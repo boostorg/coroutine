@@ -20,7 +20,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/context/detail/config.hpp>
-#include <boost/context/fcontext.hpp>
+#include <boost/thread.hpp>
 
 #include <boost/coroutine/stack_context.hpp>
 
@@ -51,15 +51,13 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-SYSTEM_INFO system_info_()
+SYSTEM_INFO system_info()
 {
-    SYSTEM_INFO si;
-    ::GetSystemInfo( & si);
+    static SYSTEM_INFO si;
+    static boost::once_flag flag;
+    boost::call_once( flag, ::GetSystemInfo, & si);
     return si;
 }
-
-SYSTEM_INFO system_info()
-{ return system_info_(); }
 
 std::size_t pagesize()
 { return static_cast< std::size_t >( system_info().dwPageSize); }

@@ -26,6 +26,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/context/fcontext.hpp>
+#include <boost/thread.hpp>
 
 #include <boost/coroutine/stack_context.hpp>
 
@@ -42,25 +43,39 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-// conform to POSIX.1-2001
-std::size_t pagesize()
-{ return ::sysconf( _SC_PAGESIZE); }
-
-rlimit stacksize_limit_()
+void pagesize_( std::size_t * size)
 {
-    rlimit limit;
+    // conform to POSIX.1-2001
+    * size = ::sysconf( _SC_PAGESIZE);
+}
+
+void stacksize_limit_( rlimit * limit)
+{
     // conforming to POSIX.1-2001
 #if defined(BOOST_DISABLE_ASSERTS)
-    ::getrlimit( RLIMIT_STACK, & limit);
+    ::getrlimit( RLIMIT_STACK, limit);
 #else
-    const int result = ::getrlimit( RLIMIT_STACK, & limit);
+    const int result = ::getrlimit( RLIMIT_STACK, limit);
     BOOST_ASSERT( 0 == result);
 #endif
-    return limit;
+}
+
+// conform to POSIX.1-2001
+std::size_t pagesize()
+{
+    static std::size_t size = 0;
+    static boost::once_flag flag;
+    boost::call_once( flag, pagesize_, & size);
+    return size;
 }
 
 rlimit stacksize_limit()
-{ return stacksize_limit_(); }
+{
+    static rlimit limit;
+    static boost::once_flag flag;
+    boost::call_once( flag, stacksize_limit_, & limit);
+    return limit;
+}
 
 std::size_t page_count( std::size_t stacksize)
 {
