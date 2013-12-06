@@ -51,11 +51,14 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
+void system_info_( SYSTEM_INFO * si)
+{ ::GetSystemInfo( si); }
+
 SYSTEM_INFO system_info()
 {
     static SYSTEM_INFO si;
     static boost::once_flag flag;
-    boost::call_once( flag, ::GetSystemInfo, & si);
+    boost::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
     return si;
 }
 
