@@ -20,7 +20,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/context/detail/config.hpp>
-#include <boost/context/fcontext.hpp>
+#include <boost/thread.hpp>
 
 #include <boost/coroutine/stack_context.hpp>
 
@@ -51,16 +51,14 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-SYSTEM_INFO system_info_()
-{
-    SYSTEM_INFO si;
-    ::GetSystemInfo( & si);
-    return si;
-}
+void system_info_( SYSTEM_INFO * si)
+{ ::GetSystemInfo( si); }
 
 SYSTEM_INFO system_info()
 {
-    static SYSTEM_INFO si = system_info_();
+    static SYSTEM_INFO si;
+    static boost::once_flag flag;
+    boost::call_once( flag, static_cast< void(*)( SYSTEM_INFO *) >( system_info_), & si);
     return si;
 }
 
@@ -70,7 +68,7 @@ std::size_t pagesize()
 std::size_t page_count( std::size_t stacksize)
 {
     return static_cast< std::size_t >(
-        std::ceil(
+        std::floor(
             static_cast< float >( stacksize) / pagesize() ) );
 }
 
@@ -112,7 +110,8 @@ standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
     BOOST_ASSERT( minimum_stacksize() <= size);
     BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
 
-    const std::size_t pages( detail::page_count( size) + 1); // add one guard page
+    const std::size_t pages( detail::page_count( size) ); // page at bottom will be used as guard-page
+    BOOST_ASSERT_MSG( 2 <= pages, "at least two pages must fit into stack (one page is guard-page)");
     const std::size_t size_ = pages * detail::pagesize();
     BOOST_ASSERT( 0 < size && 0 < size_);
 

@@ -26,6 +26,7 @@ extern "C" {
 
 #include <boost/assert.hpp>
 #include <boost/context/fcontext.hpp>
+#include <boost/thread.hpp>
 
 #include <boost/coroutine/stack_context.hpp>
 
@@ -42,36 +43,44 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-std::size_t pagesize()
+void pagesize_( std::size_t * size)
 {
     // conform to POSIX.1-2001
-    static std::size_t size = ::sysconf( _SC_PAGESIZE);
-    return size;
+    * size = ::sysconf( _SC_PAGESIZE);
 }
 
-rlimit stacksize_limit_()
+void stacksize_limit_( rlimit * limit)
 {
-    rlimit limit;
     // conforming to POSIX.1-2001
 #if defined(BOOST_DISABLE_ASSERTS)
-    ::getrlimit( RLIMIT_STACK, & limit);
+    ::getrlimit( RLIMIT_STACK, limit);
 #else
-    const int result = ::getrlimit( RLIMIT_STACK, & limit);
+    const int result = ::getrlimit( RLIMIT_STACK, limit);
     BOOST_ASSERT( 0 == result);
 #endif
-    return limit;
+}
+
+// conform to POSIX.1-2001
+std::size_t pagesize()
+{
+    static std::size_t size = 0;
+    static boost::once_flag flag;
+    boost::call_once( flag, pagesize_, & size);
+    return size;
 }
 
 rlimit stacksize_limit()
 {
-    static rlimit limit = stacksize_limit_();
+    static rlimit limit;
+    static boost::once_flag flag;
+    boost::call_once( flag, stacksize_limit_, & limit);
     return limit;
 }
 
 std::size_t page_count( std::size_t stacksize)
 {
     return static_cast< std::size_t >( 
-        std::ceil(
+        std::floor(
             static_cast< float >( stacksize) / pagesize() ) );
 }
 
@@ -108,9 +117,11 @@ standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
     BOOST_ASSERT( minimum_stacksize() <= size);
     BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
 
-    const std::size_t pages( detail::page_count( size) + 1); // add one guard page
+    const std::size_t pages( detail::page_count( size) ); // page at bottom will be used as guard-page
+    BOOST_ASSERT_MSG( 2 <= pages, "at least two pages must fit into stack (one page is guard-page)");
     const std::size_t size_( pages * detail::pagesize() );
     BOOST_ASSERT( 0 < size && 0 < size_);
+    BOOST_ASSERT( size_ <= size);
 
     const int fd( ::open("/dev/zero", O_RDONLY) );
     BOOST_ASSERT( -1 != fd);
