@@ -1174,93 +1174,7 @@ public:
         }
     };
 
-    class const_iterator : public std::iterator< std::input_iterator_tag, const typename remove_reference< R >::type >
-    {
-    private:
-        pull_coroutine< R > *   c_;
-        optional< R >           val_;
-
-        void fetch_()
-        {
-            BOOST_ASSERT( c_);
-
-            if ( ! c_->has_result() )
-            {
-                c_ = 0;
-                val_ = none;
-                return;
-            }
-            val_ = c_->get();
-        }
-
-        void increment_()
-        {
-            BOOST_ASSERT( c_);
-            BOOST_ASSERT( * c_);
-
-            ( * c_)();
-            fetch_();
-        }
-
-    public:
-        typedef typename const_iterator::pointer      pointer_t;
-        typedef typename const_iterator::reference    reference_t;
-
-        const_iterator() :
-            c_( 0), val_()
-        {}
-
-        explicit const_iterator( pull_coroutine< R > const* c) :
-            c_( const_cast< pull_coroutine< R > * >( c) ), val_()
-        { fetch_(); }
-
-        const_iterator( const_iterator const& other) :
-            c_( other.c_), val_( other.val_)
-        {}
-
-        const_iterator & operator=( const_iterator const& other)
-        {
-            if ( this == & other) return * this;
-            c_ = other.c_;
-            val_ = other.val_;
-            return * this;
-        }
-
-        bool operator==( const_iterator const& other)
-        { return other.c_ == c_ && other.val_ == val_; }
-
-        bool operator!=( const_iterator const& other)
-        { return other.c_ != c_ || other.val_ != val_; }
-
-        const_iterator & operator++()
-        {
-            increment_();
-            return * this;
-        }
-
-        const_iterator operator++( int)
-        {
-            const_iterator tmp( * this);
-            ++*this;
-            return tmp;
-        }
-
-        reference_t operator*() const
-        {
-            if ( ! val_)
-                boost::throw_exception(
-                    invalid_result() );
-            return val_.get();
-        }
-
-        pointer_t operator->() const
-        {
-            if ( ! val_)
-                boost::throw_exception(
-                    invalid_result() );
-            return val_.get_ptr();
-        }
-    };
+    struct const_iterator;
 };
 
 template< typename R >
@@ -1691,93 +1605,7 @@ public:
         }
     };
 
-    class const_iterator : public std::iterator< std::input_iterator_tag, R >
-    {
-    private:
-        pull_coroutine< R & >   *   c_;
-        optional< R & >             val_;
-
-        void fetch_()
-        {
-            BOOST_ASSERT( c_);
-
-            if ( ! c_->has_result() )
-            {
-                c_ = 0;
-                val_ = none;
-                return;
-            }
-            val_ = c_->get();
-        }
-
-        void increment_()
-        {
-            BOOST_ASSERT( c_);
-            BOOST_ASSERT( * c_);
-
-            ( * c_)();
-            fetch_();
-        }
-
-    public:
-        typedef typename const_iterator::pointer      pointer_t;
-        typedef typename const_iterator::reference    reference_t;
-
-        const_iterator() :
-            c_( 0), val_()
-        {}
-
-        explicit const_iterator( pull_coroutine< R & > const* c) :
-            c_( const_cast< pull_coroutine< R & > * >( c) ), val_()
-        { fetch_(); }
-
-        const_iterator( const_iterator const& other) :
-            c_( other.c_), val_( other.val_)
-        {}
-
-        const_iterator & operator=( const_iterator const& other)
-        {
-            if ( this == & other) return * this;
-            c_ = other.c_;
-            val_ = other.val_;
-            return * this;
-        }
-
-        bool operator==( const_iterator const& other)
-        { return other.c_ == c_ && other.val_ == val_; }
-
-        bool operator!=( const_iterator const& other)
-        { return other.c_ != c_ || other.val_ != val_; }
-
-        const_iterator & operator++()
-        {
-            increment_();
-            return * this;
-        }
-
-        const_iterator operator++( int)
-        {
-            const_iterator tmp( * this);
-            ++*this;
-            return tmp;
-        }
-
-        reference_t operator*() const
-        {
-            if ( ! val_)
-                boost::throw_exception(
-                    invalid_result() );
-            return val_.get();
-        }
-
-        pointer_t operator->() const
-        {
-            if ( ! val_)
-                boost::throw_exception(
-                    invalid_result() );
-            return val_.get_ptr();
-        }
-    };
+    struct const_iterator;
 };
 
 template<>
@@ -2875,21 +2703,9 @@ range_begin( pull_coroutine< R > & c)
 
 template< typename R >
 inline
-typename pull_coroutine< R >::const_iterator
-range_begin( pull_coroutine< R > const& c)
-{ return typename pull_coroutine< R >::const_iterator( & c); }
-
-template< typename R >
-inline
 typename pull_coroutine< R >::iterator
 range_end( pull_coroutine< R > &)
 { return typename pull_coroutine< R >::iterator(); }
-
-template< typename R >
-inline
-typename pull_coroutine< R >::const_iterator
-range_end( pull_coroutine< R > const&)
-{ return typename pull_coroutine< R >::const_iterator(); }
 
 template< typename Arg >
 inline
@@ -2899,21 +2715,9 @@ range_begin( push_coroutine< Arg > & c)
 
 template< typename Arg >
 inline
-typename push_coroutine< Arg >::const_iterator
-range_begin( push_coroutine< Arg > const& c)
-{ return typename push_coroutine< Arg >::const_iterator( & c); }
-
-template< typename Arg >
-inline
 typename push_coroutine< Arg >::iterator
 range_end( push_coroutine< Arg > &)
 { return typename push_coroutine< Arg >::iterator(); }
-
-template< typename Arg >
-inline
-typename push_coroutine< Arg >::const_iterator
-range_end( push_coroutine< Arg > const&)
-{ return typename push_coroutine< Arg >::const_iterator(); }
 
 template< typename T >
 struct coroutine
@@ -2928,17 +2732,9 @@ template< typename Arg >
 struct range_mutable_iterator< coroutines::push_coroutine< Arg > >
 { typedef typename coroutines::push_coroutine< Arg >::iterator type; };
 
-template< typename Arg >
-struct range_const_iterator< coroutines::push_coroutine< Arg > >
-{ typedef typename coroutines::push_coroutine< Arg >::const_iterator type; };
-
 template< typename R >
 struct range_mutable_iterator< coroutines::pull_coroutine< R > >
 { typedef typename coroutines::pull_coroutine< R >::iterator type; };
-
-template< typename R >
-struct range_const_iterator< coroutines::pull_coroutine< R > >
-{ typedef typename coroutines::pull_coroutine< R >::const_iterator type; };
 
 }
 
@@ -2958,18 +2754,6 @@ end( boost::coroutines::pull_coroutine< R > & c)
 
 template< typename R >
 inline
-typename boost::coroutines::pull_coroutine< R >::const_iterator
-begin( boost::coroutines::pull_coroutine< R > const& c)
-{ return boost::const_begin( c); }
-
-template< typename R >
-inline
-typename boost::coroutines::pull_coroutine< R >::const_iterator
-end( boost::coroutines::pull_coroutine< R > const& c)
-{ return boost::const_end( c); }
-
-template< typename R >
-inline
 typename boost::coroutines::push_coroutine< R >::iterator
 begin( boost::coroutines::push_coroutine< R > & c)
 { return boost::begin( c); }
@@ -2979,18 +2763,6 @@ inline
 typename boost::coroutines::push_coroutine< R >::iterator
 end( boost::coroutines::push_coroutine< R > & c)
 { return boost::end( c); }
-
-template< typename R >
-inline
-typename boost::coroutines::push_coroutine< R >::const_iterator
-begin( boost::coroutines::push_coroutine< R > const& c)
-{ return boost::const_begin( c); }
-
-template< typename R >
-inline
-typename boost::coroutines::push_coroutine< R >::const_iterator
-end( boost::coroutines::push_coroutine< R > const& c)
-{ return boost::const_end( c); }
 
 }
 
