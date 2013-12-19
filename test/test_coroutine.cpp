@@ -482,9 +482,9 @@ void test_output_iterator()
         vec_in.push_back( & i3);
         std::vector< const int* > vec_out;
         coro::coroutine< const int* >::pull_type coro( boost::bind( f19, _1, boost::ref( vec_in) ) );
-        coro::coroutine< const int* >::pull_type::iterator e = boost::end( coro);
+        coro::coroutine< const int* >::pull_type::const_iterator e = boost::const_end( coro);
         for (
-            coro::coroutine< const int* >::pull_type::iterator i = boost::begin( coro);
+            coro::coroutine< const int* >::pull_type::const_iterator i = boost::const_begin( coro);
             i != e; ++i)
         { vec_out.push_back( * i); }
         BOOST_CHECK_EQUAL( ( std::size_t)3, vec_out.size() );
