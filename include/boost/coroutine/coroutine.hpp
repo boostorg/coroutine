@@ -289,10 +289,10 @@ public:
             return * this;
         }
 
-        bool operator==( iterator const& other)
+        bool operator==( iterator const& other) const
         { return other.c_ == c_; }
 
-        bool operator!=( iterator const& other)
+        bool operator!=( iterator const& other) const
         { return other.c_ != c_; }
 
         iterator & operator*()
@@ -523,10 +523,10 @@ public:
             return * this;
         }
 
-        bool operator==( iterator const& other)
+        bool operator==( iterator const& other) const
         { return other.c_ == c_; }
 
-        bool operator!=( iterator const& other)
+        bool operator!=( iterator const& other) const
         { return other.c_ != c_; }
 
         iterator & operator*()
@@ -1138,10 +1138,10 @@ public:
             return * this;
         }
 
-        bool operator==( iterator const& other)
+        bool operator==( iterator const& other) const
         { return other.c_ == c_ && other.val_ == val_; }
 
-        bool operator!=( iterator const& other)
+        bool operator!=( iterator const& other) const
         { return other.c_ != c_ || other.val_ != val_; }
 
         iterator & operator++()
@@ -1226,10 +1226,10 @@ public:
             return * this;
         }
 
-        bool operator==( const_iterator const& other)
+        bool operator==( const_iterator const& other) const
         { return other.c_ == c_ && other.val_ == val_; }
 
-        bool operator!=( const_iterator const& other)
+        bool operator!=( const_iterator const& other) const
         { return other.c_ != c_ || other.val_ != val_; }
 
         const_iterator & operator++()
@@ -1655,10 +1655,10 @@ public:
             return * this;
         }
 
-        bool operator==( iterator const& other)
+        bool operator==( iterator const& other) const
         { return other.c_ == c_ && other.val_ == val_; }
 
-        bool operator!=( iterator const& other)
+        bool operator!=( iterator const& other) const
         { return other.c_ != c_ || other.val_ != val_; }
 
         iterator & operator++()
@@ -1743,10 +1743,10 @@ public:
             return * this;
         }
 
-        bool operator==( const_iterator const& other)
+        bool operator==( const_iterator const& other) const
         { return other.c_ == c_ && other.val_ == val_; }
 
-        bool operator!=( const_iterator const& other)
+        bool operator!=( const_iterator const& other) const
         { return other.c_ != c_ || other.val_ != val_; }
 
         const_iterator & operator++()
