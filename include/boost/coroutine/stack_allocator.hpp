@@ -4,16 +4,17 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_DETAIL_STACK_ALLOCATOR_H
-#define BOOST_COROUTINES_DETAIL_STACK_ALLOCATOR_H
+#ifndef BOOST_COROUTINES_STACK_ALLOCATOR_H
+#define BOOST_COROUTINES_STACK_ALLOCATOR_H
 
 #include <cstddef>
 
 #include <boost/config.hpp>
 
 #include <boost/context/detail/config.hpp>
-#include <boost/coroutine/detail/segmented_stack_allocator.hpp>
-#include <boost/coroutine/detail/standard_stack_allocator.hpp>
+#include <boost/coroutine/protected_stack_allocator.hpp>
+#include <boost/coroutine/segmented_stack_allocator.hpp>
+#include <boost/coroutine/simple_stack_allocator.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -23,9 +24,9 @@ namespace boost {
 namespace coroutines {
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-typedef detail::segmented_stack_allocator   stack_allocator;
+typedef segmented_stack_allocator   stack_allocator;
 #else
-typedef detail::standard_stack_allocator    stack_allocator;
+typedef protected_stack_allocator   stack_allocator;
 #endif
 
 }}
@@ -34,4 +35,4 @@ typedef detail::standard_stack_allocator    stack_allocator;
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_DETAIL_STACK_ALLOCATOR_H
+#endif // BOOST_COROUTINES_STACK_ALLOCATOR_H

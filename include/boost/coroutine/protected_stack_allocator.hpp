@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_DETAIL_SEGMENTED_STACK_ALLOCATOR_H
-#define BOOST_COROUTINES_DETAIL_SEGMENTED_STACK_ALLOCATOR_H
+#ifndef BOOST_COROUTINES_PROTECTED_STACK_ALLOCATOR_H
+#define BOOST_COROUTINES_PROTECTED_STACK_ALLOCATOR_H
 
 #include <cstddef>
 
@@ -22,10 +22,7 @@ namespace coroutines {
 
 struct stack_context;
 
-namespace detail {
-
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-class BOOST_COROUTINES_DECL segmented_stack_allocator
+class BOOST_COROUTINES_DECL protected_stack_allocator
 {
 public:
     static bool is_stack_unbound();
@@ -36,16 +33,15 @@ public:
 
     static std::size_t maximum_stacksize();
 
-    void allocate( stack_context &, std::size_t = minimum_stacksize() );
+    void allocate( stack_context &, std::size_t);
 
     void deallocate( stack_context &);
 };
-#endif
 
-}}}
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_DETAIL_SEGMENTED_STACK_ALLOCATOR_H
+#endif // BOOST_COROUTINES_PROTECTED_STACK_ALLOCATOR_H

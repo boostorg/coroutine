@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "boost/coroutine/detail/standard_stack_allocator.hpp"
+#include "boost/coroutine/protected_stack_allocator.hpp"
 
 extern "C" {
 #include <fcntl.h>
@@ -41,7 +41,6 @@ extern "C" {
 
 namespace boost {
 namespace coroutines {
-namespace detail {
 
 void pagesize_( std::size_t * size)
 {
@@ -85,11 +84,11 @@ std::size_t page_count( std::size_t stacksize)
 }
 
 bool
-standard_stack_allocator::is_stack_unbound()
-{ return RLIM_INFINITY == detail::stacksize_limit().rlim_max; }
+protected_stack_allocator::is_stack_unbound()
+{ return RLIM_INFINITY == stacksize_limit().rlim_max; }
 
 std::size_t
-standard_stack_allocator::default_stacksize()
+protected_stack_allocator::default_stacksize()
 {
     std::size_t size = 8 * minimum_stacksize();
     if ( is_stack_unbound() ) return size;
@@ -101,25 +100,25 @@ standard_stack_allocator::default_stacksize()
 }
 
 std::size_t
-standard_stack_allocator::minimum_stacksize()
+protected_stack_allocator::minimum_stacksize()
 { return SIGSTKSZ + sizeof( context::fcontext_t) + 15; }
 
 std::size_t
-standard_stack_allocator::maximum_stacksize()
+protected_stack_allocator::maximum_stacksize()
 {
     BOOST_ASSERT( ! is_stack_unbound() );
-    return static_cast< std::size_t >( detail::stacksize_limit().rlim_max);
+    return static_cast< std::size_t >( stacksize_limit().rlim_max);
 }
 
 void
-standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
+protected_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 {
     BOOST_ASSERT( minimum_stacksize() <= size);
     BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
 
-    const std::size_t pages( detail::page_count( size) ); // page at bottom will be used as guard-page
+    const std::size_t pages( page_count( size) ); // page at bottom will be used as guard-page
     BOOST_ASSERT_MSG( 2 <= pages, "at least two pages must fit into stack (one page is guard-page)");
-    const std::size_t size_( pages * detail::pagesize() );
+    const std::size_t size_( pages * pagesize() );
     BOOST_ASSERT( 0 < size && 0 < size_);
     BOOST_ASSERT( size_ <= size);
 
@@ -139,9 +138,9 @@ standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 
     // conforming to POSIX.1-2001
 #if defined(BOOST_DISABLE_ASSERTS)
-    ::mprotect( limit, detail::pagesize(), PROT_NONE);
+    ::mprotect( limit, pagesize(), PROT_NONE);
 #else
-    const int result( ::mprotect( limit, detail::pagesize(), PROT_NONE) );
+    const int result( ::mprotect( limit, pagesize(), PROT_NONE) );
     BOOST_ASSERT( 0 == result);
 #endif
 
@@ -150,7 +149,7 @@ standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 }
 
 void
-standard_stack_allocator::deallocate( stack_context & ctx)
+protected_stack_allocator::deallocate( stack_context & ctx)
 {
     BOOST_ASSERT( ctx.sp);
     BOOST_ASSERT( minimum_stacksize() <= ctx.size);
@@ -161,7 +160,7 @@ standard_stack_allocator::deallocate( stack_context & ctx)
     ::munmap( limit, ctx.size);
 }
 
-}}}
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

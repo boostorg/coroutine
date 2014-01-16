@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include "boost/coroutine/detail/standard_stack_allocator.hpp"
+#include "boost/coroutine/protected_stack_allocator.hpp"
 
 extern "C" {
 #include <windows.h>
@@ -49,7 +49,6 @@ extern "C" {
 
 namespace boost {
 namespace coroutines {
-namespace detail {
 
 void system_info_( SYSTEM_INFO * si)
 { ::GetSystemInfo( si); }
@@ -74,11 +73,11 @@ std::size_t page_count( std::size_t stacksize)
 
 // Windows seams not to provide a limit for the stacksize
 bool
-standard_stack_allocator::is_stack_unbound()
+protected_stack_allocator::is_stack_unbound()
 { return true; }
 
 std::size_t
-standard_stack_allocator::default_stacksize()
+protected_stack_allocator::default_stacksize()
 {
     std::size_t size = 64 * 1024; // 64 kB
     if ( is_stack_unbound() )
@@ -92,27 +91,27 @@ standard_stack_allocator::default_stacksize()
 
 // because Windows seams not to provide a limit for minimum stacksize
 std::size_t
-standard_stack_allocator::minimum_stacksize()
+protected_stack_allocator::minimum_stacksize()
 { return MIN_STACKSIZE; }
 
 // because Windows seams not to provide a limit for maximum stacksize
 // maximum_stacksize() can never be called (pre-condition ! is_stack_unbound() )
 std::size_t
-standard_stack_allocator::maximum_stacksize()
+protected_stack_allocator::maximum_stacksize()
 {
     BOOST_ASSERT( ! is_stack_unbound() );
     return  1 * 1024 * 1024 * 1024; // 1GB
 }
 
 void
-standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
+protected_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 {
     BOOST_ASSERT( minimum_stacksize() <= size);
     BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
 
-    const std::size_t pages( detail::page_count( size) ); // page at bottom will be used as guard-page
+    const std::size_t pages( page_count( size) ); // page at bottom will be used as guard-page
     BOOST_ASSERT_MSG( 2 <= pages, "at least two pages must fit into stack (one page is guard-page)");
-    const std::size_t size_ = pages * detail::pagesize();
+    const std::size_t size_ = pages * pagesize();
     BOOST_ASSERT( 0 < size && 0 < size_);
 
     void * limit = ::VirtualAlloc( 0, size_, MEM_COMMIT, PAGE_READWRITE);
@@ -123,10 +122,10 @@ standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
     DWORD old_options;
 #if defined(BOOST_DISABLE_ASSERTS)
     ::VirtualProtect(
-        limit, detail::pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
+        limit, pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
 #else
     const BOOL result = ::VirtualProtect(
-        limit, detail::pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
+        limit, pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
     BOOST_ASSERT( FALSE != result);
 #endif
 
@@ -135,7 +134,7 @@ standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 }
 
 void
-standard_stack_allocator::deallocate( stack_context & ctx)
+protected_stack_allocator::deallocate( stack_context & ctx)
 {
     BOOST_ASSERT( ctx.sp);
     BOOST_ASSERT( minimum_stacksize() <= ctx.size);
@@ -145,7 +144,7 @@ standard_stack_allocator::deallocate( stack_context & ctx)
     ::VirtualFree( limit, 0, MEM_RELEASE);
 }
 
-}}}
+}}
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

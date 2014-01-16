@@ -4,15 +4,15 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/coroutine/detail/segmented_stack_allocator.hpp>
+#include <boost/coroutine/segmented_stack_allocator.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/context/fcontext.hpp>
 
 #include <boost/coroutine/stack_context.hpp>
 
+// forward declaration for splitstack-functions defined in libgcc
 extern "C" {
-    
 void *__splitstack_makecontext( std::size_t,
                                 void * [BOOST_COROUTINES_SEGMENTS],
                                 std::size_t *);
@@ -36,7 +36,6 @@ void __splitstack_block_signals_context( void * [BOOST_COROUTINES_SEGMENTS],
 
 namespace boost {
 namespace coroutines {
-namespace detail {
 
 bool
 segmented_stack_allocator::is_stack_unbound()
@@ -74,7 +73,7 @@ segmented_stack_allocator::deallocate( stack_context & ctx)
     __splitstack_releasecontext( ctx.segments_ctx);
 }
 
-}}}
+}}
 
 #ifdef UDEF_SIGSTKSZ
 # undef SIGSTKSZ

@@ -12,6 +12,9 @@
 #include <boost/coroutine/exceptions.hpp>
 #include <boost/coroutine/flags.hpp>
 #include <boost/coroutine/stack_allocator.hpp>
+#include <boost/coroutine/simple_stack_allocator.hpp>
+#include <boost/coroutine/protected_stack_allocator.hpp>
+#include <boost/coroutine/segmented_stack_allocator.hpp>
 #include <boost/coroutine/stack_context.hpp>
 
 #endif // BOOST_COROUTINES_ALL_H
