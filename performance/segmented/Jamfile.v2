@@ -13,64 +13,54 @@ import modules ;
 import os ;
 import toolset ;
 
-project boost/coroutine/performance
+project boost/coroutine/performance/segmented
     : requirements
       <library>/boost/chrono//boost_chrono
       <library>/boost/coroutine//boost_coroutine
       <library>/boost/program_options//boost_program_options
+      <toolset>gcc-4.7:<cxxflags>-fsplit-stack
+      <toolset>gcc-4.7:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>gcc-4.8:<cxxflags>-fsplit-stack
+      <toolset>gcc-4.8:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <segmented-stacks>on
       <linkflags>"-lrt" 
       <link>static
       <threading>multi
     ;
 
 alias sources
-   : bind_processor_aix.cpp
+   : ../bind_processor_aix.cpp
    : <target-os>aix
    ;
 
 alias sources
-   : bind_processor_freebsd.cpp
+   : ../bind_processor_freebsd.cpp
    : <target-os>freebsd
    ;
 
 alias sources
-   : bind_processor_hpux.cpp
+   : ../bind_processor_hpux.cpp
    : <target-os>hpux
    ;
 
 alias sources
-   : bind_processor_linux.cpp
+   : ../bind_processor_linux.cpp
    : <target-os>linux
    ;
 
 alias sources
-   : bind_processor_solaris.cpp
+   : ../bind_processor_solaris.cpp
    : <target-os>solaris
    ;
 
 alias sources
-   : bind_processor_windows.cpp
+   : ../bind_processor_windows.cpp
    : <target-os>windows
    ;
 
 explicit sources ;
 
-exe performance_create_protected
+exe performance_create_segmented
    : sources
-     performance_create_protected.cpp
-   ;
-
-exe performance_create_simple
-   : sources
-     performance_create_simple.cpp
-   ;
-
-exe performance_create_prealloc
-   : sources
-     performance_create_prealloc.cpp
-   ;
-
-exe performance_switch
-   : sources
-     performance_switch.cpp
+     performance_create_segmented.cpp
    ;
