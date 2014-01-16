@@ -18,7 +18,7 @@
 #include "cycle.hpp"
 #include "preallocated_stack_allocator.hpp"
 
-typedef preallocated_stack_allocator< 8 * 1024 > stack_allocator;
+typedef preallocated_stack_allocator< 64 * 1024 > stack_allocator;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::uint64_t jobs = 1000;
