@@ -48,10 +48,10 @@ exe fibonacci
     : fibonacci.cpp
     ;
 
-exe await_emu
-    : await_emu.cpp
-    ;
-
 exe layout
     : layout.cpp
     ;
+
+#exe await_emu
+#    : await_emu.cpp
+#    ;
