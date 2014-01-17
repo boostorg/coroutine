@@ -22,6 +22,7 @@
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <boost/utility/explicit_operator_bool.hpp>
 
 #include <boost/coroutine/attributes.hpp>
 #include <boost/coroutine/detail/config.hpp>
@@ -60,8 +61,6 @@ private:
 
     struct dummy
     { void nonnull() {} };
-
-    typedef void ( dummy::*safe_bool)();
 
     ptr_t  impl_;
 
@@ -226,8 +225,7 @@ public:
     bool empty() const BOOST_NOEXCEPT
     { return ! impl_; }
 
-    operator safe_bool() const BOOST_NOEXCEPT
-    { return ( empty() || impl_->is_complete() ) ? 0 : & dummy::nonnull; }
+    BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
     { return empty() || impl_->is_complete(); }
@@ -319,8 +317,6 @@ private:
 
     struct dummy
     { void nonnull() {} };
-
-    typedef void ( dummy::*safe_bool)();
 
     ptr_t  impl_;
 
@@ -485,8 +481,7 @@ public:
     bool empty() const BOOST_NOEXCEPT
     { return ! impl_; }
 
-    operator safe_bool() const BOOST_NOEXCEPT
-    { return ( empty() || impl_->is_complete() ) ? 0 : & dummy::nonnull; }
+    BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
     { return empty() || impl_->is_complete(); }
@@ -553,8 +548,6 @@ private:
 
     struct dummy
     { void nonnull() {} };
-
-    typedef void ( dummy::*safe_bool)();
 
     ptr_t  impl_;
 
@@ -719,8 +712,7 @@ public:
     bool empty() const BOOST_NOEXCEPT
     { return ! impl_; }
 
-    operator safe_bool() const BOOST_NOEXCEPT
-    { return ( empty() || impl_->is_complete() ) ? 0 : & dummy::nonnull; }
+    BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
     { return empty() || impl_->is_complete(); }
@@ -756,8 +748,6 @@ private:
 
     struct dummy
     { void nonnull() {} };
-
-    typedef void ( dummy::*safe_bool)();
 
     ptr_t  impl_;
 
@@ -1055,8 +1045,7 @@ public:
     bool empty() const BOOST_NOEXCEPT
     { return ! impl_; }
 
-    operator safe_bool() const BOOST_NOEXCEPT
-    { return ( empty() || impl_->is_complete() ) ? 0 : & dummy::nonnull; }
+    BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
     { return empty() || impl_->is_complete(); }
@@ -1191,8 +1180,6 @@ private:
 
     struct dummy
     { void nonnull() {} };
-
-    typedef void ( dummy::*safe_bool)();
 
     ptr_t  impl_;
 
@@ -1490,8 +1477,7 @@ public:
     bool empty() const BOOST_NOEXCEPT
     { return ! impl_; }
 
-    operator safe_bool() const BOOST_NOEXCEPT
-    { return ( empty() || impl_->is_complete() ) ? 0 : & dummy::nonnull; }
+    BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
     { return empty() || impl_->is_complete(); }
@@ -1622,8 +1608,6 @@ private:
 
     struct dummy
     { void nonnull() {} };
-
-    typedef void ( dummy::*safe_bool)();
 
     ptr_t  impl_;
 
@@ -1920,8 +1904,7 @@ public:
     bool empty() const BOOST_NOEXCEPT
     { return ! impl_; }
 
-    operator safe_bool() const BOOST_NOEXCEPT
-    { return ( empty() || impl_->is_complete() ) ? 0 : & dummy::nonnull; }
+    BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
     { return empty() || impl_->is_complete(); }
