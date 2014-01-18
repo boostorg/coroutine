@@ -233,22 +233,6 @@ public:
     void swap( push_coroutine & other) BOOST_NOEXCEPT
     { impl_.swap( other.impl_); }
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    push_coroutine & operator()( Arg const& arg)
-    {
-        BOOST_ASSERT( * this);
-
-        impl_->push( arg);
-        return * this;
-    }
-
-    push_coroutine & operator()( Arg && arg) {
-        BOOST_ASSERT( * this);
-
-        impl_->push( arg);
-        return * this;
-    }
-#else
     push_coroutine & operator()( Arg const& arg)
     {
         BOOST_ASSERT( * this);
@@ -264,7 +248,6 @@ public:
         impl_->push( forward< Arg >( arg) );
         return * this;
     }
-#endif
 
     class iterator : public std::iterator< std::output_iterator_tag, void, void, void, void >
     {
