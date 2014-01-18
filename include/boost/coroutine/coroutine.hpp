@@ -237,7 +237,7 @@ public:
     {
         BOOST_ASSERT( * this);
 
-        impl_->push( forward< Arg >( arg) );
+        impl_->push( arg);
         return * this;
     }
 

@@ -100,41 +100,6 @@ public:
     friend inline void intrusive_ptr_release( push_coroutine_base * p) BOOST_NOEXCEPT
     { if ( --p->use_count_ == 0) p->deallocate_object(); }
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    void push( Arg const& arg)
-    {
-        BOOST_ASSERT( ! is_complete() );
-
-        holder< Arg > hldr_to( & caller_, arg);
-        holder< Arg > * hldr_from(
-            reinterpret_cast< holder< Arg > * >(
-                hldr_to.ctx->jump(
-                    callee_,
-                    reinterpret_cast< intptr_t >( & hldr_to),
-                    preserve_fpu() ) ) );
-        BOOST_ASSERT( hldr_from->ctx);
-        callee_ = * hldr_from->ctx;
-        if ( hldr_from->force_unwind) throw forced_unwind();
-        if ( except_) rethrow_exception( except_);
-    }
-
-    void push( Arg && arg)
-    {
-        BOOST_ASSERT( ! is_complete() );
-
-        holder< Arg > hldr_to( & caller_, boost::forward( arg) );
-        holder< Arg > * hldr_from(
-            reinterpret_cast< holder< Arg > * >(
-                hldr_to.ctx->jump(
-                    callee_,
-                    reinterpret_cast< intptr_t >( & hldr_to),
-                    preserve_fpu() ) ) );
-        BOOST_ASSERT( hldr_from->ctx);
-        callee_ = * hldr_from->ctx;
-        if ( hldr_from->force_unwind) throw forced_unwind();
-        if ( except_) rethrow_exception( except_);
-    }
-#else
     void push( Arg const& arg)
     {
         BOOST_ASSERT( ! is_complete() );
@@ -168,7 +133,6 @@ public:
         if ( hldr_from->force_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
-#endif
 };
 
 template< typename Arg >
