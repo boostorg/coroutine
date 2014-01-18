@@ -34,7 +34,8 @@ namespace coroutines {
 namespace detail {
 
 coroutine_context::coroutine_context() :
-    fcontext_t(), stack_ctx_( this), ctx_( this)
+    stack_context(), context::fcontext_t(),
+    stack_ctx_( this), ctx_( this)
 {
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     __splitstack_getcontext( stack_ctx_->segments_ctx);
@@ -42,12 +43,13 @@ coroutine_context::coroutine_context() :
 }
 
 coroutine_context::coroutine_context( ctx_fn fn, stack_context * stack_ctx) :
-    fcontext_t(), stack_ctx_( stack_ctx),
+    stack_context(), context::fcontext_t(),
+    stack_ctx_( stack_ctx),
     ctx_( context::make_fcontext( stack_ctx_->sp, stack_ctx_->size, fn) )
 {}
 
 coroutine_context::coroutine_context( coroutine_context const& other) :
-    fcontext_t(),
+    stack_context( other), context::fcontext_t( other),
     stack_ctx_( other.stack_ctx_),
     ctx_( other.ctx_)
 {}
@@ -57,6 +59,8 @@ coroutine_context::operator=( coroutine_context const& other)
 {
     if ( this == & other) return * this;
 
+    stack_context::operator=( other);
+    context::fcontext_t::operator=( other);
     stack_ctx_ = other.stack_ctx_;
     ctx_ = other.ctx_;
 
