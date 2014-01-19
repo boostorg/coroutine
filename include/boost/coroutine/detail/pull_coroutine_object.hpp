@@ -104,20 +104,7 @@ private:
     }
 
 public:
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    pull_coroutine_object( Fn && fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< pull_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( forward< Fn >( fn) ),
-        alloc_( alloc)
-    { enter_(); }
-#else
+#ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
     pull_coroutine_object( Fn fn, attributes const& attr,
                            StackAllocator const& stack_alloc,
                            allocator_t const& alloc) :
@@ -130,7 +117,7 @@ public:
         fn_( fn),
         alloc_( alloc)
     { enter_(); }
-
+#endif
     pull_coroutine_object( BOOST_RV_REF( Fn) fn, attributes const& attr,
                            StackAllocator const& stack_alloc,
                            allocator_t const& alloc) :
@@ -140,10 +127,13 @@ public:
             & this->stack_ctx,
             stack_unwind == attr.do_unwind,
             fpu_preserved == attr.preserve_fpu),
+#ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
         fn_( fn),
+#else
+        fn_( forward< Fn >( fn) ),
+#endif
         alloc_( alloc)
     { enter_(); }
-#endif
 
     ~pull_coroutine_object()
     {
@@ -461,7 +451,7 @@ private:
 
 public:
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    pull_coroutine_object( Fn && fn, attributes const& attr,
+    pull_coroutine_object( BOOST_RV_REF( Fn) fn, attributes const& attr,
                            StackAllocator const& stack_alloc,
                            allocator_t const& alloc) :
         pbase_type( stack_alloc, attr.size),
@@ -816,7 +806,7 @@ private:
 
 public:
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    pull_coroutine_object( Fn && fn, attributes const& attr,
+    pull_coroutine_object( BOOST_RV_REF( Fn) fn, attributes const& attr,
                            StackAllocator const& stack_alloc,
                            allocator_t const& alloc) :
         pbase_type( stack_alloc, attr.size),
