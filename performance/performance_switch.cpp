@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 #include <boost/chrono.hpp>
 #include <boost/coroutine/all.hpp>
@@ -20,12 +21,69 @@
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::uint64_t jobs = 1000;
 
-void fn( boost::coroutines::coroutine< void >::push_type & c)
+struct X
+{
+    std::string str;
+
+    X( std::string const& str_) :
+        str( str_)
+    {}
+};
+
+const X x("abc");
+
+void fn_void( boost::coroutines::coroutine< void >::push_type & c)
 { while ( true) c(); }
 
-duration_type measure_time()
+void fn_int( boost::coroutines::coroutine< int >::push_type & c)
+{ while ( true) c( 7); }
+
+void fn_x( boost::coroutines::coroutine< X >::push_type & c)
 {
-    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
+    while ( true) c( x);
+}
+
+duration_type measure_time_void()
+{
+    boost::coroutines::coroutine< void >::pull_type c( fn_void, boost::coroutines::attributes( preserve_fpu) );
+
+    // cache warum-up
+    c();
+        
+    time_point_type start( clock_type::now() );
+    for ( std::size_t i = 0; i < jobs; ++i) {
+        c();
+    }
+    duration_type total = clock_type::now() - start;
+    total -= overhead_clock(); // overhead of measurement
+    total /= jobs;  // loops
+    total /= 2;  // 2x jump_fcontext
+
+    return total;
+}
+
+duration_type measure_time_int()
+{
+    boost::coroutines::coroutine< int >::pull_type c( fn_int, boost::coroutines::attributes( preserve_fpu) );
+
+    // cache warum-up
+    c();
+        
+    time_point_type start( clock_type::now() );
+    for ( std::size_t i = 0; i < jobs; ++i) {
+        c();
+    }
+    duration_type total = clock_type::now() - start;
+    total -= overhead_clock(); // overhead of measurement
+    total /= jobs;  // loops
+    total /= 2;  // 2x jump_fcontext
+
+    return total;
+}
+
+duration_type measure_time_x()
+{
+    boost::coroutines::coroutine< X >::pull_type c( fn_x, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -43,9 +101,47 @@ duration_type measure_time()
 }
 
 # ifdef BOOST_CONTEXT_CYCLE
-cycle_type measure_cycles()
+cycle_type measure_cycles_void()
 {
-    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::coroutine< void >::pull_type c( fn_void, boost::coroutines::attributes( preserve_fpu) );
+
+    // cache warum-up
+    c();
+        
+    cycle_type start( cycles() );
+    for ( std::size_t i = 0; i < jobs; ++i) {
+        c();
+    }
+    cycle_type total = cycles() - start;
+    total -= overhead_cycle(); // overhead of measurement
+    total /= jobs;  // loops
+    total /= 2;  // 2x jump_fcontext
+
+    return total;
+}
+
+cycle_type measure_cycles_int()
+{
+    boost::coroutines::coroutine< int >::pull_type c( fn_int, boost::coroutines::attributes( preserve_fpu) );
+
+    // cache warum-up
+    c();
+        
+    cycle_type start( cycles() );
+    for ( std::size_t i = 0; i < jobs; ++i) {
+        c();
+    }
+    cycle_type total = cycles() - start;
+    total -= overhead_cycle(); // overhead of measurement
+    total /= jobs;  // loops
+    total /= 2;  // 2x jump_fcontext
+
+    return total;
+}
+
+cycle_type measure_cycles_x()
+{
+    boost::coroutines::coroutine< X >::pull_type c( fn_x, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -92,11 +188,19 @@ int main( int argc, char * argv[])
 
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
 
-        boost::uint64_t res = measure_time().count();
-        std::cout << "average of " << res << " nano seconds" << std::endl;
+        boost::uint64_t res = measure_time_void().count();
+        std::cout << "void: average of " << res << " nano seconds" << std::endl;
+        res = measure_time_int().count();
+        std::cout << "int: average of " << res << " nano seconds" << std::endl;
+        res = measure_time_x().count();
+        std::cout << "X: average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
-        res = measure_cycles();
-        std::cout << "average of " << res << " cpu cycles" << std::endl;
+        res = measure_cycles_void();
+        std::cout << "void: average of " << res << " cpu cycles" << std::endl;
+        res = measure_cycles_int();
+        std::cout << "int: average of " << res << " cpu cycles" << std::endl;
+        res = measure_cycles_x();
+        std::cout << "X: average of " << res << " cpu cycles" << std::endl;
 #endif
 
         return EXIT_SUCCESS;
