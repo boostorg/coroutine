@@ -23,7 +23,7 @@
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/exceptions.hpp>
 #include <boost/coroutine/detail/flags.hpp>
-#include <boost/coroutine/detail/holder.hpp>
+#include <boost/coroutine/detail/parameters.hpp>
 #include <boost/coroutine/detail/param.hpp>
 #include <boost/coroutine/detail/stack_tuple.hpp>
 #include <boost/coroutine/detail/trampoline.hpp>
@@ -77,13 +77,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -92,10 +92,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg > hldr_to( & this->caller_, true);
+        parameters< Arg > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -146,18 +146,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg > * hldr_from(
-                reinterpret_cast< holder< Arg > * >(
+            parameters< void > to( & caller);
+            parameters< Arg > * from(
+                reinterpret_cast< parameters< Arg > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, * hldr_from->data);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, * from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -168,10 +168,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg > hldr_to( & caller);
+        parameters< Arg > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -214,13 +214,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -229,10 +229,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg > hldr_to( & this->caller_, true);
+        parameters< Arg > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -265,18 +265,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg > * hldr_from(
-                reinterpret_cast< holder< Arg > * >(
+            parameters< void > to( & caller);
+            parameters< Arg > * from(
+                reinterpret_cast< parameters< Arg > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, * hldr_from->data);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, * from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -287,10 +287,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg > hldr_to( & caller);
+        parameters< Arg > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -333,13 +333,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -348,10 +348,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg > hldr_to( & this->caller_, true);
+        parameters< Arg > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -384,18 +384,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg > * hldr_from(
-                reinterpret_cast< holder< Arg > * >(
+            parameters< void > to( & caller);
+            parameters< Arg > * from(
+                reinterpret_cast< parameters< Arg > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, * hldr_from->data);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, * from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -406,10 +406,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg > hldr_to( & caller);
+        parameters< Arg > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -452,13 +452,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -467,10 +467,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg * > hldr_to( & this->caller_, true);
+        parameters< Arg * > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -531,18 +531,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg * > * hldr_from(
-                reinterpret_cast< holder< Arg * > * >(
+            parameters< void > to( & caller);
+            parameters< Arg * > * from(
+                reinterpret_cast< parameters< Arg * > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( hldr_from->data) );
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -553,10 +553,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg * > hldr_to( & caller);
+        parameters< Arg * > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -599,13 +599,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -614,10 +614,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg * > hldr_to( & this->caller_, true);
+        parameters< Arg * > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -650,18 +650,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg * > * hldr_from(
-                reinterpret_cast< holder< Arg * > * >(
+            parameters< void > to( & caller);
+            parameters< Arg * > * from(
+                reinterpret_cast< parameters< Arg * > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( hldr_from->data) );
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -672,10 +672,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg * > hldr_to( & caller);
+        parameters< Arg * > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -718,13 +718,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -733,10 +733,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg * > hldr_to( & this->caller_, true);
+        parameters< Arg * > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -769,18 +769,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg * > * hldr_from(
-                reinterpret_cast< holder< Arg * > * >(
+            parameters< void > to( & caller);
+            parameters< Arg * > * from(
+                reinterpret_cast< parameters< Arg * > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( hldr_from->data) );
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -791,10 +791,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg * > hldr_to( & caller);
+        parameters< Arg * > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -837,13 +837,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -852,10 +852,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg * > hldr_to( & this->caller_, true);
+        parameters< Arg * > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -916,18 +916,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg * > * hldr_from(
-                reinterpret_cast< holder< Arg * > * >(
+            parameters< void > to( & caller);
+            parameters< Arg * > * from(
+                reinterpret_cast< parameters< Arg * > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( hldr_from->data) );
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -938,10 +938,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg * > hldr_to( & caller);
+        parameters< Arg * > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -984,13 +984,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -999,10 +999,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg * > hldr_to( & this->caller_, true);
+        parameters< Arg * > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -1035,18 +1035,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg * > * hldr_from(
-                reinterpret_cast< holder< Arg * > * >(
+            parameters< void > to( & caller);
+            parameters< Arg * > * from(
+                reinterpret_cast< parameters< Arg * > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, hldr_from->data);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -1057,10 +1057,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg * > hldr_to( & caller);
+        parameters< Arg * > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -1103,13 +1103,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -1118,10 +1118,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< Arg * > hldr_to( & this->caller_, true);
+        parameters< Arg * > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -1154,18 +1154,18 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< Arg * > * hldr_from(
-                reinterpret_cast< holder< Arg * > * >(
+            parameters< void > to( & caller);
+            parameters< Arg * > * from(
+                reinterpret_cast< parameters< Arg * > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
-            BOOST_ASSERT( hldr_from->data);
+            BOOST_ASSERT( from->ctx);
+            BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_, hldr_from->data);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -1176,10 +1176,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< Arg * > hldr_to( & caller);
+        parameters< Arg * > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -1222,13 +1222,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -1237,10 +1237,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< void > hldr_to( & this->caller_, true);
+        parameters< void > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -1301,17 +1301,17 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< void > * hldr_from(
-                reinterpret_cast< holder< void > * >(
+            parameters< void > to( & caller);
+            parameters< void > * from(
+                reinterpret_cast< parameters< void > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
+            BOOST_ASSERT( from->ctx);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -1322,10 +1322,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< void > hldr_to( & caller);
+        parameters< void > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -1368,13 +1368,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -1383,10 +1383,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< void > hldr_to( & this->caller_, true);
+        parameters< void > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -1419,17 +1419,17 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< void > * hldr_from(
-                reinterpret_cast< holder< void > * >(
+            parameters< void > to( & caller);
+            parameters< void > * from(
+                reinterpret_cast< parameters< void > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
+            BOOST_ASSERT( from->ctx);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -1440,10 +1440,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< void > hldr_to( & caller);
+        parameters< void > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }
@@ -1486,13 +1486,13 @@ private:
 
     void enter_()
     {
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
                 this->caller_.jump(
                     this->callee_,
                     reinterpret_cast< intptr_t >( this),
                     this->preserve_fpu() ) ) );
-        this->callee_ = * hldr_from->ctx;
+        this->callee_ = * from->ctx;
         if ( this->except_) rethrow_exception( this->except_);
     }
 
@@ -1501,10 +1501,10 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        holder< void > hldr_to( & this->caller_, true);
+        parameters< void > to( & this->caller_, true);
         this->caller_.jump(
             this->callee_,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         this->flags_ &= ~flag_unwind_stack;
 
@@ -1537,17 +1537,17 @@ public:
         coroutine_context caller;
 
         {
-            holder< void > hldr_to( & caller);
-            holder< void > * hldr_from(
-                reinterpret_cast< holder< void > * >(
+            parameters< void > to( & caller);
+            parameters< void > * from(
+                reinterpret_cast< parameters< void > * >(
                     caller.jump(
                         this->caller_,
-                        reinterpret_cast< intptr_t >( & hldr_to),
+                        reinterpret_cast< intptr_t >( & to),
                         this->preserve_fpu() ) ) );
-            BOOST_ASSERT( hldr_from->ctx);
+            BOOST_ASSERT( from->ctx);
 
             // create pull_coroutine
-            Caller c( * hldr_from->ctx, false, this->preserve_fpu(), alloc_);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -1558,10 +1558,10 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        holder< void > hldr_to( & caller);
+        parameters< void > to( & caller);
         caller.jump(
             callee,
-            reinterpret_cast< intptr_t >( & hldr_to),
+            reinterpret_cast< intptr_t >( & to),
             this->preserve_fpu() );
         BOOST_ASSERT_MSG( false, "push_coroutine is complete");
     }

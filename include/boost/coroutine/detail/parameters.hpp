@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_DETAIL_HOLDER_H
-#define BOOST_COROUTINES_DETAIL_HOLDER_H
+#ifndef BOOST_COROUTINES_DETAIL_PARAMETERS_H
+#define BOOST_COROUTINES_DETAIL_PARAMETERS_H
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -21,33 +21,33 @@ namespace coroutines {
 namespace detail {
 
 template< typename Data >
-struct holder
+struct parameters
 {
     coroutine_context   *   ctx;
     Data           const*   data;
     bool                    force_unwind;
 
-    explicit holder( coroutine_context * ctx_) :
+    explicit parameters( coroutine_context * ctx_) :
         ctx( ctx_), data( 0), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, Data const* data_) :
+    explicit parameters( coroutine_context * ctx_, Data const* data_) :
         ctx( ctx_), data( data_), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, bool force_unwind_) :
+    explicit parameters( coroutine_context * ctx_, bool force_unwind_) :
         ctx( ctx_), data( 0), force_unwind( force_unwind_)
     {
         BOOST_ASSERT( ctx);
         BOOST_ASSERT( force_unwind);
     }
 
-    holder( holder const& other) :
+    parameters( parameters const& other) :
         ctx( other.ctx), data( other.data),
         force_unwind( other.force_unwind)
     {}
 
-    holder & operator=( holder const& other)
+    parameters & operator=( parameters const& other)
     {
         if ( this == & other) return * this;
         ctx = other.ctx;
@@ -58,33 +58,33 @@ struct holder
 };
 
 template< typename Data >
-struct holder< Data & >
+struct parameters< Data & >
 {
     coroutine_context   *   ctx;
     Data           const*   data;
     bool                    force_unwind;
 
-    explicit holder( coroutine_context * ctx_) :
+    explicit parameters( coroutine_context * ctx_) :
         ctx( ctx_), data( 0), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, Data const* data_) :
+    explicit parameters( coroutine_context * ctx_, Data const* data_) :
         ctx( ctx_), data( data_), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, bool force_unwind_) :
+    explicit parameters( coroutine_context * ctx_, bool force_unwind_) :
         ctx( ctx_), data( 0), force_unwind( force_unwind_)
     {
         BOOST_ASSERT( ctx);
         BOOST_ASSERT( force_unwind);
     }
 
-    holder( holder const& other) :
+    parameters( parameters const& other) :
         ctx( other.ctx), data( other.data),
         force_unwind( other.force_unwind)
     {}
 
-    holder & operator=( holder const& other)
+    parameters & operator=( parameters const& other)
     {
         if ( this == & other) return * this;
         ctx = other.ctx;
@@ -95,33 +95,33 @@ struct holder< Data & >
 };
 
 template< typename Data >
-struct holder< Data * >
+struct parameters< Data * >
 {
     coroutine_context   *   ctx;
     Data           const*   data;
     bool                    force_unwind;
 
-    explicit holder( coroutine_context * ctx_) :
+    explicit parameters( coroutine_context * ctx_) :
         ctx( ctx_), data( 0), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, Data const* data_) :
+    explicit parameters( coroutine_context * ctx_, Data const* data_) :
         ctx( ctx_), data( data_), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, bool force_unwind_) :
+    explicit parameters( coroutine_context * ctx_, bool force_unwind_) :
         ctx( ctx_), data( 0), force_unwind( force_unwind_)
     {
         BOOST_ASSERT( ctx);
         BOOST_ASSERT( force_unwind);
     }
 
-    holder( holder const& other) :
+    parameters( parameters const& other) :
         ctx( other.ctx), data( other.data),
         force_unwind( other.force_unwind)
     {}
 
-    holder & operator=( holder const& other)
+    parameters & operator=( parameters const& other)
     {
         if ( this == & other) return * this;
         ctx = other.ctx;
@@ -132,20 +132,20 @@ struct holder< Data * >
 };
 
 template<>
-struct holder< void >
+struct parameters< void >
 {
     coroutine_context  *   ctx;
     bool                force_unwind;
 
-    explicit holder( coroutine_context * ctx_, bool force_unwind_ = false) :
+    explicit parameters( coroutine_context * ctx_, bool force_unwind_ = false) :
         ctx( ctx_), force_unwind( force_unwind_)
     { BOOST_ASSERT( ctx); }
 
-    holder( holder const& other) :
+    parameters( parameters const& other) :
         ctx( other.ctx), force_unwind( other.force_unwind)
     {}
 
-    holder & operator=( holder const& other)
+    parameters & operator=( parameters const& other)
     {
         if ( this == & other) return * this;
         ctx = other.ctx;
@@ -160,4 +160,4 @@ struct holder< void >
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_DETAIL_HOLDER_H
+#endif // BOOST_COROUTINES_DETAIL_PARAMETERS_H

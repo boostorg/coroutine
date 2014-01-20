@@ -20,7 +20,7 @@
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/detail/coroutine_context.hpp>
 #include <boost/coroutine/detail/flags.hpp>
-#include <boost/coroutine/detail/holder.hpp>
+#include <boost/coroutine/detail/parameters.hpp>
 #include <boost/coroutine/detail/param.hpp>
 #include <boost/coroutine/exceptions.hpp>
 
@@ -112,18 +112,18 @@ public:
     {
         BOOST_ASSERT( ! is_complete() );
 
-        holder< R > hldr_to( & caller_);
-        holder< R > * hldr_from(
-            reinterpret_cast< holder< R > * >(
-                hldr_to.ctx->jump(
+        parameters< R > to( & caller_);
+        parameters< R > * from(
+            reinterpret_cast< parameters< R > * >(
+                to.ctx->jump(
                     callee_,
-                    reinterpret_cast< intptr_t >( & hldr_to),
+                    reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
-        BOOST_ASSERT( hldr_from->ctx);
-        callee_ = * hldr_from->ctx;
-        if ( hldr_from->data) result_ = * hldr_from->data;
+        BOOST_ASSERT( from->ctx);
+        callee_ = * from->ctx;
+        if ( from->data) result_ = * from->data;
         else result_ = none;
-        if ( hldr_from->force_unwind) throw forced_unwind();
+        if ( from->force_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
@@ -216,18 +216,18 @@ public:
     {
         BOOST_ASSERT( ! is_complete() );
 
-        holder< R * > hldr_to( & caller_);
-        holder< R * > * hldr_from(
-            reinterpret_cast< holder< R * > * >(
-                hldr_to.ctx->jump(
+        parameters< R * > to( & caller_);
+        parameters< R * > * from(
+            reinterpret_cast< parameters< R * > * >(
+                to.ctx->jump(
                     callee_,
-                    reinterpret_cast< intptr_t >( & hldr_to),
+                    reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
-        BOOST_ASSERT( hldr_from->ctx);
-        callee_ = * hldr_from->ctx;
-        if ( hldr_from->data) result_ = const_cast< R * >( hldr_from->data);
+        BOOST_ASSERT( from->ctx);
+        callee_ = * from->ctx;
+        if ( from->data) result_ = const_cast< R * >( from->data);
         else this->result_ = none;
-        if ( hldr_from->force_unwind) throw forced_unwind();
+        if ( from->force_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
@@ -320,18 +320,18 @@ public:
     {
         BOOST_ASSERT( ! is_complete() );
 
-        holder< R & > hldr_to( & caller_);
-        holder< R & > * hldr_from(
-            reinterpret_cast< holder< R & > * >(
-                hldr_to.ctx->jump(
+        parameters< R & > to( & caller_);
+        parameters< R & > * from(
+            reinterpret_cast< parameters< R & > * >(
+                to.ctx->jump(
                     callee_,
-                    reinterpret_cast< intptr_t >( & hldr_to),
+                    reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
-        BOOST_ASSERT( hldr_from->ctx);
-        callee_ = * hldr_from->ctx;
-        if ( hldr_from->data) result_ = const_cast< R * >( hldr_from->data);
+        BOOST_ASSERT( from->ctx);
+        callee_ = * from->ctx;
+        if ( from->data) result_ = const_cast< R * >( from->data);
         else this->result_ = none;
-        if ( hldr_from->force_unwind) throw forced_unwind();
+        if ( from->force_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
@@ -420,16 +420,16 @@ public:
     {
         BOOST_ASSERT( ! is_complete() );
 
-        holder< void > hldr_to( & caller_);
-        holder< void > * hldr_from(
-            reinterpret_cast< holder< void > * >(
-                hldr_to.ctx->jump(
+        parameters< void > to( & caller_);
+        parameters< void > * from(
+            reinterpret_cast< parameters< void > * >(
+                to.ctx->jump(
                     callee_,
-                    reinterpret_cast< intptr_t >( & hldr_to),
+                    reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
-        BOOST_ASSERT( hldr_from->ctx);
-        callee_ = * hldr_from->ctx;
-        if ( hldr_from->force_unwind) throw forced_unwind();
+        BOOST_ASSERT( from->ctx);
+        callee_ = * from->ctx;
+        if ( from->force_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 };
