@@ -9,7 +9,6 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/optional.hpp>
 
 #include <boost/coroutine/detail/coroutine_context.hpp>
 
@@ -24,20 +23,94 @@ namespace detail {
 template< typename Data >
 struct holder
 {
-    coroutine_context      *   ctx;
-    optional< Data >        data;
+    coroutine_context   *   ctx;
+    Data           const*   data;
     bool                    force_unwind;
 
     explicit holder( coroutine_context * ctx_) :
-        ctx( ctx_), data(), force_unwind( false)
+        ctx( ctx_), data( 0), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit holder( coroutine_context * ctx_, Data data_) :
+    explicit holder( coroutine_context * ctx_, Data const* data_) :
         ctx( ctx_), data( data_), force_unwind( false)
     { BOOST_ASSERT( ctx); }
 
     explicit holder( coroutine_context * ctx_, bool force_unwind_) :
-        ctx( ctx_), data(), force_unwind( force_unwind_)
+        ctx( ctx_), data( 0), force_unwind( force_unwind_)
+    {
+        BOOST_ASSERT( ctx);
+        BOOST_ASSERT( force_unwind);
+    }
+
+    holder( holder const& other) :
+        ctx( other.ctx), data( other.data),
+        force_unwind( other.force_unwind)
+    {}
+
+    holder & operator=( holder const& other)
+    {
+        if ( this == & other) return * this;
+        ctx = other.ctx;
+        data = other.data;
+        force_unwind = other.force_unwind;
+        return * this;
+    }
+};
+
+template< typename Data >
+struct holder< Data & >
+{
+    coroutine_context   *   ctx;
+    Data           const*   data;
+    bool                    force_unwind;
+
+    explicit holder( coroutine_context * ctx_) :
+        ctx( ctx_), data( 0), force_unwind( false)
+    { BOOST_ASSERT( ctx); }
+
+    explicit holder( coroutine_context * ctx_, Data const* data_) :
+        ctx( ctx_), data( data_), force_unwind( false)
+    { BOOST_ASSERT( ctx); }
+
+    explicit holder( coroutine_context * ctx_, bool force_unwind_) :
+        ctx( ctx_), data( 0), force_unwind( force_unwind_)
+    {
+        BOOST_ASSERT( ctx);
+        BOOST_ASSERT( force_unwind);
+    }
+
+    holder( holder const& other) :
+        ctx( other.ctx), data( other.data),
+        force_unwind( other.force_unwind)
+    {}
+
+    holder & operator=( holder const& other)
+    {
+        if ( this == & other) return * this;
+        ctx = other.ctx;
+        data = other.data;
+        force_unwind = other.force_unwind;
+        return * this;
+    }
+};
+
+template< typename Data >
+struct holder< Data * >
+{
+    coroutine_context   *   ctx;
+    Data           const*   data;
+    bool                    force_unwind;
+
+    explicit holder( coroutine_context * ctx_) :
+        ctx( ctx_), data( 0), force_unwind( false)
+    { BOOST_ASSERT( ctx); }
+
+    explicit holder( coroutine_context * ctx_, Data const* data_) :
+        ctx( ctx_), data( data_), force_unwind( false)
+    { BOOST_ASSERT( ctx); }
+
+    explicit holder( coroutine_context * ctx_, bool force_unwind_) :
+        ctx( ctx_), data( 0), force_unwind( force_unwind_)
     {
         BOOST_ASSERT( ctx);
         BOOST_ASSERT( force_unwind);
