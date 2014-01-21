@@ -20,7 +20,6 @@
 #include <boost/coroutine/exceptions.hpp>
 #include <boost/coroutine/detail/flags.hpp>
 #include <boost/coroutine/detail/parameters.hpp>
-#include <boost/coroutine/detail/param.hpp>
 #include <boost/coroutine/detail/stack_tuple.hpp>
 #include <boost/coroutine/detail/trampoline.hpp>
 #include <boost/coroutine/flags.hpp>

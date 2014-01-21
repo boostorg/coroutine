@@ -26,7 +26,6 @@
 #include <boost/coroutine/attributes.hpp>
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/detail/coroutine_context.hpp>
-#include <boost/coroutine/detail/param.hpp>
 #include <boost/coroutine/exceptions.hpp>
 #include <boost/coroutine/stack_allocator.hpp>
 #include <boost/coroutine/detail/pull_coroutine_base.hpp>
