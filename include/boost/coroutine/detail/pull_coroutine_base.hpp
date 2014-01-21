@@ -12,8 +12,6 @@
 #include <boost/context/fcontext.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/intrusive_ptr.hpp>
-#include <boost/optional.hpp>
-#include <boost/type_traits/function_traits.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/utility.hpp>
 
@@ -47,6 +45,8 @@ private:
     >
     friend class push_coroutine_object;
 
+    typedef parameters< R >                           param_type;
+
     unsigned int        use_count_;
 
 protected:
@@ -54,7 +54,7 @@ protected:
     exception_ptr       except_;
     coroutine_context   caller_;
     coroutine_context   callee_;
-    optional< R >       result_;
+    R               *   result_;
 
     virtual void deallocate_object() = 0;
 
@@ -67,7 +67,7 @@ public:
         except_(),
         caller_(),
         callee_( fn, stack_ctx),
-        result_()
+        result_( 0)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -75,7 +75,7 @@ public:
 
     pull_coroutine_base( coroutine_context const& callee,
                          bool unwind, bool preserve_fpu,
-                         optional< R > const& result) :
+                         R * result) :
         use_count_( 0),
         flags_( 0),
         except_(),
@@ -102,54 +102,55 @@ public:
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
-    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { ++p->use_count_; }
-
-    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { if ( --p->use_count_ == 0) p->deallocate_object(); }
-
     void pull()
     {
         BOOST_ASSERT( ! is_complete() );
 
-        parameters< R > to( & caller_);
-        parameters< R > * from(
-            reinterpret_cast< parameters< R > * >(
+        param_type to( & caller_);
+        param_type * from(
+            reinterpret_cast< param_type * >(
                 to.ctx->jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         BOOST_ASSERT( from->ctx);
         callee_ = * from->ctx;
-        if ( from->data) result_ = * from->data;
-        else result_ = none;
-        if ( from->force_unwind) throw forced_unwind();
+        result_ = from->data;
+        if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
     bool has_result() const
-    { return result_; }
+    { return 0 != result_; }
 
     R get() const
     {
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return result_.get(); 
+        return * result_; 
     }
+
+    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { ++p->use_count_; }
+
+    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { if ( --p->use_count_ == 0) p->deallocate_object(); }
 };
 
 template< typename R >
 class pull_coroutine_base< R * > : private noncopyable
 {
 public:
-    typedef intrusive_ptr< pull_coroutine_base >     ptr_t;
+    typedef intrusive_ptr< pull_coroutine_base >    ptr_t;
 
 private:
     template<
         typename X, typename Y, typename Z, typename V, typename W
     >
     friend class push_coroutine_object;
+
+    typedef parameters< R * >                       param_type;
 
     unsigned int        use_count_;
 
@@ -158,7 +159,7 @@ protected:
     exception_ptr       except_;
     coroutine_context   caller_;
     coroutine_context   callee_;
-    optional< R * >     result_;
+    R               **  result_;
 
     virtual void deallocate_object() = 0;
 
@@ -171,7 +172,7 @@ public:
         except_(),
         caller_(),
         callee_( fn, stack_ctx),
-        result_()
+        result_( 0)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -179,7 +180,7 @@ public:
 
     pull_coroutine_base( coroutine_context const& callee,
                          bool unwind, bool preserve_fpu,
-                         optional< R * > const& result) :
+                         R ** result) :
         use_count_( 0),
         flags_( 0),
         except_(),
@@ -206,54 +207,55 @@ public:
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
-    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { ++p->use_count_; }
-
-    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { if ( --p->use_count_ == 0) p->deallocate_object(); }
-
     void pull()
     {
         BOOST_ASSERT( ! is_complete() );
 
-        parameters< R * > to( & caller_);
-        parameters< R * > * from(
-            reinterpret_cast< parameters< R * > * >(
+        param_type to( & caller_);
+        param_type * from(
+            reinterpret_cast< param_type * >(
                 to.ctx->jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         BOOST_ASSERT( from->ctx);
         callee_ = * from->ctx;
-        if ( from->data) result_ = const_cast< R * >( from->data);
-        else this->result_ = none;
-        if ( from->force_unwind) throw forced_unwind();
+        result_ = from->data;
+        if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
     bool has_result() const
-    { return result_; }
+    { return 0 != result_; }
 
     R * get() const
     {
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return result_.get();
+        return * result_;
     }
+
+    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { ++p->use_count_; }
+
+    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { if ( --p->use_count_ == 0) p->deallocate_object(); }
 };
 
 template< typename R >
 class pull_coroutine_base< R & > : private noncopyable
 {
 public:
-    typedef intrusive_ptr< pull_coroutine_base >     ptr_t;
+    typedef intrusive_ptr< pull_coroutine_base >        ptr_t;
 
 private:
     template<
         typename X, typename Y, typename Z, typename V, typename W
     >
     friend class push_coroutine_object;
+
+    typedef parameters< R & >                           param_type;
 
     unsigned int        use_count_;
 
@@ -262,7 +264,7 @@ protected:
     exception_ptr       except_;
     coroutine_context   caller_;
     coroutine_context   callee_;
-    optional< R * >     result_;
+    R               *   result_;
 
     virtual void deallocate_object() = 0;
 
@@ -275,7 +277,7 @@ public:
         except_(),
         caller_(),
         callee_( fn, stack_ctx),
-        result_()
+        result_( 0)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -283,7 +285,7 @@ public:
 
     pull_coroutine_base( coroutine_context const& callee,
                          bool unwind, bool preserve_fpu,
-                         optional< R * > const& result) :
+                         R * result) :
         use_count_( 0),
         flags_( 0),
         except_(),
@@ -310,54 +312,55 @@ public:
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
-    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { ++p->use_count_; }
-
-    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { if ( --p->use_count_ == 0) p->deallocate_object(); }
-
     void pull()
     {
         BOOST_ASSERT( ! is_complete() );
 
-        parameters< R & > to( & caller_);
-        parameters< R & > * from(
-            reinterpret_cast< parameters< R & > * >(
+        param_type to( & caller_);
+        param_type * from(
+            reinterpret_cast< param_type * >(
                 to.ctx->jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         BOOST_ASSERT( from->ctx);
         callee_ = * from->ctx;
-        if ( from->data) result_ = const_cast< R * >( from->data);
-        else this->result_ = none;
-        if ( from->force_unwind) throw forced_unwind();
+        result_ = from->data;
+        if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
     bool has_result() const
-    { return result_; }
+    { return 0 != result_; }
 
     R & get() const
     {
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return * result_.get();
+        return * result_;
     }
+
+    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { ++p->use_count_; }
+
+    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { if ( --p->use_count_ == 0) p->deallocate_object(); }
 };
 
 template<>
 class pull_coroutine_base< void > : private noncopyable
 {
 public:
-    typedef intrusive_ptr< pull_coroutine_base >     ptr_t;
+    typedef intrusive_ptr< pull_coroutine_base >        ptr_t;
 
 private:
     template<
         typename X, typename Y, typename Z, typename V, typename W
     >
     friend class push_coroutine_object;
+
+    typedef parameters< void >                           param_type;
 
     unsigned int        use_count_;
 
@@ -410,28 +413,28 @@ public:
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
-    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { ++p->use_count_; }
-
-    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
-    { if ( --p->use_count_ == 0) p->deallocate_object(); }
-
     void pull()
     {
         BOOST_ASSERT( ! is_complete() );
 
-        parameters< void > to( & caller_);
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
+        param_type to( & caller_);
+        param_type * from(
+            reinterpret_cast< param_type * >(
                 to.ctx->jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         BOOST_ASSERT( from->ctx);
         callee_ = * from->ctx;
-        if ( from->force_unwind) throw forced_unwind();
+        if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
+
+    friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { ++p->use_count_; }
+
+    friend inline void intrusive_ptr_release( pull_coroutine_base * p) BOOST_NOEXCEPT
+    { if ( --p->use_count_ == 0) p->deallocate_object(); }
 };
 
 }}}

@@ -14,9 +14,6 @@
 #include <boost/cstdint.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/move/move.hpp>
-#include <boost/ref.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/type_traits/function_traits.hpp>
 #include <boost/utility.hpp>
 
 #include <boost/coroutine/attributes.hpp>
@@ -62,6 +59,7 @@ public:
 private:
     typedef stack_tuple< StackAllocator >               pbase_type;
     typedef push_coroutine_base< Arg >                  base_type;
+    typedef parameters< Arg >                           param_type;
 
     Fn                      fn_;
     allocator_t             alloc_;
@@ -92,7 +90,7 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        parameters< Arg > to( & this->caller_, true);
+        param_type to( & this->caller_, unwind_t::force_unwind);
         this->caller_.jump(
             this->callee_,
             reinterpret_cast< intptr_t >( & to),
@@ -147,8 +145,8 @@ public:
 
         {
             parameters< void > to( & caller);
-            parameters< Arg > * from(
-                reinterpret_cast< parameters< Arg > * >(
+            param_type * from(
+                reinterpret_cast< param_type * >(
                     caller.jump(
                         this->caller_,
                         reinterpret_cast< intptr_t >( & to),
@@ -157,7 +155,7 @@ public:
             BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, * from->data);
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -168,245 +166,7 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        parameters< Arg > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Arg, typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< Arg, reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< Arg >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            Arg, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< Arg >                  base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< Arg > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( reference_wrapper< Fn > fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< Arg > * from(
-                reinterpret_cast< parameters< Arg > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-            BOOST_ASSERT( from->data);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, * from->data);
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< Arg > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Arg, typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< Arg, const reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< Arg >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            Arg, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< Arg >                  base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< Arg > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( const reference_wrapper< Fn > fn, attributes const& attr,
-                      StackAllocator const& stack_alloc,
-                      allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< Arg > * from(
-                reinterpret_cast< parameters< Arg > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-            BOOST_ASSERT( from->data);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, * from->data);
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< Arg > to( & caller);
+        param_type to( & caller);
         caller.jump(
             callee,
             reinterpret_cast< intptr_t >( & to),
@@ -437,6 +197,7 @@ public:
 private:
     typedef stack_tuple< StackAllocator >               pbase_type;
     typedef push_coroutine_base< Arg * >                base_type;
+    typedef parameters< Arg * >                         param_type;
 
     Fn                      fn_;
     allocator_t             alloc_;
@@ -467,7 +228,7 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        parameters< Arg * > to( & this->caller_, true);
+        param_type to( & this->caller_, unwind_t::force_unwind);
         this->caller_.jump(
             this->callee_,
             reinterpret_cast< intptr_t >( & to),
@@ -532,8 +293,8 @@ public:
 
         {
             parameters< void > to( & caller);
-            parameters< Arg * > * from(
-                reinterpret_cast< parameters< Arg * > * >(
+            param_type * from(
+                reinterpret_cast< param_type * >(
                     caller.jump(
                         this->caller_,
                         reinterpret_cast< intptr_t >( & to),
@@ -542,7 +303,7 @@ public:
             BOOST_ASSERT( from->data);
 
             // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
+            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, from->data);
             try
             { fn_( c); }
             catch ( forced_unwind const&)
@@ -553,245 +314,7 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        parameters< Arg * > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Arg, typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< Arg *, reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< Arg * >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            Arg *, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< Arg * >                 base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< Arg * > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( reference_wrapper< Fn > fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< Arg * > * from(
-                reinterpret_cast< parameters< Arg * > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-            BOOST_ASSERT( from->data);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< Arg * > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Arg, typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< Arg *, const reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< Arg * >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            Arg, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< Arg * >                base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< Arg * > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( const reference_wrapper< Fn > fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< Arg * > * from(
-                reinterpret_cast< parameters< Arg * > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-            BOOST_ASSERT( from->data);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< Arg * > to( & caller);
+        param_type to( & caller);
         caller.jump(
             callee,
             reinterpret_cast< intptr_t >( & to),
@@ -822,6 +345,7 @@ public:
 private:
     typedef stack_tuple< StackAllocator >               pbase_type;
     typedef push_coroutine_base< Arg & >                base_type;
+    typedef parameters< Arg & >                         param_type;
 
     Fn                      fn_;
     allocator_t             alloc_;
@@ -852,7 +376,7 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        parameters< Arg * > to( & this->caller_, true);
+        param_type to( & this->caller_, unwind_t::force_unwind);
         this->caller_.jump(
             this->callee_,
             reinterpret_cast< intptr_t >( & to),
@@ -917,127 +441,8 @@ public:
 
         {
             parameters< void > to( & caller);
-            parameters< Arg * > * from(
-                reinterpret_cast< parameters< Arg * > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-            BOOST_ASSERT( from->data);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, const_cast< Arg * >( from->data) );
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< Arg * > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Arg, typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< Arg &, reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< Arg & >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            Arg &, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< Arg & >                 base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< Arg * > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( reference_wrapper< Fn > fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< Arg * > * from(
-                reinterpret_cast< parameters< Arg * > * >(
+            param_type * from(
+                reinterpret_cast< param_type * >(
                     caller.jump(
                         this->caller_,
                         reinterpret_cast< intptr_t >( & to),
@@ -1057,126 +462,7 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        parameters< Arg * > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Arg, typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< Arg &, const reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< Arg & >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            Arg, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< Arg & >                base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< Arg * > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( const reference_wrapper< Fn > fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< Arg * > * from(
-                reinterpret_cast< parameters< Arg * > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-            BOOST_ASSERT( from->data);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_, from->data);
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< Arg * > to( & caller);
+        param_type to( & caller);
         caller.jump(
             callee,
             reinterpret_cast< intptr_t >( & to),
@@ -1207,6 +493,7 @@ public:
 private:
     typedef stack_tuple< StackAllocator >               pbase_type;
     typedef push_coroutine_base< void >                 base_type;
+    typedef parameters< void >                          param_type;
 
     Fn                      fn_;
     allocator_t             alloc_;
@@ -1237,7 +524,7 @@ private:
         BOOST_ASSERT( ! this->is_complete() );
 
         this->flags_ |= flag_unwind_stack;
-        parameters< void > to( & this->caller_, true);
+        param_type to( & this->caller_, unwind_t::force_unwind);
         this->caller_.jump(
             this->callee_,
             reinterpret_cast< intptr_t >( & to),
@@ -1302,8 +589,8 @@ public:
 
         {
             parameters< void > to( & caller);
-            parameters< void > * from(
-                reinterpret_cast< parameters< void > * >(
+            param_type * from(
+                reinterpret_cast< param_type * >(
                     caller.jump(
                         this->caller_,
                         reinterpret_cast< intptr_t >( & to),
@@ -1322,243 +609,7 @@ public:
         }
 
         this->flags_ |= flag_complete;
-        parameters< void > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< void, reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< void >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            void, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< void >                 base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< void > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( reference_wrapper< Fn > fn, attributes const& attr,
-                           StackAllocator const& stack_alloc,
-                           allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< void > * from(
-                reinterpret_cast< parameters< void > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_);
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< void > to( & caller);
-        caller.jump(
-            callee,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        BOOST_ASSERT_MSG( false, "push_coroutine is complete");
-    }
-
-    void deallocate_object()
-    { destroy_( alloc_, this); }
-};
-
-template<
-    typename Fn,
-    typename StackAllocator, typename Allocator,
-    typename Caller
->
-class push_coroutine_object< void, const reference_wrapper< Fn >, StackAllocator, Allocator, Caller > :
-    private stack_tuple< StackAllocator >,
-    public push_coroutine_base< void >
-{
-public:
-    typedef typename Allocator::template rebind<
-        push_coroutine_object<
-            void, Fn, StackAllocator, Allocator, Caller
-        >
-    >::other                                            allocator_t;
-
-private:
-    typedef stack_tuple< StackAllocator >               pbase_type;
-    typedef push_coroutine_base< void >                 base_type;
-
-    Fn                      fn_;
-    allocator_t             alloc_;
-
-    static void destroy_( allocator_t & alloc, push_coroutine_object * p)
-    {
-        alloc.destroy( p);
-        alloc.deallocate( p, 1);
-    }
-
-    push_coroutine_object( push_coroutine_object &);
-    push_coroutine_object & operator=( push_coroutine_object const&);
-
-    void enter_()
-    {
-        parameters< void > * from(
-            reinterpret_cast< parameters< void > * >(
-                this->caller_.jump(
-                    this->callee_,
-                    reinterpret_cast< intptr_t >( this),
-                    this->preserve_fpu() ) ) );
-        this->callee_ = * from->ctx;
-        if ( this->except_) rethrow_exception( this->except_);
-    }
-
-    void unwind_stack_() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! this->is_complete() );
-
-        this->flags_ |= flag_unwind_stack;
-        parameters< void > to( & this->caller_, true);
-        this->caller_.jump(
-            this->callee_,
-            reinterpret_cast< intptr_t >( & to),
-            this->preserve_fpu() );
-        this->flags_ &= ~flag_unwind_stack;
-
-        BOOST_ASSERT( this->is_complete() );
-    }
-
-public:
-    push_coroutine_object( const reference_wrapper< Fn > fn, attributes const& attr,
-                      StackAllocator const& stack_alloc,
-                      allocator_t const& alloc) :
-        pbase_type( stack_alloc, attr.size),
-        base_type(
-            trampoline1< push_coroutine_object >,
-            & this->stack_ctx,
-            stack_unwind == attr.do_unwind,
-            fpu_preserved == attr.preserve_fpu),
-        fn_( fn),
-        alloc_( alloc)
-    { enter_(); }
-
-    ~push_coroutine_object()
-    {
-        if ( ! this->is_complete() && this->force_unwind() )
-            unwind_stack_();
-    }
-
-    void run()
-    {
-        coroutine_context callee;
-        coroutine_context caller;
-
-        {
-            parameters< void > to( & caller);
-            parameters< void > * from(
-                reinterpret_cast< parameters< void > * >(
-                    caller.jump(
-                        this->caller_,
-                        reinterpret_cast< intptr_t >( & to),
-                        this->preserve_fpu() ) ) );
-            BOOST_ASSERT( from->ctx);
-
-            // create pull_coroutine
-            Caller c( * from->ctx, false, this->preserve_fpu(), alloc_);
-            try
-            { fn_( c); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { this->except_ = current_exception(); }
-            callee = c.impl_->callee_;
-        }
-
-        this->flags_ |= flag_complete;
-        parameters< void > to( & caller);
+        param_type to( & caller);
         caller.jump(
             callee,
             reinterpret_cast< intptr_t >( & to),
