@@ -131,6 +131,14 @@ public:
         return * result_; 
     }
 
+    R * get_pointer() const
+    {
+        if ( ! has_result() )
+            boost::throw_exception(
+                invalid_result() );
+        return result_; 
+    }
+
     friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
     { ++p->use_count_; }
 
@@ -236,6 +244,14 @@ public:
         return * result_;
     }
 
+    R ** get_pointer() const
+    {
+        if ( ! has_result() )
+            boost::throw_exception(
+                invalid_result() );
+        return result_;
+    }
+
     friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT
     { ++p->use_count_; }
 
@@ -339,6 +355,14 @@ public:
             boost::throw_exception(
                 invalid_result() );
         return * result_;
+    }
+
+    R * get_pointer() const
+    {
+        if ( ! has_result() )
+            boost::throw_exception(
+                invalid_result() );
+        return result_;
     }
 
     friend inline void intrusive_ptr_add_ref( pull_coroutine_base * p) BOOST_NOEXCEPT

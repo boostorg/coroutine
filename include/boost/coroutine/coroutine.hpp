@@ -881,7 +881,7 @@ public:
                 val_ = 0;
                 return;
             }
-            val_ = c_->get();
+            val_ = c_->impl_->get_pointer();
         }
 
         void increment_()
@@ -952,6 +952,8 @@ public:
             return val_;
         }
     };
+
+    friend class iterator;
 
     struct const_iterator;
 };
@@ -1245,7 +1247,7 @@ public:
     R * get() const
     { return impl_->get(); }
 
-    class iterator : public std::iterator< std::input_iterator_tag, R >
+    class iterator : public std::iterator< std::input_iterator_tag, R * >
     {
     private:
         pull_coroutine<  R * >   *   c_;
@@ -1261,7 +1263,7 @@ public:
                 val_ = 0;
                 return;
             }
-            val_ = c_->get();
+            val_ = c_->impl_->get_pointer();
         }
 
         void increment_()
@@ -1332,6 +1334,8 @@ public:
             return val_;
         }
     };
+
+    friend class iterator;
 
     struct const_iterator;
 };
@@ -1641,7 +1645,7 @@ public:
                 val_ = 0;
                 return;
             }
-            val_ = c_->get();
+            val_ = c_->impl_->get_pointer();
         }
 
         void increment_()
@@ -1712,6 +1716,8 @@ public:
             return val_;
         }
     };
+
+    friend class iterator;
 
     struct const_iterator;
 };
