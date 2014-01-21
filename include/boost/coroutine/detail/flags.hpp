@@ -25,6 +25,12 @@ enum flag_t
     flag_preserve_fpu   = 1 << 4
 };
 
+struct unwind_t
+{
+    enum flag_t
+    { force_unwind = 1 };
+};
+
 }}}
 
 #ifdef BOOST_HAS_ABI_HEADERS

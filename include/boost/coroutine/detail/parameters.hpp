@@ -11,6 +11,7 @@
 #include <boost/config.hpp>
 
 #include <boost/coroutine/detail/coroutine_context.hpp>
+#include <boost/coroutine/detail/flags.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -24,27 +25,27 @@ template< typename Data >
 struct parameters
 {
     coroutine_context   *   ctx;
-    Data           const*   data;
-    bool                    force_unwind;
+    Data                *   data;
+    bool                    do_unwind;
 
     explicit parameters( coroutine_context * ctx_) :
-        ctx( ctx_), data( 0), force_unwind( false)
+        ctx( ctx_), data( 0), do_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit parameters( coroutine_context * ctx_, Data const* data_) :
-        ctx( ctx_), data( data_), force_unwind( false)
+    explicit parameters( coroutine_context * ctx_, Data * data_) :
+        ctx( ctx_), data( data_), do_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit parameters( coroutine_context * ctx_, bool force_unwind_) :
-        ctx( ctx_), data( 0), force_unwind( force_unwind_)
+    explicit parameters( coroutine_context * ctx_, unwind_t::flag_t) :
+        ctx( ctx_), data( 0), do_unwind( true)
     {
         BOOST_ASSERT( ctx);
-        BOOST_ASSERT( force_unwind);
+        BOOST_ASSERT( do_unwind);
     }
 
     parameters( parameters const& other) :
         ctx( other.ctx), data( other.data),
-        force_unwind( other.force_unwind)
+        do_unwind( other.do_unwind)
     {}
 
     parameters & operator=( parameters const& other)
@@ -52,7 +53,7 @@ struct parameters
         if ( this == & other) return * this;
         ctx = other.ctx;
         data = other.data;
-        force_unwind = other.force_unwind;
+        do_unwind = other.do_unwind;
         return * this;
     }
 };
@@ -61,27 +62,27 @@ template< typename Data >
 struct parameters< Data & >
 {
     coroutine_context   *   ctx;
-    Data           const*   data;
-    bool                    force_unwind;
+    Data                *   data;
+    bool                    do_unwind;
 
     explicit parameters( coroutine_context * ctx_) :
-        ctx( ctx_), data( 0), force_unwind( false)
+        ctx( ctx_), data( 0), do_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit parameters( coroutine_context * ctx_, Data const* data_) :
-        ctx( ctx_), data( data_), force_unwind( false)
+    explicit parameters( coroutine_context * ctx_, Data * data_) :
+        ctx( ctx_), data( data_), do_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit parameters( coroutine_context * ctx_, bool force_unwind_) :
-        ctx( ctx_), data( 0), force_unwind( force_unwind_)
+    explicit parameters( coroutine_context * ctx_, unwind_t::flag_t) :
+        ctx( ctx_), data( 0), do_unwind( true)
     {
         BOOST_ASSERT( ctx);
-        BOOST_ASSERT( force_unwind);
+        BOOST_ASSERT( do_unwind);
     }
 
     parameters( parameters const& other) :
         ctx( other.ctx), data( other.data),
-        force_unwind( other.force_unwind)
+        do_unwind( other.do_unwind)
     {}
 
     parameters & operator=( parameters const& other)
@@ -89,7 +90,7 @@ struct parameters< Data & >
         if ( this == & other) return * this;
         ctx = other.ctx;
         data = other.data;
-        force_unwind = other.force_unwind;
+        do_unwind = other.do_unwind;
         return * this;
     }
 };
@@ -98,27 +99,27 @@ template< typename Data >
 struct parameters< Data * >
 {
     coroutine_context   *   ctx;
-    Data           const*   data;
-    bool                    force_unwind;
+    Data                **  data;
+    bool                    do_unwind;
 
     explicit parameters( coroutine_context * ctx_) :
-        ctx( ctx_), data( 0), force_unwind( false)
+        ctx( ctx_), data( 0), do_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit parameters( coroutine_context * ctx_, Data const* data_) :
-        ctx( ctx_), data( data_), force_unwind( false)
+    explicit parameters( coroutine_context * ctx_, Data ** data_) :
+        ctx( ctx_), data( data_), do_unwind( false)
     { BOOST_ASSERT( ctx); }
 
-    explicit parameters( coroutine_context * ctx_, bool force_unwind_) :
-        ctx( ctx_), data( 0), force_unwind( force_unwind_)
+    explicit parameters( coroutine_context * ctx_, unwind_t::flag_t) :
+        ctx( ctx_), data( 0), do_unwind( true)
     {
         BOOST_ASSERT( ctx);
-        BOOST_ASSERT( force_unwind);
+        BOOST_ASSERT( do_unwind);
     }
 
     parameters( parameters const& other) :
         ctx( other.ctx), data( other.data),
-        force_unwind( other.force_unwind)
+        do_unwind( other.do_unwind)
     {}
 
     parameters & operator=( parameters const& other)
@@ -126,7 +127,7 @@ struct parameters< Data * >
         if ( this == & other) return * this;
         ctx = other.ctx;
         data = other.data;
-        force_unwind = other.force_unwind;
+        do_unwind = other.do_unwind;
         return * this;
     }
 };
@@ -134,22 +135,26 @@ struct parameters< Data * >
 template<>
 struct parameters< void >
 {
-    coroutine_context  *   ctx;
-    bool                force_unwind;
+    coroutine_context   *   ctx;
+    bool                    do_unwind;
 
-    explicit parameters( coroutine_context * ctx_, bool force_unwind_ = false) :
-        ctx( ctx_), force_unwind( force_unwind_)
+    explicit parameters( coroutine_context * ctx_) :
+        ctx( ctx_), do_unwind( false)
+    { BOOST_ASSERT( ctx); }
+
+    explicit parameters( coroutine_context * ctx_, unwind_t::flag_t) :
+        ctx( ctx_), do_unwind( true)
     { BOOST_ASSERT( ctx); }
 
     parameters( parameters const& other) :
-        ctx( other.ctx), force_unwind( other.force_unwind)
+        ctx( other.ctx), do_unwind( other.do_unwind)
     {}
 
     parameters & operator=( parameters const& other)
     {
         if ( this == & other) return * this;
         ctx = other.ctx;
-        force_unwind = other.force_unwind;
+        do_unwind = other.do_unwind;
         return * this;
     }
 };

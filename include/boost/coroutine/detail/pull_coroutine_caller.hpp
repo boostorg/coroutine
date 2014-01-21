@@ -8,7 +8,6 @@
 
 #include <boost/config.hpp>
 #include <boost/context/fcontext.hpp>
-#include <boost/optional.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/detail/pull_coroutine_base.hpp>
@@ -30,8 +29,35 @@ public:
     >::other   allocator_t;
 
     pull_coroutine_caller( coroutine_context const& callee, bool unwind, bool preserve_fpu,
-                           allocator_t const& alloc, optional< R > const& data) BOOST_NOEXCEPT :
+                           allocator_t const& alloc, R * data) BOOST_NOEXCEPT :
         pull_coroutine_base< R >( callee, unwind, preserve_fpu, data),
+        alloc_( alloc)
+    {}
+
+    void deallocate_object()
+    { destroy_( alloc_, this); }
+
+private:
+    allocator_t   alloc_;
+
+    static void destroy_( allocator_t & alloc, pull_coroutine_caller * p)
+    {
+        alloc.destroy( p);
+        alloc.deallocate( p, 1);
+    }
+};
+
+template< typename R, typename Allocator >
+class pull_coroutine_caller< R *, Allocator > : public  pull_coroutine_base< R * >
+{
+public:
+    typedef typename Allocator::template rebind<
+        pull_coroutine_caller<  R *, Allocator >
+    >::other   allocator_t;
+
+    pull_coroutine_caller( coroutine_context const& callee, bool unwind, bool preserve_fpu,
+                           allocator_t const& alloc, R ** data) BOOST_NOEXCEPT :
+        pull_coroutine_base< R * >( callee, unwind, preserve_fpu, data),
         alloc_( alloc)
     {}
 
@@ -57,7 +83,7 @@ public:
     >::other   allocator_t;
 
     pull_coroutine_caller( coroutine_context const& callee, bool unwind, bool preserve_fpu,
-                           allocator_t const& alloc, optional< R * > const& data) BOOST_NOEXCEPT :
+                           allocator_t const& alloc, R * data) BOOST_NOEXCEPT :
         pull_coroutine_base< R & >( callee, unwind, preserve_fpu, data),
         alloc_( alloc)
     {}

@@ -24,14 +24,14 @@ build options, 'variant = release cxxflags = -DBOOST_DISABLE_ASSERTS'.
     ]
     [
         [i386 [footnote AMD Athlon 64 DualCore 4400+]]
-        [62 ns / 77 cycles]
+        [78 ns / 77 cycles]
         [188868 ns / 245093 cycles]
         [31860 ns / 31812 cycles]
         [13127 ns / 19764 cycles]
     ]
     [
         [x86_64 [footnote Intel Core2 Q6700]]
-        [17 ns / 47 cycles]
+        [28 ns / 74 cycles]
         [46916 ns / 109569 cycles]
         [14368 ns / 22705 cycles]
         [6114 ns / 16728 cycles]

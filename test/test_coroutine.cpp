@@ -190,9 +190,9 @@ void f17( coro::coroutine< int >::pull_type & c, std::vector< int > & vec)
     }
 }
 
-void f19( coro::coroutine< const int* >::push_type & c, std::vector< const int * > & vec)
+void f19( coro::coroutine< int* >::push_type & c, std::vector< int * > & vec)
 {
-    BOOST_FOREACH( const int * ptr, vec)
+    BOOST_FOREACH( int * ptr, vec)
     { c( ptr); }
 }
 
@@ -445,7 +445,7 @@ void test_exceptions()
     BOOST_CHECK( thrown);
 }
 
-void test_output_iterator()
+void test_input_iterator()
 {
     {
         std::vector< int > vec;
@@ -476,17 +476,20 @@ void test_output_iterator()
     }
     {
         int i1 = 1, i2 = 2, i3 = 3;
-        std::vector< const int* > vec_in;
+        std::vector< int* > vec_in;
         vec_in.push_back( & i1);
         vec_in.push_back( & i2);
         vec_in.push_back( & i3);
-        std::vector< const int* > vec_out;
-        coro::coroutine< const int* >::pull_type coro( boost::bind( f19, _1, boost::ref( vec_in) ) );
-        coro::coroutine< const int* >::pull_type::iterator e = boost::end( coro);
+        std::vector< int* > vec_out;
+        coro::coroutine< int* >::pull_type coro( boost::bind( f19, _1, boost::ref( vec_in) ) );
+        coro::coroutine< int* >::pull_type::iterator e = boost::end( coro);
         for (
-            coro::coroutine< const int* >::pull_type::iterator i = boost::begin( coro);
+            coro::coroutine< int* >::pull_type::iterator i = boost::begin( coro);
             i != e; ++i)
-        { vec_out.push_back( * i); }
+        {
+            int * p = * i;
+            vec_out.push_back( p);
+        }
         BOOST_CHECK_EQUAL( ( std::size_t)3, vec_out.size() );
         BOOST_CHECK_EQUAL( & i1, vec_out[0] );
         BOOST_CHECK_EQUAL( & i2, vec_out[1] );
@@ -494,7 +497,7 @@ void test_output_iterator()
     }
 }
 
-void test_input_iterator()
+void test_output_iterator()
 {
     int counter = 0;
     std::vector< int > vec;
@@ -552,8 +555,8 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_unwind) );
     test->add( BOOST_TEST_CASE( & test_no_unwind) );
     test->add( BOOST_TEST_CASE( & test_exceptions) );
-    test->add( BOOST_TEST_CASE( & test_output_iterator) );
     test->add( BOOST_TEST_CASE( & test_input_iterator) );
+    test->add( BOOST_TEST_CASE( & test_output_iterator) );
 
     return test;
 }

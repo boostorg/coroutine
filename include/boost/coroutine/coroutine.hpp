@@ -14,7 +14,6 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
-#include <boost/optional.hpp>
 #include <boost/range.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/type_traits/decay.hpp>
@@ -596,7 +595,7 @@ private:
     pull_coroutine( detail::coroutine_context const& callee,
                     bool unwind, bool preserve_fpu,
                     Allocator const& alloc,
-                    optional< R > const& result) :
+                    R * result) :
         impl_()
     {
         typedef detail::pull_coroutine_caller<
@@ -870,7 +869,7 @@ public:
     {
     private:
         pull_coroutine< R > *   c_;
-        optional< R >           val_;
+        R                   *   val_;
 
         void fetch_()
         {
@@ -879,10 +878,10 @@ public:
             if ( ! c_->has_result() )
             {
                 c_ = 0;
-                val_ = none;
+                val_ = 0;
                 return;
             }
-            val_ = c_->get();
+            val_ = c_->impl_->get_pointer();
         }
 
         void increment_()
@@ -899,11 +898,11 @@ public:
         typedef typename iterator::reference    reference_t;
 
         iterator() :
-            c_( 0), val_()
+            c_( 0), val_( 0)
         {}
 
         explicit iterator( pull_coroutine< R > * c) :
-            c_( c), val_()
+            c_( c), val_( 0)
         { fetch_(); }
 
         iterator( iterator const& other) :
@@ -942,7 +941,7 @@ public:
             if ( ! val_)
                 boost::throw_exception(
                     invalid_result() );
-            return const_cast< optional< R > & >( val_).get();
+            return * val_;
         }
 
         pointer_t operator->() const
@@ -950,9 +949,393 @@ public:
             if ( ! val_)
                 boost::throw_exception(
                     invalid_result() );
-            return const_cast< optional< R > & >( val_).get_ptr();
+            return val_;
         }
     };
+
+    friend class iterator;
+
+    struct const_iterator;
+};
+
+template< typename R >
+class pull_coroutine< R * >
+{
+private:
+    template<
+        typename X, typename Y, typename Z, typename V, typename W
+    >
+    friend class detail::push_coroutine_object;
+
+    typedef detail::pull_coroutine_base< R * >  base_t;
+    typedef typename base_t::ptr_t              ptr_t;
+
+    struct dummy
+    { void nonnull() {} };
+
+    ptr_t  impl_;
+
+    BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
+
+    template< typename Allocator >
+    pull_coroutine( detail::coroutine_context const& callee,
+                    bool unwind, bool preserve_fpu,
+                    Allocator const& alloc,
+                    R ** result) :
+        impl_()
+    {
+        typedef detail::pull_coroutine_caller<
+                R *, Allocator
+        >                               caller_t;
+        typename caller_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) caller_t(
+                callee, unwind, preserve_fpu, a, result) );
+    }
+
+public:
+    pull_coroutine() BOOST_NOEXCEPT :
+        impl_()
+    {}
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+# ifdef BOOST_MSVC
+	typedef void ( * coroutine_fn)( push_coroutine< R * > &);
+
+    explicit pull_coroutine( coroutine_fn fn, attributes const& attr = attributes(),
+            stack_allocator const& stack_alloc = stack_allocator(),
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >() ) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                R *, coroutine_fn, stack_allocator, std::allocator< pull_coroutine >,
+                push_coroutine< R * >
+            >                               object_t;
+        object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( forward< coroutine_fn >( fn), attr, stack_alloc, a) );
+    }
+
+    template< typename StackAllocator >
+    explicit pull_coroutine( coroutine_fn fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >() ) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                R *, coroutine_fn, StackAllocator, std::allocator< pull_coroutine >,
+                push_coroutine< R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( forward< coroutine_fn >( fn), attr, stack_alloc, a) );
+    }
+
+    template< typename StackAllocator, typename Allocator >
+    explicit pull_coroutine( coroutine_fn fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            Allocator const& alloc) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                R *, coroutine_fn, StackAllocator, Allocator,
+                push_coroutine< R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( forward< coroutine_fn >( fn), attr, stack_alloc, a) );
+    }
+# endif
+    template< typename Fn >
+    explicit pull_coroutine( BOOST_RV_REF( Fn) fn, attributes const& attr = attributes(),
+            stack_allocator const& stack_alloc = stack_allocator(),
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >() ) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, stack_allocator, std::allocator< pull_coroutine >,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( forward< Fn >( fn), attr, stack_alloc, a) );
+    }
+
+    template< typename Fn, typename StackAllocator >
+    explicit pull_coroutine( BOOST_RV_REF( Fn) fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >() ) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, StackAllocator, std::allocator< pull_coroutine >,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( forward< Fn >( fn), attr, stack_alloc, a) );
+    }
+
+    template< typename Fn, typename StackAllocator, typename Allocator >
+    explicit pull_coroutine( BOOST_RV_REF( Fn) fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            Allocator const& alloc) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, StackAllocator, Allocator,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( forward< Fn >( fn), attr, stack_alloc, a) );
+    }
+#else
+    template< typename Fn >
+    explicit pull_coroutine( Fn fn, attributes const& attr = attributes(),
+            stack_allocator const& stack_alloc = stack_allocator(),
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >(),
+            typename disable_if< is_convertible< Fn &, BOOST_RV_REF(Fn) >, dummy* >::type = 0) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, stack_allocator, std::allocator< pull_coroutine >,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+    }
+
+    template< typename Fn, typename StackAllocator >
+    explicit pull_coroutine( Fn fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >(),
+            typename disable_if< is_convertible< Fn &, BOOST_RV_REF(Fn) >, dummy* >::type = 0) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, StackAllocator, std::allocator< pull_coroutine >,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+    }
+
+    template< typename Fn, typename StackAllocator, typename Allocator >
+    explicit pull_coroutine( Fn fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            Allocator const& alloc,
+            typename disable_if< is_convertible< Fn &, BOOST_RV_REF(Fn) >, dummy* >::type = 0) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, StackAllocator, Allocator,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+    }
+
+    template< typename Fn >
+    explicit pull_coroutine( BOOST_RV_REF( Fn) fn, attributes const& attr = attributes(),
+            stack_allocator const& stack_alloc = stack_allocator(),
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >(),
+            typename disable_if<
+                is_same< typename decay< Fn >::type, pull_coroutine >, dummy*
+            >::type = 0) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, stack_allocator, std::allocator< pull_coroutine >,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+    }
+
+    template< typename Fn, typename StackAllocator >
+    explicit pull_coroutine( BOOST_RV_REF( Fn) fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >(),
+            typename disable_if<
+                is_same< typename decay< Fn >::type, pull_coroutine >, dummy*
+            >::type = 0) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, StackAllocator, std::allocator< pull_coroutine >,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+    }
+
+    template< typename Fn, typename StackAllocator, typename Allocator >
+    explicit pull_coroutine( BOOST_RV_REF( Fn) fn, attributes const& attr,
+            StackAllocator const& stack_alloc,
+            Allocator const& alloc,
+            typename disable_if<
+                is_same< typename decay< Fn >::type, pull_coroutine >, dummy*
+            >::type = 0) :
+    impl_()
+    {
+        typedef detail::pull_coroutine_object<
+                 R *, Fn, StackAllocator, Allocator,
+                push_coroutine<  R * >
+            >                               object_t;
+        typename object_t::allocator_t a( alloc);
+        impl_ = ptr_t(
+            // placement new
+            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+    }
+#endif
+
+    pull_coroutine( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT :
+        impl_()
+    { swap( other); }
+
+    pull_coroutine & operator=( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT
+    {
+        pull_coroutine tmp( boost::move( other) );
+        swap( tmp);
+        return * this;
+    }
+
+    bool empty() const BOOST_NOEXCEPT
+    { return ! impl_; }
+
+    BOOST_EXPLICIT_OPERATOR_BOOL();
+
+    bool operator!() const BOOST_NOEXCEPT
+    { return empty() || impl_->is_complete(); }
+
+    void swap( pull_coroutine & other) BOOST_NOEXCEPT
+    { impl_.swap( other.impl_); }
+
+    pull_coroutine & operator()()
+    {
+        BOOST_ASSERT( * this);
+
+        impl_->pull();
+        return * this;
+    }
+
+    bool has_result() const
+    {
+        BOOST_ASSERT( ! empty() );
+
+        return impl_->has_result();
+    }
+
+    R * get() const
+    { return impl_->get(); }
+
+    class iterator : public std::iterator< std::input_iterator_tag, R * >
+    {
+    private:
+        pull_coroutine<  R * >   *   c_;
+        R                       **   val_;
+
+        void fetch_()
+        {
+            BOOST_ASSERT( c_);
+
+            if ( ! c_->has_result() )
+            {
+                c_ = 0;
+                val_ = 0;
+                return;
+            }
+            val_ = c_->impl_->get_pointer();
+        }
+
+        void increment_()
+        {
+            BOOST_ASSERT( c_);
+            BOOST_ASSERT( * c_);
+
+            ( * c_)();
+            fetch_();
+        }
+
+    public:
+        typedef typename iterator::pointer      pointer_t;
+        typedef typename iterator::reference    reference_t;
+
+        iterator() :
+            c_( 0), val_( 0)
+        {}
+
+        explicit iterator( pull_coroutine<  R * > * c) :
+            c_( c), val_( 0)
+        { fetch_(); }
+
+        iterator( iterator const& other) :
+            c_( other.c_), val_( other.val_)
+        {}
+
+        iterator & operator=( iterator const& other)
+        {
+            if ( this == & other) return * this;
+            c_ = other.c_;
+            val_ = other.val_;
+            return * this;
+        }
+
+        bool operator==( iterator const& other)
+        { return other.c_ == c_ && other.val_ == val_; }
+
+        bool operator!=( iterator const& other)
+        { return other.c_ != c_ || other.val_ != val_; }
+
+        iterator & operator++()
+        {
+            increment_();
+            return * this;
+        }
+
+        iterator operator++( int)
+        {
+            iterator tmp( * this);
+            ++*this;
+            return tmp;
+        }
+
+        reference_t operator*() const
+        {
+            if ( ! val_)
+                boost::throw_exception(
+                    invalid_result() );
+            return * val_;
+        }
+
+        pointer_t operator->() const
+        {
+            if ( ! val_)
+                boost::throw_exception(
+                    invalid_result() );
+            return val_;
+        }
+    };
+
+    friend class iterator;
 
     struct const_iterator;
 };
@@ -980,7 +1363,7 @@ private:
     pull_coroutine( detail::coroutine_context const& callee,
                     bool unwind, bool preserve_fpu,
                     Allocator const& alloc,
-                    optional< R * > const& result) :
+                    R * result) :
         impl_()
     {
         typedef detail::pull_coroutine_caller<
@@ -1249,8 +1632,8 @@ public:
     class iterator : public std::iterator< std::input_iterator_tag, R >
     {
     private:
-        pull_coroutine< R & > *  c_;
-        optional< R & >          val_;
+        pull_coroutine< R & >   *   c_;
+        R                       *   val_;
 
         void fetch_()
         {
@@ -1259,10 +1642,10 @@ public:
             if ( ! c_->has_result() )
             {
                 c_ = 0;
-                val_ = none;
+                val_ = 0;
                 return;
             }
-            val_ = c_->get();
+            val_ = c_->impl_->get_pointer();
         }
 
         void increment_()
@@ -1279,11 +1662,11 @@ public:
         typedef typename iterator::reference    reference_t;
 
         iterator() :
-            c_( 0), val_()
+            c_( 0), val_( 0)
         {}
 
         explicit iterator( pull_coroutine< R & > * c) :
-            c_( c), val_()
+            c_( c), val_( 0)
         { fetch_(); }
 
         iterator( iterator const& other) :
@@ -1322,7 +1705,7 @@ public:
             if ( ! val_)
                 boost::throw_exception(
                     invalid_result() );
-            return const_cast< optional< R & > & >( val_).get();
+            return * val_;
         }
 
         pointer_t operator->() const
@@ -1330,9 +1713,11 @@ public:
             if ( ! val_)
                 boost::throw_exception(
                     invalid_result() );
-            return const_cast< optional< R & > & >( val_).get_ptr();
+            return val_;
         }
     };
+
+    friend class iterator;
 
     struct const_iterator;
 };
