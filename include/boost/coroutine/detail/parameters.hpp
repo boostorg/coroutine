@@ -95,43 +95,6 @@ struct parameters< Data & >
     }
 };
 
-template< typename Data >
-struct parameters< Data * >
-{
-    coroutine_context   *   ctx;
-    Data                **  data;
-    bool                    do_unwind;
-
-    explicit parameters( coroutine_context * ctx_) :
-        ctx( ctx_), data( 0), do_unwind( false)
-    { BOOST_ASSERT( ctx); }
-
-    explicit parameters( coroutine_context * ctx_, Data ** data_) :
-        ctx( ctx_), data( data_), do_unwind( false)
-    { BOOST_ASSERT( ctx); }
-
-    explicit parameters( coroutine_context * ctx_, unwind_t::flag_t) :
-        ctx( ctx_), data( 0), do_unwind( true)
-    {
-        BOOST_ASSERT( ctx);
-        BOOST_ASSERT( do_unwind);
-    }
-
-    parameters( parameters const& other) :
-        ctx( other.ctx), data( other.data),
-        do_unwind( other.do_unwind)
-    {}
-
-    parameters & operator=( parameters const& other)
-    {
-        if ( this == & other) return * this;
-        ctx = other.ctx;
-        data = other.data;
-        do_unwind = other.do_unwind;
-        return * this;
-    }
-};
-
 template<>
 struct parameters< void >
 {
