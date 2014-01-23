@@ -14,21 +14,6 @@ import modules ;
 import os ;
 import toolset ;
 
-if [ os.name ] = SOLARIS
-{
-  lib socket ;
-  lib nsl ;
-}
-else if [ os.name ] = NT
-{
-  lib ws2_32 ;
-  lib mswsock ;
-}
-else if [ os.name ] = HPUX
-{
-  lib ipv6 ;
-}
-
 project boost/coroutine/example
     : requirements
       <library>../../build//boost_coroutine
@@ -40,42 +25,6 @@ project boost/coroutine/example
       <threading>multi
     ;
 
-exe segmented_stack
-    : segmented_stack.cpp
-    ;
-
-exe fibonacci
-    : fibonacci.cpp
-    ;
-
-exe echo
-    : echo.cpp
-    ;
-
-exe power
-    : power.cpp
-    ;
-
-exe parallel
-    : parallel.cpp
-    ;
-
-exe unwind
-    : unwind.cpp
-    ;
-
-exe same_fringe
-    : same_fringe.cpp
-    ;
-
-exe layout
-    : layout.cpp
-    ;
-
-exe chaining
-    : chaining.cpp
-    ;
-
-exe exception
-    : exception.cpp
+exe simple
+    : simple.cpp
     ;

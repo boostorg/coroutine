@@ -22,6 +22,18 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
+template< typename Fn, typename Coro >
+void trampoline1_ex( intptr_t vp)
+{
+    BOOST_ASSERT( vp);
+
+    init< Fn, Coro > * from(
+        reinterpret_cast< init< Fn, Coro > * >( vp);
+
+    Coro c( from->fn, from->attr, from->caller, from->callee);
+    c.run();
+}
+
 template< typename Coroutine >
 void trampoline1( intptr_t vp)
 {

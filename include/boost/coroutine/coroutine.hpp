@@ -1354,7 +1354,9 @@ private:
     struct dummy
     { void nonnull() {} };
 
-    ptr_t  impl_;
+    base_t      *   impl_;
+    stack_allocator stack_alloc_;
+    stack_context   stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
@@ -1480,19 +1482,26 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn, attributes const& attr = attributes(),
-            stack_allocator const& stack_alloc = stack_allocator(),
             std::allocator< pull_coroutine > const& alloc = std::allocator< pull_coroutine >(),
             typename disable_if< is_convertible< Fn &, BOOST_RV_REF(Fn) >, dummy* >::type = 0) :
-    impl_()
+    impl_( 0),
+    stack_alloc_()
+    stack_ctx_(),
     {
         typedef detail::pull_coroutine_object<
-                void, Fn, stack_allocator, std::allocator< pull_coroutine >,
-                push_coroutine< void >
+                void, Fn, push_coroutine< void >
             >                               object_t;
-        typename object_t::allocator_t a( alloc);
-        impl_ = ptr_t(
-            // placement new
-            ::new( a.allocate( 1) ) object_t( fn, attr, stack_alloc, a) );
+
+        stack_alloc_.alocate( stack_ctx_, attr.size);
+        detail::coroutine_context caller;
+        detail::coroutine_context callee( trampoline1_ex< Fn, object_t >, & stack_ctx_);
+        init< Fn, object_t > to( fn, & caller, & callee, & attr);
+        impl_ = reinterpret_cast< base_t >(
+                caller.jump(
+                    callee,
+                    reinterpret_cast< intptr_t >( & to),
+                    fpu_preserved == attr.preserve_fpu) );
+        BOOST_ASSERT( impl_);
     }
 
     template< typename Fn, typename StackAllocator >
@@ -1588,7 +1597,7 @@ public:
 #endif
 
     pull_coroutine( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT :
-        impl_()
+        impl_( 0)
     { swap( other); }
 
     pull_coroutine & operator=( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT
@@ -1607,7 +1616,7 @@ public:
     { return empty() || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
-    { impl_.swap( other.impl_); }
+    { std::swap( impl_, other.impl_); }
 
     pull_coroutine & operator()()
     {
