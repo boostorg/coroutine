@@ -14,6 +14,8 @@
 #include <boost/cstdint.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <boost/coroutine/detail/setup.hpp>
+
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -23,36 +25,15 @@ namespace coroutines {
 namespace detail {
 
 template< typename Fn, typename Coro >
-void trampoline1_ex( intptr_t vp)
+void trampoline( intptr_t vp)
 {
     BOOST_ASSERT( vp);
 
-    init< Fn, Coro > * from(
-        reinterpret_cast< init< Fn, Coro > * >( vp);
+    setup< Fn, Coro > * from(
+        reinterpret_cast< setup< Fn, Coro > * >( vp) );
 
-    Coro c( from->fn, from->attr, from->caller, from->callee);
+    Coro c( forward< Fn >( from->fn), from->attr, from->caller, from->callee);
     c.run();
-}
-
-template< typename Coroutine >
-void trampoline1( intptr_t vp)
-{
-    BOOST_ASSERT( vp);
-
-    reinterpret_cast< Coroutine * >( vp)->run();
-}
-
-template< typename Coroutine, typename Arg >
-void trampoline2( intptr_t vp)
-{
-    BOOST_ASSERT( vp);
-
-    tuple< Coroutine *, Arg > * tpl(
-        reinterpret_cast< tuple< Coroutine *, Arg > * >( vp) );
-    Coroutine * coro( get< 0 >( * tpl) );
-    Arg arg( get< 1 >( * tpl) );
-
-    coro->run( arg);
 }
 
 }}}

@@ -17,12 +17,13 @@
 #include "clock.hpp"
 #include "cycle.hpp"
 
-typedef boost::coroutines::simple_stack_allocator   stack_allocator;
+typedef boost::coroutines::simple_stack_allocator               stack_allocator;
+typedef boost::coroutines::coroutine< void, stack_allocator >   coroutine;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::uint64_t jobs = 1000;
 
-void fn( boost::coroutines::coroutine< void >::push_type & c)
+void fn( coroutine::push_type & c)
 { while ( true) c(); }
 
 duration_type measure_time()
@@ -30,11 +31,11 @@ duration_type measure_time()
     stack_allocator stack_alloc;
 
     // cache warum-up
-    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
+    coroutine::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
+        coroutine::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -49,11 +50,11 @@ cycle_type measure_cycles()
     stack_allocator stack_alloc;
 
     // cache warum-up
-    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
+    coroutine::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
+        coroutine::pull_type c( fn, boost::coroutines::attributes( preserve_fpu), stack_alloc);
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement

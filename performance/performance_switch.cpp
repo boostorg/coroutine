@@ -18,6 +18,9 @@
 #include "clock.hpp"
 #include "cycle.hpp"
 
+typedef boost::coroutines::protected_stack_allocator            stack_allocator;
+typedef boost::coroutines::coroutine< void, stack_allocator >   coroutine;
+
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::uint64_t jobs = 1000;
 

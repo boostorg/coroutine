@@ -10,28 +10,55 @@
 #include <boost/bind.hpp>
 #include <boost/coroutine/all.hpp>
 
-typedef boost::coroutines::coroutine< void >::pull_type pull_coro_t;
-typedef boost::coroutines::coroutine< void >::push_type push_coro_t;
-
-void runit( push_coro_t & sink)
+struct X
 {
-    std::cout << "started! ";
+    int i;
+
+    X( int i_) :
+        i( i_)
+    {}
+};
+
+typedef boost::coroutines::coroutine< X* >::pull_type pull_coro_t;
+typedef boost::coroutines::coroutine< X* >::push_type push_coro_t;
+
+void fn1( push_coro_t & sink)
+{
     for ( int i = 0; i < 10; ++i)
     {
-        sink();
+        X x( i);
+        sink( & x);
+    }
+}
+
+void fn2( pull_coro_t & source)
+{
+    while ( source) {
+        X * x = source.get();
+        std::cout << "i = " << x->i << std::endl;
+        source();
     }
 }
 
 int main( int argc, char * argv[])
 {
     {
-        pull_coro_t source( runit);
+        pull_coro_t source( fn1);
         while ( source) {
+            X * x = source.get();
+            std::cout << "i = " << x->i << std::endl;
             source();
         }
     }
-
-    std::cout << "\nDone" << std::endl;
+    {
+        push_coro_t sink( fn2);
+        for ( int i = 0; i < 10; ++i)
+        {
+            X x( i);
+            sink( & x);
+        }
+    }
+    std::cout << "Done" << std::endl;
 
     return EXIT_SUCCESS;
 }

@@ -88,7 +88,7 @@ public:
     static std::size_t minimum_stacksize()
     { return Default; }
 
-    preallocated_stack_allocator( std::size_t count) :
+    preallocated_stack_allocator( std::size_t count = 1) :
         p_( new impl( count) )
     {}
 
