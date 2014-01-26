@@ -74,6 +74,15 @@ struct attributes
         do_unwind( do_unwind_),
         preserve_fpu( preserve_fpu_)
     {}
+
+    explicit attributes(
+            std::size_t size_,
+            flag_unwind_t do_unwind_,
+            flag_fpu_t preserve_fpu_) BOOST_NOEXCEPT :
+        size( size_),
+        do_unwind( do_unwind_),
+        preserve_fpu( preserve_fpu_)
+    {}
 };
 
 }}
