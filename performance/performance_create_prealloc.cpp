@@ -31,10 +31,13 @@ duration_type measure_time()
 {
     stack_allocator stack_alloc;
 
-    // cache warum-up
-    boost::coroutines::coroutine< void >::pull_type c( fn,
-            boost::coroutines::attributes( stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-            stack_alloc);
+    {
+        // cache warum-up
+        boost::coroutines::coroutine< void >::pull_type c( fn,
+                boost::coroutines::attributes(
+                    stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
+                stack_alloc);
+    }
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
@@ -54,10 +57,13 @@ cycle_type measure_cycles()
 {
     stack_allocator stack_alloc;
 
-    // cache warum-up
-    boost::coroutines::coroutine< void >::pull_type c( fn,
-            boost::coroutines::attributes( stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-            stack_alloc);
+    {
+        // cache warum-up
+        boost::coroutines::coroutine< void >::pull_type c( fn,
+                boost::coroutines::attributes(
+                    stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
+                stack_alloc);
+    }
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
