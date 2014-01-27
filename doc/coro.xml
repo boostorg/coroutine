@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE library PUBLIC "-//Boost//DTD BoostBook XML V1.0//EN" "http://www.boost.org/tools/boostbook/dtd/boostbook.dtd">
-<library id="coroutine" name="Coroutine" dirname="coroutine" last-revision="$Date: 2014/01/17 16:35:12 $"
+<library id="coroutine" name="Coroutine" dirname="coroutine" last-revision="$Date: 2014/01/27 18:42:43 $"
  xmlns:xi="http://www.w3.org/2001/XInclude">
   <libraryinfo>
     <authorgroup>
@@ -2450,7 +2450,7 @@
     </note>
     <para>
       class <emphasis>boost::coroutines::stack_allocator</emphasis> is a typedef
-      of <emphasis>boost::coroutines::protected_stack_allocator</emphasis>.
+      of <emphasis>boost::coroutines::standard_stack_allocator</emphasis>.
     </para>
     <section id="coroutine.stack.protected_stack_allocator">
       <title><link linkend="coroutine.stack.protected_stack_allocator">Class <emphasis>protected_stack_allocator</emphasis></link></title>
@@ -2659,19 +2659,19 @@
         </varlistentry>
       </variablelist>
     </section>
-    <section id="coroutine.stack.simple_stack_allocator">
-      <title><link linkend="coroutine.stack.simple_stack_allocator">Class <emphasis>simple_stack_allocator</emphasis></link></title>
+    <section id="coroutine.stack.standard_stack_allocator">
+      <title><link linkend="coroutine.stack.standard_stack_allocator">Class <emphasis>standard_stack_allocator</emphasis></link></title>
       <para>
-        <emphasis role="bold">Boost.Coroutine</emphasis> provides the class <emphasis>boost::coroutines::simple_stack_allocator</emphasis>
+        <emphasis role="bold">Boost.Coroutine</emphasis> provides the class <emphasis>boost::coroutines::standard_stack_allocator</emphasis>
         which models the <emphasis>stack-allocator concept</emphasis>. In contrast
         to <emphasis>boost::coroutines::protected_stack_allocator</emphasis> it does
         not append a guard page at the end of each stack. The memory is simply managed
         by <code><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase
-        role="identifier">calloc</phrase><phrase role="special">()</phrase></code>
+        role="identifier">malloc</phrase><phrase role="special">()</phrase></code>
         and <code><phrase role="identifier">std</phrase><phrase role="special">::</phrase><phrase
         role="identifier">free</phrase><phrase role="special">()</phrase></code>.
       </para>
-<programlisting><phrase role="keyword">class</phrase> <phrase role="identifier">simple_stack_allocator</phrase>
+<programlisting><phrase role="keyword">class</phrase> <phrase role="identifier">standard_stack_allocator</phrase>
 <phrase role="special">{</phrase>
     <phrase role="keyword">static</phrase> <phrase role="keyword">bool</phrase> <phrase role="identifier">is_stack_unbound</phrase><phrase role="special">();</phrase>
 
@@ -2686,9 +2686,9 @@
     <phrase role="keyword">void</phrase> <phrase role="identifier">deallocate</phrase><phrase role="special">(</phrase> <phrase role="identifier">stack_context</phrase> <phrase role="special">&amp;);</phrase>
 <phrase role="special">}</phrase>
 </programlisting>
-      <bridgehead renderas="sect4" id="coroutine.stack.simple_stack_allocator.h0">
-        <phrase id="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__keyword__bool__phrase___phrase_role__identifier__is_stack_unbound__phrase__phrase_role__special______phrase___code_"/><link
-        linkend="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__keyword__bool__phrase___phrase_role__identifier__is_stack_unbound__phrase__phrase_role__special______phrase___code_"><code><phrase
+      <bridgehead renderas="sect4" id="coroutine.stack.standard_stack_allocator.h0">
+        <phrase id="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__keyword__bool__phrase___phrase_role__identifier__is_stack_unbound__phrase__phrase_role__special______phrase___code_"/><link
+        linkend="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__keyword__bool__phrase___phrase_role__identifier__is_stack_unbound__phrase__phrase_role__special______phrase___code_"><code><phrase
         role="keyword">static</phrase> <phrase role="keyword">bool</phrase> <phrase
         role="identifier">is_stack_unbound</phrase><phrase role="special">()</phrase></code></link>
       </bridgehead>
@@ -2704,9 +2704,9 @@
           </listitem>
         </varlistentry>
       </variablelist>
-      <bridgehead renderas="sect4" id="coroutine.stack.simple_stack_allocator.h1">
-        <phrase id="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__maximum_stacksize__phrase__phrase_role__special______phrase___code_"/><link
-        linkend="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__maximum_stacksize__phrase__phrase_role__special______phrase___code_"><code><phrase
+      <bridgehead renderas="sect4" id="coroutine.stack.standard_stack_allocator.h1">
+        <phrase id="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__maximum_stacksize__phrase__phrase_role__special______phrase___code_"/><link
+        linkend="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__maximum_stacksize__phrase__phrase_role__special______phrase___code_"><code><phrase
         role="keyword">static</phrase> <phrase role="identifier">std</phrase><phrase
         role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase
         role="identifier">maximum_stacksize</phrase><phrase role="special">()</phrase></code></link>
@@ -2731,9 +2731,9 @@
           </listitem>
         </varlistentry>
       </variablelist>
-      <bridgehead renderas="sect4" id="coroutine.stack.simple_stack_allocator.h2">
-        <phrase id="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__default_stacksize__phrase__phrase_role__special______phrase___code_"/><link
-        linkend="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__default_stacksize__phrase__phrase_role__special______phrase___code_"><code><phrase
+      <bridgehead renderas="sect4" id="coroutine.stack.standard_stack_allocator.h2">
+        <phrase id="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__default_stacksize__phrase__phrase_role__special______phrase___code_"/><link
+        linkend="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__default_stacksize__phrase__phrase_role__special______phrase___code_"><code><phrase
         role="keyword">static</phrase> <phrase role="identifier">std</phrase><phrase
         role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase
         role="identifier">default_stacksize</phrase><phrase role="special">()</phrase></code></link>
@@ -2753,9 +2753,9 @@
           </listitem>
         </varlistentry>
       </variablelist>
-      <bridgehead renderas="sect4" id="coroutine.stack.simple_stack_allocator.h3">
-        <phrase id="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__minimum_stacksize__phrase__phrase_role__special______phrase___code_"/><link
-        linkend="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__minimum_stacksize__phrase__phrase_role__special______phrase___code_"><code><phrase
+      <bridgehead renderas="sect4" id="coroutine.stack.standard_stack_allocator.h3">
+        <phrase id="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__minimum_stacksize__phrase__phrase_role__special______phrase___code_"/><link
+        linkend="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__static__phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__minimum_stacksize__phrase__phrase_role__special______phrase___code_"><code><phrase
         role="keyword">static</phrase> <phrase role="identifier">std</phrase><phrase
         role="special">::</phrase><phrase role="identifier">size_t</phrase> <phrase
         role="identifier">minimum_stacksize</phrase><phrase role="special">()</phrase></code></link>
@@ -2772,9 +2772,9 @@
           </listitem>
         </varlistentry>
       </variablelist>
-      <bridgehead renderas="sect4" id="coroutine.stack.simple_stack_allocator.h4">
-        <phrase id="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__allocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___code_"/><link
-        linkend="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__allocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___code_"><code><phrase
+      <bridgehead renderas="sect4" id="coroutine.stack.standard_stack_allocator.h4">
+        <phrase id="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__allocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___code_"/><link
+        linkend="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__allocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___phrase_role__identifier__std__phrase__phrase_role__special______phrase__phrase_role__identifier__size_t__phrase___phrase_role__identifier__size__phrase__phrase_role__special_____phrase___code_"><code><phrase
         role="keyword">void</phrase> <phrase role="identifier">allocate</phrase><phrase
         role="special">(</phrase> <phrase role="identifier">stack_context</phrase>
         <phrase role="special">&amp;</phrase> <phrase role="identifier">sctx</phrase><phrase
@@ -2819,9 +2819,9 @@
           </listitem>
         </varlistentry>
       </variablelist>
-      <bridgehead renderas="sect4" id="coroutine.stack.simple_stack_allocator.h5">
-        <phrase id="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__deallocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"/><link
-        linkend="coroutine.stack.simple_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__deallocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code><phrase
+      <bridgehead renderas="sect4" id="coroutine.stack.standard_stack_allocator.h5">
+        <phrase id="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__deallocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"/><link
+        linkend="coroutine.stack.standard_stack_allocator._code__phrase_role__keyword__void__phrase___phrase_role__identifier__deallocate__phrase__phrase_role__special_____phrase___phrase_role__identifier__stack_context__phrase___phrase_role__special___amp___phrase___phrase_role__identifier__sctx__phrase__phrase_role__special_____phrase___code_"><code><phrase
         role="keyword">void</phrase> <phrase role="identifier">deallocate</phrase><phrase
         role="special">(</phrase> <phrase role="identifier">stack_context</phrase>
         <phrase role="special">&amp;</phrase> <phrase role="identifier">sctx</phrase><phrase
@@ -2981,7 +2981,7 @@
             </entry>
             <entry>
               <para>
-                62 ns / 77 cycles
+                78 ns / 77 cycles
               </para>
             </entry>
             <entry>
@@ -3012,7 +3012,7 @@
             </entry>
             <entry>
               <para>
-                17 ns / 47 cycles
+                28 ns / 74 cycles
               </para>
             </entry>
             <entry>

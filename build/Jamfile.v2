@@ -51,9 +51,9 @@ explicit segmented_allocator_sources ;
 lib boost_coroutine
     : detail/coroutine_context.cpp
       exceptions.cpp
-      simple_stack_allocator.cpp
       protected_allocator_sources
       segmented_allocator_sources
+      standard_stack_allocator.cpp
     : <link>shared:<library>../../context/build//boost_context
       <link>shared:<library>../../system/build//boost_system
       <link>shared:<library>../../thread/build//boost_thread

@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_SIMPLE_STACK_ALLOCATOR_H
-#define BOOST_COROUTINES_SIMPLE_STACK_ALLOCATOR_H
+#ifndef BOOST_COROUTINES_STANDARD_STACK_ALLOCATOR_H
+#define BOOST_COROUTINES_STANDARD_STACK_ALLOCATOR_H
 
 #include <cstddef>
 
@@ -22,7 +22,7 @@ namespace coroutines {
 
 struct stack_context;
 
-class BOOST_COROUTINES_DECL simple_stack_allocator
+class BOOST_COROUTINES_DECL standard_stack_allocator
 {
 public:
     static bool is_stack_unbound();
@@ -44,4 +44,4 @@ public:
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_SIMPLE_STACK_ALLOCATOR_H
+#endif // BOOST_COROUTINES_STANDARD_STACK_ALLOCATOR_H

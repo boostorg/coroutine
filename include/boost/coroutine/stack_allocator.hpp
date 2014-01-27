@@ -12,9 +12,8 @@
 #include <boost/config.hpp>
 
 #include <boost/context/detail/config.hpp>
-#include <boost/coroutine/protected_stack_allocator.hpp>
 #include <boost/coroutine/segmented_stack_allocator.hpp>
-#include <boost/coroutine/simple_stack_allocator.hpp>
+#include <boost/coroutine/standard_stack_allocator.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -26,7 +25,7 @@ namespace coroutines {
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 typedef segmented_stack_allocator   stack_allocator;
 #else
-typedef protected_stack_allocator   stack_allocator;
+typedef standard_stack_allocator    stack_allocator;
 #endif
 
 }}

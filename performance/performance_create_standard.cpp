@@ -17,7 +17,7 @@
 #include "clock.hpp"
 #include "cycle.hpp"
 
-typedef boost::coroutines::simple_stack_allocator               stack_allocator;
+typedef boost::coroutines::standard_stack_allocator   stack_allocator;
 typedef boost::coroutines::coroutine< void, stack_allocator >   coro_type;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
