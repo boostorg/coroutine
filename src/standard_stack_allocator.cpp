@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/coroutine/simple_stack_allocator.hpp>
+#include <boost/coroutine/standard_stack_allocator.hpp>
 
 #include <cstdlib>
 #include <stdexcept>
@@ -22,28 +22,28 @@ namespace boost {
 namespace coroutines {
 
 bool
-simple_stack_allocator::is_stack_unbound()
+standard_stack_allocator::is_stack_unbound()
 { return protected_stack_allocator::is_stack_unbound(); }
 
 std::size_t
-simple_stack_allocator::maximum_stacksize()
+standard_stack_allocator::maximum_stacksize()
 { return protected_stack_allocator::maximum_stacksize(); }
 
 std::size_t
-simple_stack_allocator::default_stacksize()
+standard_stack_allocator::default_stacksize()
 { return protected_stack_allocator::default_stacksize(); }
 
 std::size_t
-simple_stack_allocator::minimum_stacksize()
+standard_stack_allocator::minimum_stacksize()
 { return protected_stack_allocator::minimum_stacksize(); }
 
 void
-simple_stack_allocator::allocate( stack_context & ctx, std::size_t size)
+standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 {
     BOOST_ASSERT( minimum_stacksize() <= size);
     BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
 
-    void * limit = std::calloc( size, sizeof( char) );
+    void * limit = std::malloc( size);
     if ( ! limit) throw std::bad_alloc();
 
     ctx.size = size;
@@ -51,7 +51,7 @@ simple_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 }
 
 void
-simple_stack_allocator::deallocate( stack_context & ctx)
+standard_stack_allocator::deallocate( stack_context & ctx)
 {
     BOOST_ASSERT( ctx.sp);
     BOOST_ASSERT( minimum_stacksize() <= ctx.size);

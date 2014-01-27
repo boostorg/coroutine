@@ -9,7 +9,7 @@ coroutine/coroutine/unidirect/push_coro.html
 coroutine/attributes.html
 coroutine/stack.html
 coroutine/stack/protected_stack_allocator.html
-coroutine/stack/simple_stack_allocator.html
+coroutine/stack/standard_stack_allocator.html
 coroutine/stack/stack_context.html
 coroutine/stack/segmented_stack.html
 coroutine/performance.html
