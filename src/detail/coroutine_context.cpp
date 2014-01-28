@@ -50,9 +50,14 @@ coroutine_context::coroutine_context( ctx_fn fn, stack_context * stack_ctx) :
 
 coroutine_context::coroutine_context( coroutine_context const& other) :
     stack_context( other), context::fcontext_t( other),
-    stack_ctx_( other.stack_ctx_),
-    ctx_( other.ctx_)
-{}
+    stack_ctx_( this), ctx_( this)
+{
+    if ( & other != other.stack_ctx_)
+    {
+        stack_ctx_ = other.stack_ctx_;
+        ctx_ = other.ctx_;
+    }
+}
 
 coroutine_context &
 coroutine_context::operator=( coroutine_context const& other)
@@ -61,8 +66,11 @@ coroutine_context::operator=( coroutine_context const& other)
 
     stack_context::operator=( other);
     context::fcontext_t::operator=( other);
-    stack_ctx_ = other.stack_ctx_;
-    ctx_ = other.ctx_;
+    if ( & other != other.stack_ctx_)
+    {
+        stack_ctx_ = other.stack_ctx_;
+        ctx_ = other.ctx_;
+    }
 
     return * this;
 }

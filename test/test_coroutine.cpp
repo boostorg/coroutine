@@ -95,7 +95,10 @@ public:
 struct my_exception {};
 
 void f1( coro::coroutine< void >::push_type & c)
-{ c(); }
+{
+    while ( c)
+        c();
+}
 
 void f2( coro::coroutine< void >::push_type &)
 { ++value1; }
@@ -198,7 +201,7 @@ void f19( coro::coroutine< int* >::push_type & c, std::vector< int * > & vec)
 
 void f20( coro::coroutine< int >::push_type &)
 {}
-#if 0
+
 void test_move()
 {
     {
@@ -208,9 +211,11 @@ void test_move()
         BOOST_CHECK( coro1.empty() );
         BOOST_CHECK( coro2);
         BOOST_CHECK( ! coro2.empty() );
+        coro2();
         coro1 = boost::move( coro2);
         BOOST_CHECK( coro1);
         BOOST_CHECK( ! coro1.empty() );
+        coro1();
         BOOST_CHECK( ! coro2);
         BOOST_CHECK( coro2.empty() );
     }
@@ -235,7 +240,7 @@ void test_move()
         BOOST_CHECK( value3);
     }
 }
-#endif
+
 void test_complete()
 {
     value1 = 0;
@@ -538,7 +543,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     boost::unit_test::test_suite * test =
         BOOST_TEST_SUITE("Boost.coroutine: coroutine test suite");
 
-//    test->add( BOOST_TEST_CASE( & test_move) );
+    test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_complete) );
     test->add( BOOST_TEST_CASE( & test_jump) );
     test->add( BOOST_TEST_CASE( & test_result_int) );
