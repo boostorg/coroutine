@@ -60,9 +60,9 @@ exe performance_create_protected
      performance_create_protected.cpp
    ;
 
-exe performance_create_simple
+exe performance_create_standard
    : sources
-     performance_create_simple.cpp
+     performance_create_standard.cpp
    ;
 
 exe performance_create_prealloc
