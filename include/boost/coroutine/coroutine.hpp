@@ -82,7 +82,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( pull_coroutine< Arg > &);
+	typedef void ( * coroutine_fn)( pull_coroutine< Arg, StackAllocator > &);
 
     explicit push_coroutine( coroutine_fn fn,
                              attributes const& attr = attributes() );
@@ -270,7 +270,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( pull_coroutine< Arg & > &);
+	typedef void ( * coroutine_fn)( pull_coroutine< Arg &, StackAllocator > &);
 
     explicit push_coroutine( coroutine_fn fn,
                              attributes const& attr = attributes() );
@@ -451,7 +451,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( pull_coroutine< void > &);
+	typedef void ( * coroutine_fn)( pull_coroutine< void, StackAllocator > &);
 
     explicit push_coroutine( coroutine_fn fn,
                              attributes const& attr = attributes() );
@@ -600,7 +600,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( push_coroutine< R > &);
+	typedef void ( * coroutine_fn)( push_coroutine< R, StackAllocator > &);
 
     explicit pull_coroutine( coroutine_fn fn,
                              attributes const& attr = attributes() ) :
@@ -1031,7 +1031,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( push_coroutine< R & > &);
+	typedef void ( * coroutine_fn)( push_coroutine< R &, StackAllocator > &);
 
     explicit pull_coroutine( coroutine_fn fn,
                              attributes const& attr = attributes() ) :
@@ -1458,7 +1458,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( push_coroutine< void > &);
+	typedef void ( * coroutine_fn)( push_coroutine< void, StackAllocator > &);
 
     explicit pull_coroutine( coroutine_fn fn,
                              attributes const& attr = attributes() ) :
