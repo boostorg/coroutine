@@ -33,7 +33,11 @@ void trampoline( intptr_t vp)
     setup< Fn, Coro > * from(
         reinterpret_cast< setup< Fn, Coro > * >( vp) );
 
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+    Coro c( forward< Fn >( from->fn), from->attr, from->caller, from->callee);
+#else
     Coro c( move( from->fn), from->attr, from->caller, from->callee);
+#endif
     c.run();
 }
 

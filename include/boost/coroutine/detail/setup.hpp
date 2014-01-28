@@ -57,7 +57,7 @@ struct setup
 #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
         fn( fn_),
 #else
-        fn( forward< Fn >( fn_) )
+        fn( forward< Fn >( fn_) ),
 #endif
         caller( caller_),
         callee( callee_),
