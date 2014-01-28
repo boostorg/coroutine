@@ -207,10 +207,13 @@ private:
         typename X, typename Y, typename Z
     >
     friend class pull_coroutine_object;
+    template<
+        typename X, typename Y, typename Z
+    >
+    friend void trampoline_void( intptr_t);
 
     typedef parameters< void >                          param_type;
 
-protected:
     int                     flags_;
     exception_ptr           except_;
     coroutine_context   *   caller_;

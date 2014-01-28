@@ -19,23 +19,21 @@ struct X
     {}
 };
 
-typedef boost::coroutines::coroutine< X* >::pull_type pull_coro_t;
-typedef boost::coroutines::coroutine< X* >::push_type push_coro_t;
+typedef boost::coroutines::coroutine< void >::pull_type pull_coro_t;
+typedef boost::coroutines::coroutine< void >::push_type push_coro_t;
 
 void fn1( push_coro_t & sink)
 {
     for ( int i = 0; i < 10; ++i)
     {
-        X x( i);
-        sink( & x);
+        sink();
     }
 }
 
 void fn2( pull_coro_t & source)
 {
     while ( source) {
-        X * x = source.get();
-        std::cout << "i = " << x->i << std::endl;
+        std::cout << "i = " << std::endl;
         source();
     }
 }
@@ -45,8 +43,8 @@ int main( int argc, char * argv[])
     {
         pull_coro_t source( fn1);
         while ( source) {
-            X * x = source.get();
-            std::cout << "i = " << x->i << std::endl;
+//          X * x = source.get();
+            std::cout << "i = " << std::endl;
             source();
         }
     }
@@ -54,8 +52,7 @@ int main( int argc, char * argv[])
         push_coro_t sink( fn2);
         for ( int i = 0; i < 10; ++i)
         {
-            X x( i);
-            sink( & x);
+            sink();
         }
     }
     std::cout << "Done" << std::endl;
