@@ -12,6 +12,7 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
+#include <boost/move/move.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <boost/coroutine/detail/setup.hpp>
@@ -32,7 +33,7 @@ void trampoline( intptr_t vp)
     setup< Fn, Coro > * from(
         reinterpret_cast< setup< Fn, Coro > * >( vp) );
 
-    Coro c( forward< Fn >( from->fn), from->attr, from->caller, from->callee);
+    Coro c( move( from->fn), from->attr, from->caller, from->callee);
     c.run();
 }
 

@@ -35,7 +35,7 @@ struct setup
     coroutine_context   *   callee;
     attributes              attr;
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+#ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
     setup( Fn fn_,
            coroutine_context * caller_,
            coroutine_context * callee_,
@@ -45,21 +45,7 @@ struct setup
         callee( callee_),
         attr( attr_)
     {}
-#else
-    setup( Fn fn_,
-           coroutine_context * caller_,
-           coroutine_context * callee_,
-           attributes const& attr_,
-           typename disable_if<
-                      is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                      dummy*
-                    >::type = 0) :
-        fn( fn_),
-        caller( caller_),
-        callee( callee_),
-        attr( attr_)
-    {}
-
+#endif
     setup( BOOST_RV_REF( Fn) fn_,
            coroutine_context * caller_,
            coroutine_context * callee_,
@@ -68,12 +54,15 @@ struct setup
                is_same< typename decay< Fn >::type, setup >,
                dummy*
            >::type = 0) :
+#ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
         fn( fn_),
+#else
+        fn( forward< Fn >( fn_) )
+#endif
         caller( caller_),
         callee( callee_),
         attr( attr_)
     {}
-#endif
 };
 
 }}}
