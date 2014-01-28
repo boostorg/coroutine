@@ -42,6 +42,9 @@
 namespace boost {
 namespace coroutines {
 
+template< typename R, typename StackAllocator >
+class pull_coroutine;
+
 template< typename Arg, typename StackAllocator >
 class push_coroutine
 {
@@ -1467,7 +1470,6 @@ public:
         stack_ctx_(),
         caller_(),
         callee_()
-    impl_()
     {
         typedef detail::pull_coroutine_object<
                 void, coroutine_fn, push_coroutine< void, StackAllocator >
@@ -1489,7 +1491,7 @@ public:
 
     explicit pull_coroutine( coroutine_fn fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
