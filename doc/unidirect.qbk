@@ -428,29 +428,18 @@ resumed with __coro_op__).]
 
     #include <boost/coroutine/coroutine.hpp>
 
-    template< typename R >
+    template< typename R, typename StackAllocator = standard_stack_allocator >
     class coroutine<>::pull_type
     {
     public:
         pull_type();
 
-        template<
-            typename Fn,
-            typename StackAllocator = stack_allocator,
-            typename Allocator = std::allocator< coroutine >
-        >
-        pull_type( Fn fn, attributes const& attr = attributes(),
-                   StackAllocator const& stack_alloc = StackAllocator(),
-                   Allocator const& alloc = Allocator() );
+        template< typename Fn >
+        pull_type( Fn fn, attributes const& attr = attributes() );
 
-        template<
-            typename Fn,
-            typename StackAllocator = stack_allocator,
-            typename Allocator = std::allocator< coroutine >
-        >
+        template< typename Fn >
         pull_type( Fn && fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator(),
-                   Allocator const& alloc = Allocator() );
+                   StackAllocator stack_alloc = StackAllocator() );
 
         pull_type( pull_type && other);
 
@@ -486,27 +475,24 @@ resumed with __coro_op__).]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator, typename Allocator >
-          pull_type( Fn fn, attributes const& attr, StackAllocator const& stack_alloc, Allocator const& alloc)`]
+[heading `template< typename Fn >
+          pull_type( Fn fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
-determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used and internal
-data are allocated by Allocator.]]
+determines stack clean-up and preserving floating-point registers.]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator, typename Allocator >
-          pull_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc, Allocator const& alloc)`]
+[heading `template< typename Fn >
+          pull_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used and internal
-data are allocated by Allocator.]]
+For allocating/deallocating the stack `stack_alloc` is used.]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
 ]
 
@@ -612,29 +598,18 @@ of `other`.]]
 
     #include <boost/coroutine/coroutine.hpp>
 
-    template< typename Arg >
+    template< typename Arg, typename StackAllocator = standard_stack_allocator >
     class coroutine<>::push_type
     {
     public:
         push_type();
 
-        template<
-            typename Fn,
-            typename StackAllocator = stack_allocator,
-            typename Allocator = std::allocator< coroutine >
-        >
-        push_type( Fn fn, attributes const& attr = attributes(),
-                   StackAllocator const& stack_alloc = StackAllocator(),
-                   Allocator const& alloc = Allocator() );
+        template< typename Fn >
+        push_type( Fn fn, attributes const& attr = attributes() );
 
-        template<
-            typename Fn,
-            typename StackAllocator = stack_allocator,
-            typename Allocator = std::allocator< coroutine >
-        >
+        template< typename Fn >
         push_type( Fn && fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator(),
-                   Allocator const& alloc = Allocator() );
+                   StackAllocator stack_alloc = StackAllocator() );
 
         push_type( push_type && other);
 

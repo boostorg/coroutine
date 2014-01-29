@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_DETAIL_PUSH_COROUTINE_BASE_H
-#define BOOST_COROUTINES_DETAIL_PUSH_COROUTINE_BASE_H
+#ifndef BOOST_COROUTINES_DETAIL_PUSH_COROUTINE_IMPL_H
+#define BOOST_COROUTINES_DETAIL_PUSH_COROUTINE_IMPL_H
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -17,6 +17,7 @@
 #include <boost/coroutine/detail/coroutine_context.hpp>
 #include <boost/coroutine/detail/flags.hpp>
 #include <boost/coroutine/detail/parameters.hpp>
+#include <boost/coroutine/detail/trampoline_push.hpp>
 #include <boost/coroutine/exceptions.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
@@ -31,24 +32,23 @@ struct stack_context;
 namespace detail {
 
 template< typename Arg >
-class push_coroutine_base : private noncopyable
+class push_coroutine_impl : private noncopyable
 {
 private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class pull_coroutine_object;
+    friend void trampoline_push( intptr_t);
 
     typedef parameters< Arg >                           param_type;
 
-protected:
     int                     flags_;
     exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
 public:
-    push_coroutine_base( coroutine_context * caller,
+    push_coroutine_impl( coroutine_context * caller,
                          coroutine_context * callee,
                          bool unwind, bool preserve_fpu) :
         flags_( 0),
@@ -60,7 +60,7 @@ public:
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
 
-    virtual ~push_coroutine_base()
+    virtual ~push_coroutine_impl()
     {}
 
     bool force_unwind() const BOOST_NOEXCEPT
@@ -123,24 +123,23 @@ public:
 };
 
 template< typename Arg >
-class push_coroutine_base< Arg & > : private noncopyable
+class push_coroutine_impl< Arg & > : private noncopyable
 {
 private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class pull_coroutine_object;
+    friend void trampoline_push( intptr_t);
 
     typedef parameters< Arg & >                         param_type;
 
-protected:
     int                     flags_;
     exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
 public:
-    push_coroutine_base( coroutine_context * caller,
+    push_coroutine_impl( coroutine_context * caller,
                          coroutine_context * callee,
                          bool unwind, bool preserve_fpu) :
         flags_( 0),
@@ -152,7 +151,7 @@ public:
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
 
-    virtual ~push_coroutine_base()
+    virtual ~push_coroutine_impl()
     {}
 
     bool force_unwind() const BOOST_NOEXCEPT
@@ -200,17 +199,13 @@ public:
 };
 
 template<>
-class push_coroutine_base< void > : private noncopyable
+class push_coroutine_impl< void > : private noncopyable
 {
 private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class pull_coroutine_object;
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void trampoline_void( intptr_t);
+    friend void trampoline_push_void( intptr_t);
 
     typedef parameters< void >                          param_type;
 
@@ -220,7 +215,7 @@ private:
     coroutine_context   *   callee_;
 
 public:
-    push_coroutine_base( coroutine_context * caller,
+    push_coroutine_impl( coroutine_context * caller,
                          coroutine_context * callee,
                          bool unwind, bool preserve_fpu) :
         flags_( 0),
@@ -232,7 +227,7 @@ public:
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
 
-    virtual ~push_coroutine_base()
+    virtual ~push_coroutine_impl()
     {}
 
     bool force_unwind() const BOOST_NOEXCEPT
@@ -285,4 +280,4 @@ public:
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_DETAIL_PUSH_COROUTINE_BASE_H
+#endif // BOOST_COROUTINES_DETAIL_PUSH_COROUTINE_IMPL_H

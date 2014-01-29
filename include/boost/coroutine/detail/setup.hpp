@@ -25,7 +25,7 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-template< typename Fn, typename Coro >
+template< typename Fn >
 struct setup
 {
     struct dummy {};

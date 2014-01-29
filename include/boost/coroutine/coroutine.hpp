@@ -27,13 +27,12 @@
 #include <boost/coroutine/detail/coroutine_context.hpp>
 #include <boost/coroutine/detail/parameters.hpp>
 #include <boost/coroutine/detail/setup.hpp>
-#include <boost/coroutine/detail/trampoline.hpp>
+#include <boost/coroutine/detail/trampoline_pull.hpp>
+#include <boost/coroutine/detail/trampoline_push.hpp>
 #include <boost/coroutine/exceptions.hpp>
 #include <boost/coroutine/stack_allocator.hpp>
-#include <boost/coroutine/detail/pull_coroutine_base.hpp>
-#include <boost/coroutine/detail/pull_coroutine_object.hpp>
-#include <boost/coroutine/detail/push_coroutine_base.hpp>
-#include <boost/coroutine/detail/push_coroutine_object.hpp>
+#include <boost/coroutine/detail/pull_coroutine_impl.hpp>
+#include <boost/coroutine/detail/push_coroutine_impl.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -52,13 +51,14 @@ private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class detail::pull_coroutine_object;
+    friend void detail::trampoline_pull( intptr_t);
 
-    typedef detail::push_coroutine_base< Arg >  base_t;
+    typedef detail::push_coroutine_impl< Arg >  impl_type;
+    typedef detail::parameters< Arg >           param_type;
 
     struct dummy {};
 
-    base_t                  *   impl_;
+    impl_type               *   impl_;
     StackAllocator              stack_alloc_;
     stack_context               stack_ctx_;
     detail::coroutine_context   caller_;
@@ -66,7 +66,7 @@ private:
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( push_coroutine)
 
-    push_coroutine( base_t * impl) :
+    push_coroutine( impl_type * impl) :
         impl_( impl),
         stack_alloc_(),
         stack_ctx_(),
@@ -240,13 +240,14 @@ private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class detail::pull_coroutine_object;
+    friend void detail::trampoline_pull( intptr_t);
 
-    typedef detail::push_coroutine_base< Arg & >    base_t;
+    typedef detail::push_coroutine_impl< Arg & >    impl_type;
+    typedef detail::parameters< Arg & >             param_type;
 
     struct dummy {};
 
-    base_t                  *   impl_;
+    impl_type               *   impl_;
     StackAllocator              stack_alloc_;
     stack_context               stack_ctx_;
     detail::coroutine_context   caller_;
@@ -254,7 +255,7 @@ private:
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( push_coroutine)
 
-    push_coroutine( base_t * impl) :
+    push_coroutine( impl_type * impl) :
         impl_( impl),
         stack_alloc_(),
         stack_ctx_(),
@@ -421,17 +422,14 @@ private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class detail::pull_coroutine_object;
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_void( intptr_t);
+    friend void detail::trampoline_pull_void( intptr_t);
 
-    typedef detail::push_coroutine_base< void >  base_t;
+    typedef detail::push_coroutine_impl< void >     impl_type;
+    typedef detail::parameters< void >              param_type;
 
     struct dummy {};
 
-    base_t                  *   impl_;
+    impl_type               *   impl_;
     StackAllocator              stack_alloc_;
     stack_context               stack_ctx_;
     detail::coroutine_context   caller_;
@@ -439,7 +437,7 @@ private:
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( push_coroutine)
 
-    push_coroutine( base_t * impl) :
+    push_coroutine( impl_type * impl) :
         impl_( impl),
         stack_alloc_(),
         stack_ctx_(),
@@ -574,13 +572,14 @@ private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class detail::push_coroutine_object;
+    friend void detail::trampoline_push( intptr_t);
 
-    typedef detail::pull_coroutine_base< R >    base_t;
+    typedef detail::pull_coroutine_impl< R >    impl_type;
+    typedef detail::parameters< R >             param_type;
 
     struct dummy {};
 
-    base_t                  *   impl_;
+    impl_type               *   impl_;
     StackAllocator              stack_alloc_;
     stack_context               stack_ctx_;
     detail::coroutine_context   caller_;
@@ -588,7 +587,7 @@ private:
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
-    pull_coroutine( base_t * impl) :
+    pull_coroutine( impl_type * impl) :
         impl_( impl),
         stack_alloc_(),
         stack_ctx_(),
@@ -617,16 +616,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, coroutine_fn, push_coroutine< R, StackAllocator >
-        >                                       object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                    & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -644,16 +640,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, coroutine_fn, push_coroutine< R, StackAllocator >
-        >                                       object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                         & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -671,16 +664,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, Fn, push_coroutine< R, StackAllocator >
-        >                                       object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                               & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -699,16 +689,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, Fn, push_coroutine< R, StackAllocator >
-        >                                       object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                               & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -730,15 +717,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, Fn, push_coroutine< R, StackAllocator >
-            >                               object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -761,15 +746,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, Fn, push_coroutine< R, StackAllocator >
-        >                                       object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -791,15 +774,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, Fn, push_coroutine< R, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -822,15 +803,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R, Fn, push_coroutine< R, StackAllocator >
-        >                                  object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1005,13 +984,14 @@ private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class detail::push_coroutine_object;
+    friend void detail::trampoline_push( intptr_t);
 
-    typedef detail::pull_coroutine_base< R & >  base_t;
+    typedef detail::pull_coroutine_impl< R & >  impl_type;
+    typedef detail::parameters< R & >           param_type;
 
     struct dummy {};
 
-    base_t                  *   impl_;
+    impl_type               *   impl_;
     StackAllocator              stack_alloc_;
     stack_context               stack_ctx_;
     detail::coroutine_context   caller_;
@@ -1019,7 +999,7 @@ private:
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
-    pull_coroutine( base_t * impl) :
+    pull_coroutine( impl_type * impl) :
         impl_( impl),
         stack_alloc_(),
         stack_ctx_(),
@@ -1048,16 +1028,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, coroutine_fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                         & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< coroutien_fn, impl_type > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1075,16 +1052,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, coroutine_fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                         & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< coroutien_fn, impl_type > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1102,16 +1076,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, Fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                               & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1130,16 +1101,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, Fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                               & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1161,15 +1129,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, Fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1192,15 +1158,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, Fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1222,15 +1186,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, Fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1253,15 +1215,13 @@ public:
         caller_(),
         callee_()
     {
-        typedef detail::pull_coroutine_object<
-                R &, Fn, push_coroutine< R &, StackAllocator >
-        >                                   object_t;
-
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                             & stack_ctx_);
-        detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        callee_ = detail::coroutine_context(
+            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
+            >,
+            & stack_ctx_);
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1432,17 +1392,14 @@ private:
     template<
         typename X, typename Y, typename Z
     >
-    friend class detail::push_coroutine_object;
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_void( intptr_t);
+    friend void detail::trampoline_push_void( intptr_t);
 
-    typedef detail::pull_coroutine_base< void > base_t;
+    typedef detail::pull_coroutine_impl< void >     impl_type;
+    typedef detail::parameters< void >              param_type;
 
     struct dummy {};
 
-    base_t                  *   impl_;
+    impl_type               *   impl_;
     StackAllocator              stack_alloc_;
     stack_context               stack_ctx_;
     detail::coroutine_context   caller_;
@@ -1450,7 +1407,7 @@ private:
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
-    pull_coroutine( base_t * impl) :
+    pull_coroutine( impl_type * impl) :
         impl_( impl),
         stack_alloc_(),
         stack_ctx_(),
@@ -1481,13 +1438,13 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-                detail::trampoline<
-                    coroutine_fn, base_t, push_corotuine< void, StackAllocator >
+                detail::trampoline_pull_void<
+                    coroutine_fn, impl_type, push_coroutine< void, StackAllocator >
                 >,
                 & stack_ctx_);
-        detail::setup< coroutine_fn, base_t > to( forward< coroutine_fn >( fn),
+        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn),
                                                   & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1507,13 +1464,13 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline<
-                coroutine_fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                coroutine_fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< coroutine_fn, base_t > to( forward< coroutine_fn >( fn),
+        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn),
                                                   & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1533,13 +1490,13 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline<
-                Fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                Fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< Fn, base_t > to( forward< Fn >( fn),
+        detail::setup< Fn > to( forward< Fn >( fn),
                                         & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1560,13 +1517,13 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline<
-                Fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                Fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< Fn, base_t > to( forward< Fn >( fn),
+        detail::setup< Fn > to( forward< Fn >( fn),
                                         & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1589,12 +1546,12 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void<
-                Fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                Fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1618,12 +1575,12 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void<
-                Fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                Fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1647,12 +1604,12 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline<
-                Fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                Fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1677,12 +1634,12 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline<
-                Fn, base_t, push_coroutine< void, StackAllocator >
+            detail::trampoline_pull_void<
+                Fn, impl_type, push_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-        impl_ = reinterpret_cast< base_t * >(
+        detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+        impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
                     reinterpret_cast< intptr_t >( & to),
@@ -1758,16 +1715,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( coroutine_fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, coroutine_fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                     & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+            detail::trampoline_push<
+                coroutine_fn, impl_type, pull_coroutine< Arg, StackAllocator >
+            >,
+            & stack_ctx_);
+    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1785,16 +1740,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( coroutine_fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, coroutine_fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                     & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+            detail::trampoline_push<
+                coroutine_fn, impl_type, pull_coroutine< Arg, StackAllocator >
+            >,
+            & stack_ctx_);
+    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1811,16 +1764,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( coroutine_fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, coroutine_fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                     & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+            detail::trampoline_push<
+                coroutine_fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+            >,
+            & stack_ctx_);
+    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1838,16 +1789,15 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( coroutine_fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, coroutine_fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< coroutine_fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< coroutine_fn, object_t > to( forward< coroutine_fn >( fn),
-                                                     & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+            detail::trampoline_push<
+                coroutine_fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+                coroutine_fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+            >,
+            & stack_ctx_);
+    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1866,13 +1816,12 @@ push_coroutine< void, StackAllocator >::push_coroutine( coroutine_fn fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-            detail::trampoline<
-                coroutine_fn, base_t, pull_corotuine< void, StackAllocator >
+            detail::trampoline_push_void<
+                coroutine_fn, impl_type, pull_coroutine< void, StackAllocator >
             >,
             & stack_ctx_);
-    detail::setup< coroutine_fn, base_t > to( forward< coroutine_fn >( fn),
-                                              & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1892,13 +1841,12 @@ push_coroutine< void, StackAllocator >::push_coroutine( coroutine_fn fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-            detail::trampoline<
-                coroutine_fn, base_t, pull_corotuine< void, StackAllocator >
-            >,
-            & stack_ctx_);
-    detail::setup< coroutine_fn, base_t > to( forward< coroutine_fn >( fn),
-                                              & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+        detail::trampoline_push_void<
+            coroutine_fn, impl_type, pull_coroutine< void, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1916,16 +1864,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, Fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                           & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1944,16 +1890,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, Fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                           & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1971,16 +1915,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, Fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                           & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -1999,16 +1941,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, Fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( forward< Fn >( fn),
-                                           & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2028,13 +1968,13 @@ push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-        detail::trampoline<
-            Fn, base_t, pull_coroutine< void, StackAllocator >
+        detail::trampoline_push_void<
+            Fn, impl_type, pull_coroutine< void, StackAllocator >
         >,
         & stack_ctx_);
-    detail::setup< Fn, base_t > to( forward< Fn >( fn),
+    detail::setup< Fn > to( forward< Fn >( fn),
                                     & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2055,13 +1995,13 @@ push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-        detail::trampoline<
-            Fn, base_t, pull_coroutine< void, StackAllocator >
+        detail::trampoline_push_void<
+            Fn, impl_type, pull_coroutine< void, StackAllocator >
         >,
         & stack_ctx_);
-    detail::setup< Fn, base_t > to( forward< Fn >( fn),
+    detail::setup< Fn > to( forward< Fn >( fn),
                                     & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2083,15 +2023,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, Fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2114,15 +2053,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, Fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2144,15 +2082,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, Fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2175,15 +2112,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, Fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2207,12 +2143,12 @@ push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-        detail::trampoline_void<
-            Fn, base_t, pull_coroutine< void, StackAllocator >
+        detail::trampoline_push_void<
+            Fn, impl_type, pull_coroutine< void, StackAllocator >
         >,
         & stack_ctx_);
-    detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2237,12 +2173,12 @@ push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-        detail::trampoline_void<
-            Fn, base_t, pull_coroutine< void, StackAllocator >
+        detail::trampoline_push_void<
+            Fn, impl_type, pull_coroutine< void, StackAllocator >
         >,
         & stack_ctx_);
-    detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2264,15 +2200,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, Fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2295,15 +2230,14 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg, Fn, pull_coroutine< Arg, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2325,15 +2259,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, Fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2356,15 +2289,14 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
     caller_(),
     callee_()
 {
-    typedef detail::push_coroutine_object<
-            Arg &, Fn, pull_coroutine< Arg &, StackAllocator >
-    >                                       object_t;
-
     stack_alloc_.allocate( stack_ctx_, attr.size);
-    callee_ = detail::coroutine_context( detail::trampoline< Fn, object_t >,
-                                         & stack_ctx_);
-    detail::setup< Fn, object_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    callee_ = detail::coroutine_context(
+        detail::trampoline_push<
+            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
+        >,
+        & stack_ctx_);
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2388,12 +2320,12 @@ push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-        detail::trampoline<
-            Fn, base_t, pull_coroutine< void, StackAllocator >
+        detail::trampoline_push_void<
+            Fn, impl_type, pull_coroutine< void, StackAllocator >
         >,
         & stack_ctx_);
-    detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
@@ -2418,12 +2350,12 @@ push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 {
     stack_alloc_.allocate( stack_ctx_, attr.size);
     callee_ = detail::coroutine_context(
-        detail::trampoline<
-            Fn, base_t, pull_coroutine< void, StackAllocator >
+        detail::trampoline_push_void<
+            Fn, impl_type, pull_coroutine< void, StackAllocator >
         >,
         & stack_ctx_);
-    detail::setup< Fn, base_t > to( fn, & caller_, & callee_, attr);
-    impl_ = reinterpret_cast< base_t * >(
+    detail::setup< Fn > to( fn, & caller_, & callee_, attr);
+    impl_ = reinterpret_cast< impl_type * >(
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
