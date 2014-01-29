@@ -95,7 +95,10 @@ public:
 struct my_exception {};
 
 void f1( coro::coroutine< void >::push_type & c)
-{ c(); }
+{
+    while ( c)
+        c();
+}
 
 void f2( coro::coroutine< void >::push_type &)
 { ++value1; }
@@ -208,9 +211,11 @@ void test_move()
         BOOST_CHECK( coro1.empty() );
         BOOST_CHECK( coro2);
         BOOST_CHECK( ! coro2.empty() );
+        coro2();
         coro1 = boost::move( coro2);
         BOOST_CHECK( coro1);
         BOOST_CHECK( ! coro1.empty() );
+        coro1();
         BOOST_CHECK( ! coro2);
         BOOST_CHECK( coro2.empty() );
     }
