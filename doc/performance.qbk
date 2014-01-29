@@ -13,29 +13,29 @@ following table. Performance measurements were taken using `rdtsc` and
 platforms. In each case, cache warm-up was accounted for, and the one
 running thread was pinned to a single CPU. The code was compiled using the
 build options, 'variant = release cxxflags = -DBOOST_DISABLE_ASSERTS
-optimization = speed'.
+optimization = speed' (stack-unwinding disabled).
 
 [table Perfomance of coroutine
     [
         [Platform]
         [switch]
         [construction (protected stack-allocator)]
-        [construction (simple stack-allocator)]
+        [construction (standard stack-allocator)]
         [construction (preallocated stack-allocator)]
     ]
     [
         [i386 [footnote AMD Athlon 64 DualCore 4400+]]
-        [78 ns / 77 cycles]
-        [188868 ns / 245093 cycles]
-        [31860 ns / 31812 cycles]
-        [13127 ns / 19764 cycles]
+        [55 ns / 105 cycles]
+        [ ns /  cycles]
+        [ ns /  cycles]
+        [ ns /  cycles]
     ]
     [
         [x86_64 [footnote Intel Core2 Q6700]]
-        [28 ns / 74 cycles]
-        [46916 ns / 109569 cycles]
-        [14368 ns / 22705 cycles]
-        [6114 ns / 16728 cycles]
+        [49 ns / 132 cycles]
+        [38029 ns / 111898 cycles]
+        [480 ns / 1208 cycles]
+        [3528 ns / 13007 cycles]
     ]
 ]
 
