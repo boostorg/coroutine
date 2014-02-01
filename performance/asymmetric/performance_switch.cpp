@@ -14,9 +14,9 @@
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
-#include "bind_processor.hpp"
-#include "clock.hpp"
-#include "cycle.hpp"
+#include "../bind_processor.hpp"
+#include "../clock.hpp"
+#include "../cycle.hpp"
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::uint64_t jobs = 1000;

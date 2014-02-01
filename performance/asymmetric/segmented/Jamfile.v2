@@ -1,4 +1,3 @@
-# Boost.Coroutine Library Examples Jamfile
 
 #          Copyright Oliver Kowalke 2009.
 # Distributed under the Boost Software License, Version 1.0.
@@ -14,26 +13,13 @@ import modules ;
 import os ;
 import toolset ;
 
-if [ os.name ] = SOLARIS
-{
-  lib socket ;
-  lib nsl ;
-}
-else if [ os.name ] = NT
-{
-  lib ws2_32 ;
-  lib mswsock ;
-}
-else if [ os.name ] = HPUX
-{
-  lib ipv6 ;
-}
-
-project boost/coroutine/example
+project boost/coroutine/performance/segmented
     : requirements
-      <library>../../build//boost_coroutine
+      <library>/boost/chrono//boost_chrono
+      <library>/boost/coroutine//boost_coroutine
       <library>/boost/program_options//boost_program_options
-      <library>/boost/thread//boost_thread
+      <segmented-stacks>on
+      <linkflags>"-lrt" 
       <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>gcc-4.8,<segmented-stacks>on:<cxxflags>-fsplit-stack
@@ -41,21 +27,41 @@ project boost/coroutine/example
       <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
-      <threading>multi
     ;
 
-exe same_fringe
-    : same_fringe.cpp
-    ;
+alias sources
+   : ../../bind_processor_aix.cpp
+   : <target-os>aix
+   ;
 
-exe fibonacci
-    : fibonacci.cpp
-    ;
+alias sources
+   : ../../bind_processor_freebsd.cpp
+   : <target-os>freebsd
+   ;
 
-exe layout
-    : layout.cpp
-    ;
+alias sources
+   : ../../bind_processor_hpux.cpp
+   : <target-os>hpux
+   ;
 
-#exe await_emu
-#    : await_emu.cpp
-#    ;
+alias sources
+   : ../../bind_processor_linux.cpp
+   : <target-os>linux
+   ;
+
+alias sources
+   : ../../bind_processor_solaris.cpp
+   : <target-os>solaris
+   ;
+
+alias sources
+   : ../../bind_processor_windows.cpp
+   : <target-os>windows
+   ;
+
+explicit sources ;
+
+exe performance_create_segmented
+   : sources
+     performance_create_segmented.cpp
+   ;

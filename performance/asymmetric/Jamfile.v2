@@ -13,20 +13,14 @@ import modules ;
 import os ;
 import toolset ;
 
-project boost/coroutine/performance/segmented
+project boost/coroutine/performance/asymmetric
     : requirements
       <library>/boost/chrono//boost_chrono
       <library>/boost/coroutine//boost_coroutine
       <library>/boost/program_options//boost_program_options
-      <segmented-stacks>on
       <linkflags>"-lrt" 
-      <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc-4.7,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
-      <toolset>gcc-4.8,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc-4.8,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
-      <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <toolset>gcc-4.9,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static
+      <threading>multi
     ;
 
 alias sources
@@ -61,7 +55,22 @@ alias sources
 
 explicit sources ;
 
-exe performance_create_segmented
+exe performance_create_protected
    : sources
-     performance_create_segmented.cpp
+     performance_create_protected.cpp
+   ;
+
+exe performance_create_standard
+   : sources
+     performance_create_standard.cpp
+   ;
+
+exe performance_create_prealloc
+   : sources
+     performance_create_prealloc.cpp
+   ;
+
+exe performance_switch
+   : sources
+     performance_switch.cpp
    ;

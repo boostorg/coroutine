@@ -13,32 +13,24 @@
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
-#include "bind_processor.hpp"
-#include "clock.hpp"
-#include "cycle.hpp"
-
-typedef boost::coroutines::standard_stack_allocator   stack_allocator;
-typedef boost::coroutines::coroutine< void, stack_allocator >   coro_type;
+#include "../../bind_processor.hpp"
+#include "../../clock.hpp"
+#include "../../cycle.hpp"
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
-boost::coroutines::flag_unwind_t unwind_stack = boost::coroutines::stack_unwind;
 boost::uint64_t jobs = 1000;
 
-void fn( coro_type::push_type & c)
+void fn( boost::coroutines::coroutine< void >::push_type & c)
 { while ( true) c(); }
 
 duration_type measure_time()
 {
-    stack_allocator stack_alloc;
-
     // cache warum-up
-    coro_type::pull_type c( fn,
-        boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
+    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        coro_type::pull_type c( fn,
-            boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
+        boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -50,16 +42,12 @@ duration_type measure_time()
 # ifdef BOOST_CONTEXT_CYCLE
 cycle_type measure_cycles()
 {
-    stack_allocator stack_alloc;
-
     // cache warum-up
-    coro_type::pull_type c( fn,
-        boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
+    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        coro_type::pull_type c( fn,
-            boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
+        boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
@@ -75,12 +63,11 @@ int main( int argc, char * argv[])
     {
         bind_to_processor( 0);
 
-        bool preserve = false, unwind = true;
+        bool preserve = false;
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")
             ("fpu,f", boost::program_options::value< bool >( & preserve), "preserve FPU registers")
-            ("unwind,u", boost::program_options::value< bool >( & unwind), "unwind coroutine-stack")
             ("jobs,j", boost::program_options::value< boost::uint64_t >( & jobs), "jobs to run");
 
         boost::program_options::variables_map vm;
@@ -98,7 +85,6 @@ int main( int argc, char * argv[])
         }
 
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
-        if ( ! unwind) unwind_stack = boost::coroutines::no_stack_unwind;
 
         boost::uint64_t res = measure_time().count();
         std::cout << "average of " << res << " nano seconds" << std::endl;

@@ -13,12 +13,11 @@
 #include <boost/cstdint.hpp>
 #include <boost/program_options.hpp>
 
-#include "bind_processor.hpp"
-#include "clock.hpp"
-#include "cycle.hpp"
-#include "preallocated_stack_allocator.hpp"
+#include "../bind_processor.hpp"
+#include "../clock.hpp"
+#include "../cycle.hpp"
 
-typedef preallocated_stack_allocator                            stack_allocator;
+typedef boost::coroutines::protected_stack_allocator            stack_allocator;
 typedef boost::coroutines::coroutine< void, stack_allocator >   coro_type;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
@@ -32,19 +31,14 @@ duration_type measure_time()
 {
     stack_allocator stack_alloc;
 
-    {
-        // cache warum-up
-        coro_type::pull_type c( fn,
-                boost::coroutines::attributes(
-                    stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-                stack_alloc);
-    }
+    // cache warum-up
+    coro_type::pull_type c( fn,
+        boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
         coro_type::pull_type c( fn,
-            boost::coroutines::attributes( stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-            stack_alloc);
+            boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -58,19 +52,14 @@ cycle_type measure_cycles()
 {
     stack_allocator stack_alloc;
 
-    {
-        // cache warum-up
-        coro_type::pull_type c( fn,
-                boost::coroutines::attributes(
-                    stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-                stack_alloc);
-    }
+    // cache warum-up
+    coro_type::pull_type c( fn,
+        boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
         coro_type::pull_type c( fn,
-            boost::coroutines::attributes( stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-            stack_alloc);
+            boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
