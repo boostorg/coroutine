@@ -10,6 +10,10 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
+#include <boost/type_traits/decay.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <boost/utility/explicit_operator_bool.hpp>
 
 #include <boost/coroutine/attributes.hpp>
@@ -219,7 +223,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_pull< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, self_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -246,7 +250,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_pull< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, self_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -516,7 +520,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_pull< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, self_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -543,7 +547,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_pull< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, self_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
