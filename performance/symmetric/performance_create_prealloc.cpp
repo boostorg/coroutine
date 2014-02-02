@@ -27,17 +27,9 @@ boost::uint64_t jobs = 1000;
 
 void fn( coro_type::self_type &) {}
 
-duration_type measure_time()
+duration_type measure_time( duration_type overhead)
 {
     stack_allocator stack_alloc;
-
-    {
-        // cache warum-up
-        coro_type c( fn,
-                boost::coroutines::attributes(
-                    stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-                stack_alloc);
-    }
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
@@ -46,24 +38,16 @@ duration_type measure_time()
             stack_alloc);
     }
     duration_type total = clock_type::now() - start;
-    total -= overhead_clock(); // overhead of measurement
+    total -= overhead; // overhead of measurement
     total /= jobs;  // loops
 
     return total;
 }
 
 # ifdef BOOST_CONTEXT_CYCLE
-cycle_type measure_cycles()
+cycle_type measure_cycles( cycle_type overhead)
 {
     stack_allocator stack_alloc;
-
-    {
-        // cache warum-up
-        coro_type c( fn,
-                boost::coroutines::attributes(
-                    stack_allocator::default_stacksize(), unwind_stack, preserve_fpu),
-                stack_alloc);
-    }
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
@@ -72,7 +56,7 @@ cycle_type measure_cycles()
             stack_alloc);
     }
     cycle_type total = cycles() - start;
-    total -= overhead_cycle(); // overhead of measurement
+    total -= overhead; // overhead of measurement
     total /= jobs;  // loops
 
     return total;
@@ -110,10 +94,14 @@ int main( int argc, char * argv[])
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
         if ( ! unwind) unwind_stack = boost::coroutines::no_stack_unwind;
 
-        boost::uint64_t res = measure_time().count();
+        duration_type overhead_c = overhead_clock();
+        std::cout << "overhead " << overhead_c.count() << " nano seconds" << std::endl;
+        boost::uint64_t res = measure_time( overhead_c).count();
         std::cout << "average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
-        res = measure_cycles();
+        cycle_type overhead_y = overhead_cycle();
+        std::cout << "overhead " << overhead_y << " cpu cycles" << std::endl;
+        res = measure_cycles( overhead_y);
         std::cout << "average of " << res << " cpu cycles" << std::endl;
 #endif
 

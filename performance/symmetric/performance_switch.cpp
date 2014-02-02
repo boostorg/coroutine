@@ -42,7 +42,7 @@ void fn_int( boost::coroutines::symmetric_coroutine< int >::self_type &)
 void fn_x( boost::coroutines::symmetric_coroutine< X >::self_type &)
 {}
 
-duration_type measure_time_void()
+duration_type measure_time_void( duration_type overhead)
 {
     duration_type total = duration_type::zero();
     for ( std::size_t i = 0; i < jobs; ++i) {
@@ -51,15 +51,15 @@ duration_type measure_time_void()
         time_point_type start( clock_type::now() );
         c();
         total += clock_type::now() - start;
-        total -= overhead_clock(); // overhead of measurement
     }
+    total -= jobs * overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
     return total;
 }
 
-duration_type measure_time_int()
+duration_type measure_time_int( duration_type overhead)
 {
     int i = 3;
     duration_type total = duration_type::zero();
@@ -69,15 +69,15 @@ duration_type measure_time_int()
         time_point_type start( clock_type::now() );
         c( i);
         total += clock_type::now() - start;
-        total -= overhead_clock(); // overhead of measurement
     }
+    total -= jobs * overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
     return total;
 }
 
-duration_type measure_time_x()
+duration_type measure_time_x( duration_type overhead)
 {
     X x("abc");
     duration_type total = duration_type::zero();
@@ -87,8 +87,8 @@ duration_type measure_time_x()
         time_point_type start( clock_type::now() );
         c();
         total += clock_type::now() - start;
-        total -= overhead_clock(); // overhead of measurement
     }
+    total -= jobs * overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -96,7 +96,7 @@ duration_type measure_time_x()
 }
 
 # ifdef BOOST_CONTEXT_CYCLE
-cycle_type measure_cycles_void()
+cycle_type measure_cycles_void( cycle_type overhead)
 {
     cycle_type total = 0;
     for ( std::size_t i = 0; i < jobs; ++i) {
@@ -105,15 +105,15 @@ cycle_type measure_cycles_void()
         cycle_type start( cycles() );
         c();
         total += cycles() - start;
-        total -= overhead_cycle(); // overhead of measurement
     }
+    total -= jobs * overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
     return total;
 }
 
-cycle_type measure_cycles_int()
+cycle_type measure_cycles_int( cycle_type overhead)
 {
     int i = 3;
     cycle_type total = 0;
@@ -123,15 +123,15 @@ cycle_type measure_cycles_int()
         cycle_type start( cycles() );
         c( i);
         total += cycles() - start;
-        total -= overhead_cycle(); // overhead of measurement
     }
+    total -= jobs * overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
     return total;
 }
 
-cycle_type measure_cycles_x()
+cycle_type measure_cycles_x( cycle_type overhead)
 {
     X x("abc");
     cycle_type total = 0;
@@ -141,8 +141,8 @@ cycle_type measure_cycles_x()
         cycle_type start( cycles() );
         c( x);
         total += cycles() - start;
-        total -= overhead_cycle(); // overhead of measurement
     }
+    total -= jobs * overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -179,18 +179,22 @@ int main( int argc, char * argv[])
 
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
 
-        boost::uint64_t res = measure_time_void().count();
+        duration_type overhead_c = overhead_clock();
+        std::cout << "overhead " << overhead_c.count() << " nano seconds" << std::endl;
+        boost::uint64_t res = measure_time_void( overhead_c).count();
         std::cout << "void: average of " << res << " nano seconds" << std::endl;
-        res = measure_time_int().count();
+        res = measure_time_int( overhead_c).count();
         std::cout << "int: average of " << res << " nano seconds" << std::endl;
-        res = measure_time_x().count();
+        res = measure_time_x( overhead_c).count();
         std::cout << "X: average of " << res << " nano seconds" << std::endl;
 #ifdef BOOST_CONTEXT_CYCLE
-        res = measure_cycles_void();
+        cycle_type overhead_y = overhead_cycle();
+        std::cout << "overhead " << overhead_y << " cpu cycles" << std::endl;
+        res = measure_cycles_void( overhead_y);
         std::cout << "void: average of " << res << " cpu cycles" << std::endl;
-        res = measure_cycles_int();
+        res = measure_cycles_int( overhead_y);
         std::cout << "int: average of " << res << " cpu cycles" << std::endl;
-        res = measure_cycles_x();
+        res = measure_cycles_x( overhead_y);
         std::cout << "X: average of " << res << " cpu cycles" << std::endl;
 #endif
 
