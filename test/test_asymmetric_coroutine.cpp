@@ -56,7 +56,7 @@ public:
         state( true)
     {}
 
-    void operator()( coro::coroutine< int >::push_type &)
+    void operator()( coro::asymmetric_coroutine< int >::push_type &)
     { value3 = state; }
 };
 
@@ -88,35 +88,35 @@ public:
         return * this;
     }
 
-    void operator()( coro::coroutine< int >::push_type &)
+    void operator()( coro::asymmetric_coroutine< int >::push_type &)
     { value3 = state; }
 };
 
 struct my_exception {};
 
-void f1( coro::coroutine< void >::push_type & c)
+void f1( coro::asymmetric_coroutine< void >::push_type & c)
 {
     while ( c)
         c();
 }
 
-void f2( coro::coroutine< void >::push_type &)
+void f2( coro::asymmetric_coroutine< void >::push_type &)
 { ++value1; }
 
-void f3( coro::coroutine< void >::push_type & c)
+void f3( coro::asymmetric_coroutine< void >::push_type & c)
 {
     ++value1;
     c();
     ++value1;
 }
 
-void f4( coro::coroutine< int >::push_type & c)
+void f4( coro::asymmetric_coroutine< int >::push_type & c)
 {
     c( 3);
     c( 7);
 }
 
-void f5( coro::coroutine< std::string >::push_type & c)
+void f5( coro::asymmetric_coroutine< std::string >::push_type & c)
 {
     std::string res("abc");
     c( res);
@@ -124,13 +124,13 @@ void f5( coro::coroutine< std::string >::push_type & c)
     c( res);
 }
 
-void f6( coro::coroutine< int >::pull_type & c)
+void f6( coro::asymmetric_coroutine< int >::pull_type & c)
 { value1 = c.get(); }
 
-void f7( coro::coroutine< std::string >::pull_type & c)
+void f7( coro::asymmetric_coroutine< std::string >::pull_type & c)
 { value2 = c.get(); }
 
-void f8( coro::coroutine< boost::tuple< double, double > >::pull_type & c)
+void f8( coro::asymmetric_coroutine< boost::tuple< double, double > >::pull_type & c)
 {
     double x = 0, y = 0;
     boost::tie( x, y) = c.get();
@@ -140,30 +140,30 @@ void f8( coro::coroutine< boost::tuple< double, double > >::pull_type & c)
     value4 = x + y;
 }
 
-void f9( coro::coroutine< int * >::pull_type & c)
+void f9( coro::asymmetric_coroutine< int * >::pull_type & c)
 { value5 = c.get(); }
 
-void f91( coro::coroutine< int const* >::pull_type & c)
+void f91( coro::asymmetric_coroutine< int const* >::pull_type & c)
 { value5 = const_cast< int * >( c.get() ); }
 
-void f10( coro::coroutine< int & >::pull_type & c)
+void f10( coro::asymmetric_coroutine< int & >::pull_type & c)
 {
     int const& i = c.get();
     value5 = const_cast< int * >( & i);
 }
 
-void f101( coro::coroutine< int const& >::pull_type & c)
+void f101( coro::asymmetric_coroutine< int const& >::pull_type & c)
 {
     int const& i = c.get();
     value5 = const_cast< int * >( & i);
 }
 
-void f11( coro::coroutine< boost::tuple< int, int > >::pull_type & c)
+void f11( coro::asymmetric_coroutine< boost::tuple< int, int > >::pull_type & c)
 {
     boost::tie( value8, value9) = c.get();
 }
 
-void f12( coro::coroutine< void >::pull_type & c)
+void f12( coro::asymmetric_coroutine< void >::pull_type & c)
 {
     X x_;
     c();
@@ -171,10 +171,10 @@ void f12( coro::coroutine< void >::pull_type & c)
 }
 
 template< typename E >
-void f14( coro::coroutine< void >::pull_type &, E const& e)
+void f14( coro::asymmetric_coroutine< void >::pull_type &, E const& e)
 { throw e; }
 
-void f16( coro::coroutine< int >::push_type & c)
+void f16( coro::asymmetric_coroutine< int >::push_type & c)
 {
     c( 1);
     c( 2);
@@ -183,7 +183,7 @@ void f16( coro::coroutine< int >::push_type & c)
     c( 5);
 }
 
-void f17( coro::coroutine< int >::pull_type & c, std::vector< int > & vec)
+void f17( coro::asymmetric_coroutine< int >::pull_type & c, std::vector< int > & vec)
 {
     int x = c.get();
     while ( 5 > x)
@@ -193,20 +193,20 @@ void f17( coro::coroutine< int >::pull_type & c, std::vector< int > & vec)
     }
 }
 
-void f19( coro::coroutine< int* >::push_type & c, std::vector< int * > & vec)
+void f19( coro::asymmetric_coroutine< int* >::push_type & c, std::vector< int * > & vec)
 {
     BOOST_FOREACH( int * ptr, vec)
     { c( ptr); }
 }
 
-void f20( coro::coroutine< int >::push_type &)
+void f20( coro::asymmetric_coroutine< int >::push_type &)
 {}
 
 void test_move()
 {
     {
-        coro::coroutine< void >::pull_type coro1;
-        coro::coroutine< void >::pull_type coro2( f1);
+        coro::asymmetric_coroutine< void >::pull_type coro1;
+        coro::asymmetric_coroutine< void >::pull_type coro2( f1);
         BOOST_CHECK( ! coro1);
         BOOST_CHECK( coro1.empty() );
         BOOST_CHECK( coro2);
@@ -225,7 +225,7 @@ void test_move()
         copyable cp( 3);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( ! value3);
-        coro::coroutine< int >::pull_type coro( cp);
+        coro::asymmetric_coroutine< int >::pull_type coro( cp);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( value3);
     }
@@ -235,7 +235,7 @@ void test_move()
         moveable mv( 7);
         BOOST_CHECK( mv.state);
         BOOST_CHECK( ! value3);
-        coro::coroutine< int >::pull_type coro( boost::move( mv) );
+        coro::asymmetric_coroutine< int >::pull_type coro( boost::move( mv) );
         BOOST_CHECK( ! mv.state);
         BOOST_CHECK( value3);
     }
@@ -245,7 +245,7 @@ void test_complete()
 {
     value1 = 0;
 
-    coro::coroutine< void >::pull_type coro( f2);
+    coro::asymmetric_coroutine< void >::pull_type coro( f2);
     BOOST_CHECK( ! coro);
     BOOST_CHECK_EQUAL( ( int)1, value1);
 }
@@ -254,7 +254,7 @@ void test_jump()
 {
     value1 = 0;
 
-    coro::coroutine< void >::pull_type coro( f3);
+    coro::asymmetric_coroutine< void >::pull_type coro( f3);
     BOOST_CHECK( coro);
     BOOST_CHECK_EQUAL( ( int)1, value1);
     coro();
@@ -264,7 +264,7 @@ void test_jump()
 
 void test_result_int()
 {
-    coro::coroutine< int >::pull_type coro( f4);
+    coro::asymmetric_coroutine< int >::pull_type coro( f4);
     BOOST_CHECK( coro);
     int result = coro.get();
     BOOST_CHECK( coro);
@@ -278,7 +278,7 @@ void test_result_int()
 
 void test_result_string()
 {
-    coro::coroutine< std::string >::pull_type coro( f5);
+    coro::asymmetric_coroutine< std::string >::pull_type coro( f5);
     BOOST_CHECK( coro);
     std::string result = coro.get();
     BOOST_CHECK( coro);
@@ -294,7 +294,7 @@ void test_arg_int()
 {
     value1 = 0;
 
-    coro::coroutine< int >::push_type coro( f6);
+    coro::asymmetric_coroutine< int >::push_type coro( f6);
     BOOST_CHECK( coro);
     coro( 3);
     BOOST_CHECK( ! coro);
@@ -305,7 +305,7 @@ void test_arg_string()
 {
     value2 = "";
 
-    coro::coroutine< std::string >::push_type coro( f7);
+    coro::asymmetric_coroutine< std::string >::push_type coro( f7);
     BOOST_CHECK( coro);
     coro( std::string("abc") );
     BOOST_CHECK( ! coro);
@@ -316,7 +316,7 @@ void test_fp()
 {
     value4 = 0;
 
-    coro::coroutine< boost::tuple< double, double > >::push_type coro( f8);
+    coro::asymmetric_coroutine< boost::tuple< double, double > >::push_type coro( f8);
     BOOST_CHECK( coro);
     coro( boost::make_tuple( 7.35, 3.14) );
     BOOST_CHECK( coro);
@@ -333,7 +333,7 @@ void test_ptr()
     value5 = 0;
 
     int a = 3;
-    coro::coroutine< int * >::push_type coro( f9);
+    coro::asymmetric_coroutine< int * >::push_type coro( f9);
     BOOST_CHECK( coro);
     coro( & a);
     BOOST_CHECK( ! coro);
@@ -345,7 +345,7 @@ void test_const_ptr()
     value5 = 0;
 
     int a = 3;
-    coro::coroutine< int const* >::push_type coro( f91);
+    coro::asymmetric_coroutine< int const* >::push_type coro( f91);
     BOOST_CHECK( coro);
     coro( & a);
     BOOST_CHECK( ! coro);
@@ -357,7 +357,7 @@ void test_ref()
     value5 = 0;
 
     int a = 3;
-    coro::coroutine< int & >::push_type coro( f10);
+    coro::asymmetric_coroutine< int & >::push_type coro( f10);
     BOOST_CHECK( coro);
     coro( a);
     BOOST_CHECK( ! coro);
@@ -369,7 +369,7 @@ void test_const_ref()
     value5 = 0;
 
     int a = 3;
-    coro::coroutine< int const& >::push_type coro( f101);
+    coro::asymmetric_coroutine< int const& >::push_type coro( f101);
     BOOST_CHECK( coro);
     coro( a);
     BOOST_CHECK( ! coro);
@@ -385,7 +385,7 @@ void test_tuple()
     boost::tuple< int, int > tpl( a, b);
     BOOST_CHECK_EQUAL( a, tpl.get< 0 >() );
     BOOST_CHECK_EQUAL( b, tpl.get< 1 >() );
-    coro::coroutine< boost::tuple< int, int > >::push_type coro( f11);
+    coro::asymmetric_coroutine< boost::tuple< int, int > >::push_type coro( f11);
     BOOST_CHECK( coro);
     coro( tpl);
     BOOST_CHECK( ! coro);
@@ -397,7 +397,7 @@ void test_unwind()
 {
     value1 = 0;
     {
-        coro::coroutine< void >::push_type coro( f12);
+        coro::asymmetric_coroutine< void >::push_type coro( f12);
         BOOST_CHECK( coro);
         BOOST_CHECK_EQUAL( ( int) 0, value1);
         coro();
@@ -413,7 +413,7 @@ void test_no_unwind()
 {
     value1 = 0;
     {
-        coro::coroutine< void >::push_type coro(
+        coro::asymmetric_coroutine< void >::push_type coro(
             f12,
             coro::attributes(
                 coro::stack_allocator::default_stacksize(),
@@ -435,7 +435,7 @@ void test_exceptions()
     std::runtime_error ex("abc");
     try
     {
-        coro::coroutine< void >::push_type coro( boost::bind( f14< std::runtime_error >, _1, ex) );
+        coro::asymmetric_coroutine< void >::push_type coro( boost::bind( f14< std::runtime_error >, _1, ex) );
         BOOST_CHECK( coro);
         coro();
         BOOST_CHECK( ! coro);
@@ -454,7 +454,7 @@ void test_input_iterator()
 {
     {
         std::vector< int > vec;
-        coro::coroutine< int >::pull_type coro( f16);
+        coro::asymmetric_coroutine< int >::pull_type coro( f16);
         BOOST_FOREACH( int i, coro)
         { vec.push_back( i); }
         BOOST_CHECK_EQUAL( ( std::size_t)5, vec.size() );
@@ -466,10 +466,10 @@ void test_input_iterator()
     }
     {
         std::vector< int > vec;
-        coro::coroutine< int >::pull_type coro( f16);
-        coro::coroutine< int >::pull_type::iterator e = boost::end( coro);
+        coro::asymmetric_coroutine< int >::pull_type coro( f16);
+        coro::asymmetric_coroutine< int >::pull_type::iterator e = boost::end( coro);
         for (
-            coro::coroutine< int >::pull_type::iterator i = boost::begin( coro);
+            coro::asymmetric_coroutine< int >::pull_type::iterator i = boost::begin( coro);
             i != e; ++i)
         { vec.push_back( * i); }
         BOOST_CHECK_EQUAL( ( std::size_t)5, vec.size() );
@@ -486,10 +486,10 @@ void test_input_iterator()
         vec_in.push_back( & i2);
         vec_in.push_back( & i3);
         std::vector< int* > vec_out;
-        coro::coroutine< int* >::pull_type coro( boost::bind( f19, _1, boost::ref( vec_in) ) );
-        coro::coroutine< int* >::pull_type::iterator e = boost::end( coro);
+        coro::asymmetric_coroutine< int* >::pull_type coro( boost::bind( f19, _1, boost::ref( vec_in) ) );
+        coro::asymmetric_coroutine< int* >::pull_type::iterator e = boost::end( coro);
         for (
-            coro::coroutine< int* >::pull_type::iterator i = boost::begin( coro);
+            coro::asymmetric_coroutine< int* >::pull_type::iterator i = boost::begin( coro);
             i != e; ++i)
         {
             int * p = * i;
@@ -506,10 +506,10 @@ void test_output_iterator()
 {
     int counter = 0;
     std::vector< int > vec;
-    coro::coroutine< int >::push_type coro(
+    coro::asymmetric_coroutine< int >::push_type coro(
         boost::bind( f17, _1, boost::ref( vec) ) );
-    coro::coroutine< int >::push_type::iterator e( boost::end( coro) );
-    for ( coro::coroutine< int >::push_type::iterator i( boost::begin( coro) );
+    coro::asymmetric_coroutine< int >::push_type::iterator e( boost::end( coro) );
+    for ( coro::asymmetric_coroutine< int >::push_type::iterator i( boost::begin( coro) );
           i != e; ++i)
     {
         i = ++counter;
@@ -524,7 +524,7 @@ void test_output_iterator()
 void test_invalid_result()
 {
     bool catched = false;
-    coro::coroutine< int >::pull_type coro( f20);
+    coro::asymmetric_coroutine< int >::pull_type coro( f20);
     BOOST_CHECK( ! coro);
     try
     {
@@ -541,7 +541,7 @@ void test_invalid_result()
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
-        BOOST_TEST_SUITE("Boost.coroutine: coroutine test suite");
+        BOOST_TEST_SUITE("Boost.coroutine: asymmetric coroutine test suite");
 
     test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_complete) );
