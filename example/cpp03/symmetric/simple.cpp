@@ -10,69 +10,36 @@
 #include <boost/bind.hpp>
 #include <boost/coroutine/all.hpp>
 
-struct Y
+typedef boost::coroutines::symmetric_coroutine< void >  coro_t;
+
+coro_t * c1 = 0;
+coro_t * c2 = 0;
+
+void foo( coro_t::self_type & self)
 {
-    Y()
-    { std::cout << "Y()" <<std::endl; }
-
-    ~Y()
-    { std::cout << "~Y()" <<std::endl; }
-};
-
-struct X
-{
-    int     i;
-
-    X( int i_) :
-        i( i_)
-    {}
-};
-
-typedef boost::coroutines::symmetric_coroutine< X* >  coro1_t;
-typedef boost::coroutines::symmetric_coroutine< X* >  coro2_t;
-
-coro1_t  * c1;
-coro2_t  * c2;
-
-void fn1( coro1_t::self_type & self)
-{
-    Y y;
-    X * x = 0;
-    std::cout << "fn1: start" << std::endl;
-
-    if ( self) x = self.get();
-    std::cout << "fn1: i == " << x->i << std::endl;
-    x->i += 1;
-    self( * c2, x);
-
-    if ( self) x = self.get();
-    std::cout << "fn1: i == " << x->i << std::endl;
-    x->i += 1;
-    self( * c2, x);
-    std::cout << "fn1: finish" << std::endl;
+    std::cout << "foo1" << std::endl;
+    self( * c2);
+    std::cout << "foo2" << std::endl;
+    self( * c2);
+    std::cout << "foo3" << std::endl;
 }
 
-void fn2( coro2_t::self_type & self)
+void bar( coro_t::self_type & self)
 {
-    std::cout << "fn2: start" << std::endl;
-    X * x = 0;
-    if ( self) x = self.get();
-    std::cout << "fn2: i == " << x->i << std::endl;
-    x->i = 7;
-    self( * c1, x);
-    if ( self) x = self.get();
-    std::cout << "fn2: i == " << x->i << std::endl;
-    std::cout << "fn2: finish" << std::endl;
+    std::cout << "bar1" << std::endl;
+    self( * c1);
+    std::cout << "bar2" << std::endl;
+    self( * c1);
+    std::cout << "bar3" << std::endl;
 }
 
 int main( int argc, char * argv[])
 {
-    coro1_t c1_( fn1);
-    coro2_t c2_( fn2);
-    c1 = & c1_;
-    c2 = & c2_;
-    X x(3);
-    c1_( & x);
+    coro_t coro1( foo);
+    coro_t coro2( bar);
+    c1 = & coro1;
+    c2 = & coro2;
+    coro1();
     std::cout << "Done" << std::endl;
 
     return EXIT_SUCCESS;
