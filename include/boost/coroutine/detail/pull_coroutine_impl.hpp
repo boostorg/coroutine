@@ -128,7 +128,7 @@ public:
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return * result_; 
+        return * result_;
     }
 
     R * get_pointer() const
@@ -136,7 +136,7 @@ public:
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return result_; 
+        return result_;
     }
 };
 

@@ -10,7 +10,6 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 
-#include <boost/coroutine/detail/coroutine_context.hpp>
 #include <boost/coroutine/detail/flags.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
