@@ -168,15 +168,6 @@ public:
         return * this;
     }
 
-    template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X & x)
-    {
-        BOOST_ASSERT( other);
-
-        result_ = impl_->yield_to( other.impl_, x);
-        return * this;
-    }
-
     template< typename Coro >
     symmetric_coroutine_self & operator()( Coro & other)
     {
