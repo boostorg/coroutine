@@ -37,7 +37,7 @@ private:
     friend class detail::symmetric_coroutine_self;
 
     typedef detail::symmetric_coroutine_impl< T >   impl_type;
-    typedef detail::parameters< T >                  param_type;
+    typedef detail::parameters< T >                 param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine)
 
