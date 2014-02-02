@@ -32,20 +32,20 @@ struct X
 
 const X x("abc");
 
-void fn_void( boost::coroutines::coroutine< void >::push_type & c)
+void fn_void( boost::coroutines::asymmetric_coroutine< void >::push_type & c)
 { while ( true) c(); }
 
-void fn_int( boost::coroutines::coroutine< int >::push_type & c)
+void fn_int( boost::coroutines::asymmetric_coroutine< int >::push_type & c)
 { while ( true) c( 7); }
 
-void fn_x( boost::coroutines::coroutine< X >::push_type & c)
+void fn_x( boost::coroutines::asymmetric_coroutine< X >::push_type & c)
 {
     while ( true) c( x);
 }
 
 duration_type measure_time_void()
 {
-    boost::coroutines::coroutine< void >::pull_type c( fn_void, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< void >::pull_type c( fn_void, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -64,7 +64,7 @@ duration_type measure_time_void()
 
 duration_type measure_time_int()
 {
-    boost::coroutines::coroutine< int >::pull_type c( fn_int, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< int >::pull_type c( fn_int, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -83,7 +83,7 @@ duration_type measure_time_int()
 
 duration_type measure_time_x()
 {
-    boost::coroutines::coroutine< X >::pull_type c( fn_x, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< X >::pull_type c( fn_x, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -103,7 +103,7 @@ duration_type measure_time_x()
 # ifdef BOOST_CONTEXT_CYCLE
 cycle_type measure_cycles_void()
 {
-    boost::coroutines::coroutine< void >::pull_type c( fn_void, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< void >::pull_type c( fn_void, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -122,7 +122,7 @@ cycle_type measure_cycles_void()
 
 cycle_type measure_cycles_int()
 {
-    boost::coroutines::coroutine< int >::pull_type c( fn_int, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< int >::pull_type c( fn_int, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();
@@ -141,7 +141,7 @@ cycle_type measure_cycles_int()
 
 cycle_type measure_cycles_x()
 {
-    boost::coroutines::coroutine< X >::pull_type c( fn_x, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< X >::pull_type c( fn_x, boost::coroutines::attributes( preserve_fpu) );
 
     // cache warum-up
     c();

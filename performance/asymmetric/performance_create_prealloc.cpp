@@ -19,7 +19,7 @@
 #include "../preallocated_stack_allocator.hpp"
 
 typedef preallocated_stack_allocator                            stack_allocator;
-typedef boost::coroutines::coroutine< void, stack_allocator >   coro_type;
+typedef boost::coroutines::asymmetric_coroutine< void, stack_allocator >   coro_type;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::coroutines::flag_unwind_t unwind_stack = boost::coroutines::stack_unwind;

@@ -20,17 +20,17 @@
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::uint64_t jobs = 1000;
 
-void fn( boost::coroutines::coroutine< void >::push_type & c)
+void fn( boost::coroutines::asymmetric_coroutine< void >::push_type & c)
 { while ( true) c(); }
 
 duration_type measure_time()
 {
     // cache warum-up
-    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
+        boost::coroutines::asymmetric_coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
     }
     duration_type total = clock_type::now() - start;
     total -= overhead_clock(); // overhead of measurement
@@ -43,11 +43,11 @@ duration_type measure_time()
 cycle_type measure_cycles()
 {
     // cache warum-up
-    boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
+    boost::coroutines::asymmetric_coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
 
     cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
+        boost::coroutines::asymmetric_coroutine< void >::pull_type c( fn, boost::coroutines::attributes( preserve_fpu) );
     }
     cycle_type total = cycles() - start;
     total -= overhead_cycle(); // overhead of measurement
