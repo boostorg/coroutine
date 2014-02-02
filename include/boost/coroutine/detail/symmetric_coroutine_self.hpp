@@ -82,7 +82,7 @@ public:
     }
 
     template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X x)
+    symmetric_coroutine_self & operator()( Coro & other, X & x)
     {
         BOOST_ASSERT( other);
 
@@ -114,6 +114,8 @@ class symmetric_coroutine_self< R & >
 private:
     typedef parameters< R & >                   param_type;
     typedef symmetric_coroutine_impl< R & >     impl_type;
+
+    struct dummy {};
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_self)
 
@@ -160,7 +162,7 @@ public:
     }
 
     template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X x)
+    symmetric_coroutine_self & operator()( Coro & other, X & x)
     {
         BOOST_ASSERT( other);
 
@@ -226,7 +228,7 @@ public:
     { std::swap( impl_, other.impl_); }
 
     template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X x)
+    symmetric_coroutine_self & operator()( Coro & other, X & x)
     {
         BOOST_ASSERT( other);
 
