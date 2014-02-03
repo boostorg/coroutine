@@ -81,6 +81,12 @@ public:
         std::swap( result_, other.result_);
     }
 
+    symmetric_coroutine_self & operator()()
+    {
+        result_ = impl_->yield();
+        return * this;
+    }
+
     template< typename Coro, typename X >
     symmetric_coroutine_self & operator()( Coro & other, X & x)
     {
@@ -161,6 +167,12 @@ public:
         std::swap( result_, other.result_);
     }
 
+    symmetric_coroutine_self & operator()()
+    {
+        result_ = impl_->yield();
+        return * this;
+    }
+
     template< typename Coro, typename X >
     symmetric_coroutine_self & operator()( Coro & other, X & x)
     {
@@ -226,6 +238,12 @@ public:
 
     void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
     { std::swap( impl_, other.impl_); }
+
+    symmetric_coroutine_self & operator()()
+    {
+        impl_->yield();
+        return * this;
+    }
 
     template< typename Coro, typename X >
     symmetric_coroutine_self & operator()( Coro & other, X & x)

@@ -211,6 +211,28 @@ void f14( coro::symmetric_coroutine< int >::self_type & self,
 void f141( coro::symmetric_coroutine< std::string >::self_type & self)
 { if ( self) value3 = self.get(); }
 
+void f15( coro::symmetric_coroutine< int >::self_type & self,
+          int offset,
+          coro::symmetric_coroutine< int > & other)
+{
+    int x = self.get();
+    value2 += x + offset;
+    self( other, x);
+    x = self.get();
+    value2 += x + offset;
+    self( other, x);
+}
+
+void f151( coro::symmetric_coroutine< int >::self_type & self,
+          int offset)
+{
+    int x = self.get();
+    value2 += x + offset;
+    self();
+    x = self.get();
+    value2 += x + offset;
+}
+
 void test_move()
 {
     {
@@ -259,6 +281,33 @@ void test_complete()
     coro();
     BOOST_CHECK( ! coro);
     BOOST_CHECK_EQUAL( ( int)1, value2);
+}
+
+void test_yield()
+{
+    value2 = 0;
+
+    coro::symmetric_coroutine< int > coro3(
+        boost::bind( f151, _1, 3) );
+    BOOST_CHECK( coro3);
+    coro::symmetric_coroutine< int > coro2(
+        boost::bind( f15, _1, 2, boost::ref( coro3) ) );
+    BOOST_CHECK( coro2);
+    coro::symmetric_coroutine< int > coro1(
+        boost::bind( f15, _1, 1, boost::ref( coro2) ) );
+    BOOST_CHECK( coro1);
+
+    BOOST_CHECK_EQUAL( ( int)0, value2);
+    coro1( 1);
+    BOOST_CHECK( coro3);
+    BOOST_CHECK( coro2);
+    BOOST_CHECK( coro1);
+    BOOST_CHECK_EQUAL( ( int)9, value2);
+    coro1( 2);
+    BOOST_CHECK( ! coro3);
+    BOOST_CHECK( coro2);
+    BOOST_CHECK( coro1);
+    BOOST_CHECK_EQUAL( ( int)21, value2);
 }
 
 void test_pass_value()
@@ -516,6 +565,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 
     test->add( BOOST_TEST_CASE( & test_move) );
     test->add( BOOST_TEST_CASE( & test_complete) );
+    test->add( BOOST_TEST_CASE( & test_yield) );
     test->add( BOOST_TEST_CASE( & test_pass_value) );
     test->add( BOOST_TEST_CASE( & test_pass_reference) );
     test->add( BOOST_TEST_CASE( & test_pass_pointer) );

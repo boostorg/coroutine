@@ -138,6 +138,21 @@ public:
         run_( & to);
     }
 
+    R * yield()
+    {
+        BOOST_ASSERT( ! is_complete() );
+
+        param_type to;
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                callee_->jump(
+                    * caller_,
+                    reinterpret_cast< intptr_t >( & to),
+                    preserve_fpu() ) ) );
+        if ( from->do_unwind) throw forced_unwind();
+        return from->data;
+    }
+
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
@@ -268,6 +283,21 @@ public:
         run_( & to);
     }
 
+    R * yield()
+    {
+        BOOST_ASSERT( ! is_complete() );
+
+        param_type to;
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                callee_->jump(
+                    * caller_,
+                    reinterpret_cast< intptr_t >( & to),
+                    preserve_fpu() ) ) );
+        if ( from->do_unwind) throw forced_unwind();
+        return from->data;
+    }
+
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
@@ -392,6 +422,20 @@ public:
 
         typename symmetric_coroutine_impl< X >::param_type to( & x);
         yield_to_( other, & to);
+    }
+
+    void yield()
+    {
+        BOOST_ASSERT( ! is_complete() );
+
+        param_type to;
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                callee_->jump(
+                    * caller_,
+                    reinterpret_cast< intptr_t >( & to),
+                    preserve_fpu() ) ) );
+        if ( from->do_unwind) throw forced_unwind();
     }
 
     template< typename X >
