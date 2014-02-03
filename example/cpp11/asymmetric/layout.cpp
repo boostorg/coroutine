@@ -26,8 +26,8 @@ int main(int argc,char* argv[]){
         "days", "old" };
 
     int num=5,width=15;
-    boost::coroutines::coroutine<std::string>::push_type writer(
-        [&](boost::coroutines::coroutine<std::string>::pull_type& in){
+    boost::coroutines::asymmetric_coroutine<std::string>::push_type writer(
+        [&](boost::coroutines::asymmetric_coroutine<std::string>::pull_type& in){
             // finish the last line when we leave by whatever means
             FinalEOL eol;
             // pull values from upstream, lay them out 'num' to a line

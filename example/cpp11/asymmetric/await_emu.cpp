@@ -70,8 +70,8 @@ void reschedule()
 
 // ___________________________________________________________ //
 
-typedef coroutines::coroutine<void>::pull_type      coro_pull;
-typedef coroutines::coroutine<void>::push_type      coro_push;
+typedef coroutines::asymmetric_coroutine<void>::pull_type      coro_pull;
+typedef coroutines::asymmetric_coroutine<void>::push_type      coro_push;
 
 struct CurrentCoro
 {

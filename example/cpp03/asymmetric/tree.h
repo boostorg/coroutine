@@ -94,10 +94,10 @@ bool operator!=( leaf const& l, leaf  const& r)
 class tree_visitor : public visitor
 {
 private:
-    boost::coroutines::coroutine< leaf & >::push_type  &   c_;
+    boost::coroutines::asymmetric_coroutine< leaf & >::push_type  &   c_;
 
 public:
-    tree_visitor( boost::coroutines::coroutine< leaf & >::push_type & c) :
+    tree_visitor( boost::coroutines::asymmetric_coroutine< leaf & >::push_type & c) :
         c_( c)
     {}
 
@@ -111,7 +111,7 @@ public:
     { c_( l); }
 };
 
-void enumerate_leafs( boost::coroutines::coroutine< leaf & >::push_type & c, node::ptr_t root)
+void enumerate_leafs( boost::coroutines::asymmetric_coroutine< leaf & >::push_type & c, node::ptr_t root)
 {
     tree_visitor v( c);
     root->accept( v);

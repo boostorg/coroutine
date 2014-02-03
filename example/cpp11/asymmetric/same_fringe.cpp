@@ -82,7 +82,7 @@ node::ptr_t create_right_tree_from(const std::string& root)
 }
 
 // recursively walk the tree, delivering values in order
-void traverse(node::ptr_t n, boost::coroutines::coroutine<std::string>::push_type& out)
+void traverse(node::ptr_t n, boost::coroutines::asymmetric_coroutine<std::string>::push_type& out)
 {
     if (n->left)
         traverse(n->left,out);
@@ -95,8 +95,8 @@ int main()
 {
     {
         node::ptr_t left_d(create_left_tree_from("d"));
-        boost::coroutines::coroutine<std::string>::pull_type left_d_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type left_d_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(left_d,out);
             });
         std::cout << "left tree from d:\n";
@@ -106,8 +106,8 @@ int main()
         std::cout << std::endl;
 
         node::ptr_t right_b(create_right_tree_from("b"));
-        boost::coroutines::coroutine<std::string>::pull_type right_b_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type right_b_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(right_b,out);
             });
         std::cout << "right tree from b:\n";
@@ -117,8 +117,8 @@ int main()
         std::cout << std::endl;
 
         node::ptr_t right_x(create_right_tree_from("x"));
-        boost::coroutines::coroutine<std::string>::pull_type right_x_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type right_x_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(right_x,out);
             });
         std::cout << "right tree from x:\n";
@@ -130,14 +130,14 @@ int main()
 
     {
         node::ptr_t left_d(create_left_tree_from("d"));
-        boost::coroutines::coroutine<std::string>::pull_type left_d_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type left_d_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(left_d,out);
             });
 
         node::ptr_t right_b(create_right_tree_from("b"));
-        boost::coroutines::coroutine<std::string>::pull_type right_b_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type right_b_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(right_b,out);
             });
 
@@ -151,14 +151,14 @@ int main()
 
     {
         node::ptr_t left_d(create_left_tree_from("d"));
-        boost::coroutines::coroutine<std::string>::pull_type left_d_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type left_d_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(left_d,out);
             });
 
         node::ptr_t right_x(create_right_tree_from("x"));
-        boost::coroutines::coroutine<std::string>::pull_type right_x_reader(
-            [&]( boost::coroutines::coroutine<std::string>::push_type & out) {
+        boost::coroutines::asymmetric_coroutine<std::string>::pull_type right_x_reader(
+            [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out) {
                 traverse(right_x,out);
             });
 

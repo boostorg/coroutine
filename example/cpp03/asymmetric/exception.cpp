@@ -13,8 +13,8 @@
 #include <boost/coroutine/all.hpp>
 #include <boost/throw_exception.hpp>
 
-typedef boost::coroutines::coroutine< int >::pull_type pull_coro_t;
-typedef boost::coroutines::coroutine< int >::push_type push_coro_t;
+typedef boost::coroutines::asymmetric_coroutine< int >::pull_type pull_coro_t;
+typedef boost::coroutines::asymmetric_coroutine< int >::push_type push_coro_t;
 
 struct my_exception : public std::runtime_error
 {

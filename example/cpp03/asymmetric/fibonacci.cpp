@@ -10,7 +10,7 @@
 #include <boost/range.hpp>
 #include <boost/coroutine/all.hpp>
 
-void fibonacci( boost::coroutines::coroutine< int >::push_type & sink)
+void fibonacci( boost::coroutines::asymmetric_coroutine< int >::push_type & sink)
 {
     int first = 1, second = 1;
     sink( first);     
@@ -26,9 +26,9 @@ void fibonacci( boost::coroutines::coroutine< int >::push_type & sink)
 
 int main()
 {
-    boost::coroutines::coroutine< int >::pull_type source( fibonacci);
+    boost::coroutines::asymmetric_coroutine< int >::pull_type source( fibonacci);
     boost::range_iterator<
-       boost::coroutines::coroutine< int >::pull_type
+       boost::coroutines::asymmetric_coroutine< int >::pull_type
     >::type   it( boost::begin( source) );
     for ( int i = 0; i < 10; ++i)
     {

@@ -16,7 +16,7 @@ struct X : private boost::noncopyable
     ~X() { std::cout << "~X()" << std::endl; }
 };
 
-void fn( boost::coroutines::coroutine< void >::push_type & sink)
+void fn( boost::coroutines::asymmetric_coroutine< void >::push_type & sink)
 {
     X x;
     int i = 0;
@@ -30,7 +30,7 @@ void fn( boost::coroutines::coroutine< void >::push_type & sink)
 int main( int argc, char * argv[])
 {
     {
-        boost::coroutines::coroutine< void >::pull_type source( fn);
+        boost::coroutines::asymmetric_coroutine< void >::pull_type source( fn);
         for ( int k = 0; k < 3; ++k)
         {
             source();

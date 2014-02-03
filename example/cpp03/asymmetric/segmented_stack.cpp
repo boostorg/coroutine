@@ -35,7 +35,7 @@ void bar( int i)
     }
 }
 
-void foo( boost::coroutines::coroutine< void >::pull_type & source)
+void foo( boost::coroutines::asymmetric_coroutine< void >::pull_type & source)
 {
     bar( count);
     source();
@@ -44,7 +44,7 @@ void foo( boost::coroutines::coroutine< void >::pull_type & source)
 void thread_fn()
 {
     {
-        boost::coroutines::coroutine< void >::push_type sink( foo);
+        boost::coroutines::asymmetric_coroutine< void >::push_type sink( foo);
         sink();
     }
 }

@@ -20,7 +20,7 @@ struct FinalEOL
     ~FinalEOL() { std::cout << std::endl; }
 };
 
-void layout(boost::coroutines::coroutine<std::string>::pull_type& in, int num, int width)
+void layout(boost::coroutines::asymmetric_coroutine<std::string>::pull_type& in, int num, int width)
 {
     // Finish the last line when we leave by whatever means
     FinalEOL eol;
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
         ("old")
     ;
 
-    boost::coroutines::coroutine<std::string>::push_type writer(
+    boost::coroutines::asymmetric_coroutine<std::string>::push_type writer(
         boost::bind(layout, _1, 5, 15));
 
     std::copy(boost::begin(words), boost::end(words), boost::begin(writer));

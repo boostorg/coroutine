@@ -11,8 +11,8 @@
 
 int main()
 {
-    boost::coroutines::coroutine< int >::pull_type source(
-        [&]( boost::coroutines::coroutine< int >::push_type & sink) {
+    boost::coroutines::asymmetric_coroutine< int >::pull_type source(
+        [&]( boost::coroutines::asymmetric_coroutine< int >::push_type & sink) {
             int first = 1, second = 1;
             sink( first);
             sink( second);

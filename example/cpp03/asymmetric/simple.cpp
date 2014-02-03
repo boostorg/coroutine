@@ -19,8 +19,8 @@ struct X
     {}
 };
 
-typedef boost::coroutines::coroutine< X& >::pull_type pull_coro_t;
-typedef boost::coroutines::coroutine< X& >::push_type push_coro_t;
+typedef boost::coroutines::asymmetric_coroutine< X& >::pull_type pull_coro_t;
+typedef boost::coroutines::asymmetric_coroutine< X& >::push_type push_coro_t;
 
 void fn1( push_coro_t & sink)
 {

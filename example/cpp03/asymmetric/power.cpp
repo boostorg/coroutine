@@ -12,7 +12,7 @@
 #include <boost/range.hpp>
 #include <boost/coroutine/all.hpp>
 
-void power( boost::coroutines::coroutine< int >::push_type & sink, int number, int exponent)
+void power( boost::coroutines::asymmetric_coroutine< int >::push_type & sink, int number, int exponent)
 {
     int counter = 0;
     int result = 1;
@@ -27,16 +27,16 @@ int main()
 {
     {
         std::cout << "using range functions" << std::endl;
-        boost::coroutines::coroutine< int >::pull_type source( boost::bind( power, _1, 2, 8) );
-        boost::coroutines::coroutine< int >::pull_type::iterator e( boost::end( source) );
-        for ( boost::coroutines::coroutine< int >::pull_type::iterator i( boost::begin( source) );
+        boost::coroutines::asymmetric_coroutine< int >::pull_type source( boost::bind( power, _1, 2, 8) );
+        boost::coroutines::asymmetric_coroutine< int >::pull_type::iterator e( boost::end( source) );
+        for ( boost::coroutines::asymmetric_coroutine< int >::pull_type::iterator i( boost::begin( source) );
               i != e; ++i)
             std::cout << * i <<  " ";
     }
 
     {
         std::cout << "\nusing BOOST_FOREACH" << std::endl;
-        boost::coroutines::coroutine< int >::pull_type source( boost::bind( power, _1, 2, 8) );
+        boost::coroutines::asymmetric_coroutine< int >::pull_type source( boost::bind( power, _1, 2, 8) );
         BOOST_FOREACH( int i, source)
         { std::cout << i <<  " "; }
     }

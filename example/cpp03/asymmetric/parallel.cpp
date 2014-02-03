@@ -10,7 +10,7 @@
 #include <boost/bind.hpp>
 #include <boost/coroutine/all.hpp>
 
-void first( boost::coroutines::coroutine< void >::push_type & sink)
+void first( boost::coroutines::asymmetric_coroutine< void >::push_type & sink)
 {
     std::cout << "started first! ";
     for ( int i = 0; i < 10; ++i)
@@ -20,7 +20,7 @@ void first( boost::coroutines::coroutine< void >::push_type & sink)
     }
 }
 
-void second( boost::coroutines::coroutine< void >::push_type & sink)
+void second( boost::coroutines::asymmetric_coroutine< void >::push_type & sink)
 {
     std::cout << "started second! ";
     for ( int i = 0; i < 10; ++i)
@@ -33,8 +33,8 @@ void second( boost::coroutines::coroutine< void >::push_type & sink)
 int main( int argc, char * argv[])
 {
     {
-        boost::coroutines::coroutine< void >::pull_type source1( boost::bind( first, _1) );
-        boost::coroutines::coroutine< void >::pull_type source2( boost::bind( second, _1) );
+        boost::coroutines::asymmetric_coroutine< void >::pull_type source1( boost::bind( first, _1) );
+        boost::coroutines::asymmetric_coroutine< void >::pull_type source2( boost::bind( second, _1) );
         while ( source1 && source2) {
             source1();
             std::cout << " ";
