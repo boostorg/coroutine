@@ -11,30 +11,33 @@
 
 typedef boost::coroutines::symmetric_coroutine< void >  coro_t;
 
-coro_t * c1 = 0;
-coro_t * c2 = 0;
-
 int main( int argc, char * argv[])
 {
+    coro_t * other1 = 0;
+    coro_t * other2 = 0;
+
     coro_t coro1(
         [&]( coro_t::self_type & self) {
             std::cout << "foo1" << std::endl;
-            self( * c2);
+            self( * other2);
             std::cout << "foo2" << std::endl;
-            self( * c2);
+            self( * other2);
             std::cout << "foo3" << std::endl;
         });
     coro_t coro2(
         [&]( coro_t::self_type & self) {
             std::cout << "bar1" << std::endl;
-            self( * c1);
+            self( * other1);
             std::cout << "bar2" << std::endl;
-            self( * c1);
+            self( * other1);
             std::cout << "bar3" << std::endl;
         });
-    c1 = & coro1;
-    c2 = & coro2;
+
+    other1 = & coro1;
+    other2 = & coro2;
+
     coro1();
+
     std::cout << "Done" << std::endl;
 
     return EXIT_SUCCESS;
