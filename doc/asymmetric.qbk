@@ -5,18 +5,15 @@
           http://www.boost.org/LICENSE_1_0.txt
 ]
 
-[section:unidirect Unidirectional coroutine]
+[section:asymmetric Asyymetric coroutine]
 
-[note This is the default interface (macro BOOST_COROUTINES_UNIDIRECT).]
-
-Two coroutine types - __push_coro__ and __pull_coro__ - providing a
+Two asymmetric coroutine types - __push_coro__ and __pull_coro__ - providing a
 unidirectional transfer of data.
 
 
 [heading __pull_coro__]
 __pull_coro__ transfers data from another execution context (== pulled-from).
-The class has only one template parameter defining the transferred parameter
-type.
+The first template parameter defining the transferred parameter type.
 The constructor of __pull_coro__ takes a function (__coro_fn__) accepting a
 reference to a __push_coro__ as argument. Instantiating a __pull_coro__ passes
 the control of execution to __coro_fn__ and a complementary __push_coro__ is
@@ -28,8 +25,8 @@ context; it transfers no data.
 __pull_coro__ provides input iterators (__pull_coro_it__) and __begin__/__end__
 are overloaded. The increment-operation switches the context and transfers data.
 
-        boost::coroutines::coroutine<int>::pull_type source(
-            [&](boost::coroutines::coroutine<int>::push_type& sink){
+        boost::coroutines::asymmetric_coroutine<int>::pull_type source(
+            [&](boost::coroutines::asymmetric_coroutine<int>::push_type& sink){
                 int first=1,second=1;
                 sink(first);
                 sink(second);
@@ -68,8 +65,7 @@ Fibonacci numbers.
 
 [heading __push_coro__]
 __push_coro__ transfers data to the other execution context (== pushed-to).
-The class has only one template parameter defining the transferred parameter
-type.
+The first template parameter defining the transferred parameter type.
 The constructor of __push_coro__ takes a function (__coro_fn__) accepting a
 reference to a __pull_coro__ as argument. In contrast to __pull_coro__,
 instantiating a __push_coro__ does not pass the control of execution to
@@ -90,8 +86,8 @@ and transfers data.
         };
 
         const int num=5, width=15;
-        boost::coroutines::coroutine<std::string>::push_type writer(
-            [&](boost::coroutines::coroutine<std::string>::pull_type& in){
+        boost::coroutines::asymmetric_coroutine<std::string>::push_type writer(
+            [&](boost::coroutines::asymmetric_coroutine<std::string>::pull_type& in){
                 // finish the last line when we leave by whatever means
                 FinalEOL eol;
                 // pull values from upstream, lay them out 'num' to a line
@@ -145,72 +141,6 @@ overloaded, the ['std::copy] algorithm can be used to iterate over the vector
 containing the strings and pass them one by one to the coroutine.
 
 
-[heading stackful]
-Each instance of a coroutine has its own stack.
-
-In contrast to stackless coroutines, stackful coroutines allow invoking the
-suspend operation out of arbitrary sub-stackframes, enabling escape-and-reenter
-recursive operations.
-
-
-[heading move-only]
-A coroutine is moveable-only.
-
-If it were copyable, then its stack with all the objects allocated on it
-would be copied too. That would force undefined behaviour if some of these
-objects were RAII-classes (manage a resource via RAII pattern). When the first
-of the coroutine copies terminates (unwinds its stack), the RAII class
-destructors will release their managed resources. When the second copy
-terminates, the same destructors will try to doubly-release the same resources,
-leading to undefined behavior.
-
-
-[heading clean-up]
-On coroutine destruction the associated stack will be unwound.
-
-The constructor of coroutine allows to pass an customized ['stack-allocator].
-['stack-allocator] is free to deallocate the stack or cache it for future usage
-(for coroutines created later).
-
-
-[heading segmented stack]
-__push_coro__ and __pull_coro__ does support segmented stacks (growing on
-demand).
-
-It is not always possible to estimated the required stack size - in most cases
-too much memory is allocated (waste of virtual address-space).
-
-At construction a coroutine starts with a default (minimal) stack size. This
-minimal stack size is the maximum of page size and the canonical size for signal
-stack (macro SIGSTKSZ on POSIX).
-
-At this time of writing only GCC (4.7)\cite{gccsplit} is known to support
-segmented stacks. With version 1.54 __boost_coroutine__ provides support for
-segmented stacks.
-
-The destructor releases the associated stack. The implementer is free to
-deallocate the stack or to cache it for later usage.
-
-
-[heading context switch]
-A coroutine saves and restores registers according to the underlying ABI on
-each context switch.
-
-Some applications do not use floating-point registers and can disable preserving
-fpu registers for performance reasons.
-
-[note According to the calling convention the FPU registers are preserved by
-default.]
-
-On POSIX systems, the coroutine context switch does not preserve signal masks
-for performance reasons.
-
-A context switch is done via __push_coro_op__ and __pull_coro_op__.
-
-[warning Calling __push_coro_op__/__pull_coro_op__ from inside the [_same]
-coroutine results in undefined behaviour.]
-
-
 [heading coroutine-function]
 The __coro_fn__ returns ['void] and takes its counterpart-coroutine as
 argument, so that using the coroutine passed as argument to __coro_fn__ is the
@@ -237,8 +167,8 @@ still valid and a data value is available or __coro_fn__ has terminated
 (__pull_coro__ is invalid; no data value available). Access to the transferred
 data value is given by __pull_coro_get__.
 
-        boost::coroutines::coroutine<int>::pull_type source( // constructor enters coroutine-function
-            [&](boost::coroutines::coroutine<int>::push_type& sink){
+        boost::coroutines::asymmetric_coroutine<int>::pull_type source( // constructor enters coroutine-function
+            [&](boost::coroutines::asymmetric_coroutine<int>::push_type& sink){
                 sink(1); // push {1} back to main-context
                 sink(1); // push {1} back to main-context
                 sink(2); // push {2} back to main-context
@@ -261,8 +191,8 @@ The main-context must call this __push_coro_op__ in order to transfer each data
 value into the __coro_fn__.
 Access to the transferred data value is given by __pull_coro_get__.
 
-        boost::coroutines::coroutine<int>::push_type sink( // constructor does NOT enter coroutine-function
-            [&](boost::coroutines::coroutine<int>::pull_type& source){
+        boost::coroutines::asymmetric_coroutine<int>::push_type sink( // constructor does NOT enter coroutine-function
+            [&](boost::coroutines::asymmetric_coroutine<int>::pull_type& source){
                 for (int i:source) {
                     std::cout << i <<  " ";
                 }
@@ -282,8 +212,8 @@ Splitting-up the access of parameters from context switch function enables to
 check if __pull_coro__ is valid after return from __pull_coro_op__, e.g.
 __pull_coro__ has values and __coro_fn__ has not terminated.
 
-        boost::coroutines::coroutine<boost::tuple<int,int>>::push_type sink(
-            [&](boost::coroutines::coroutine<boost::tuple<int,int>>::pull_type& source){
+        boost::coroutines::asymmetric_coroutine<boost::tuple<int,int>>::push_type sink(
+            [&](boost::coroutines::asymmetric_coroutine<boost::tuple<int,int>>::pull_type& source){
                 // access tuple {7,11}; x==7 y==1
                 int x,y;
                 boost::tie(x,y)=source.get();
@@ -343,8 +273,8 @@ After unwinding, a __coro__ is complete.
         };
 
         {
-            boost::coroutines::coroutine<void>::push_type sink(
-                [&](boost::coroutines::coroutine<void>::pull_type& source){
+            boost::coroutines::asymmetric_coroutine<void>::push_type sink(
+                [&](boost::coroutines::asymmetric_coroutine<void>::pull_type& source){
                     X x;
                     for(int=0;;++i){
                         std::cout<<"fn(): "<<i<<std::endl;
@@ -359,7 +289,7 @@ After unwinding, a __coro__ is complete.
             sink();
             sink();
 
-            std::cout<<"c is complete: "<<std::boolalpha<<c.is_complete()<<"\n";
+            std::cout<<"sink is complete: "<<std::boolalpha<<sink<<"\n";
         }
 
         std::cout<<"Done"<<std::endl;
@@ -372,7 +302,7 @@ After unwinding, a __coro__ is complete.
             fn(): 3
             fn(): 4
             fn(): 5
-            c is complete: false
+            sink is complete: false
             ~X()
             Done
 
@@ -382,8 +312,8 @@ __boost_coroutine__ provides output- and input-iterators using __boost_range__.
 __pull_coro__ can be used via input-iterators using __begin__ and __end__.
 
         int number=2,exponent=8;
-        boost::coroutines::coroutine< int >::pull_type source(
-            [&]( boost::coroutines::coroutine< int >::push_type & sink){
+        boost::coroutines::asymmetric_coroutine< int >::pull_type source(
+            [&]( boost::coroutines::asymmetric_coroutine< int >::push_type & sink){
                 int counter=0,result=1;
                 while(counter++<exponent){
                     result=result*number;
@@ -402,8 +332,8 @@ __pull_coro__ can be used via input-iterators using __begin__ and __end__.
 
 Output-iterators can be created from __push_coro__.
 
-        boost::coroutines::coroutine<int>::push_type sink(
-            [&](boost::coroutines::coroutine<int>::pull_type& source){
+        boost::coroutines::asymmetric_coroutine<int>::push_type sink(
+            [&](boost::coroutines::asymmetric_coroutine<int>::pull_type& source){
                 while(source){
                     std::cout << source.get() <<  " ";
                     source();
@@ -416,11 +346,11 @@ Output-iterators can be created from __push_coro__.
 
 [heading Exit a __coro_fn__]
 __coro_fn__ is exited with a simple return statement jumping back to the calling
-routine. The __pull_coro__/__push_coro__ becomes complete, e.g. __coro_bool__
-will return 'false'.
+routine. The __pull_coro__/__push_coro__ becomes complete, e.g. __pull_coro_bool__/
+__push_coro_bool__ will return 'false'.
 
 [important After returning from __coro_fn__ the __coro__ is complete (can not
-resumed with __coro_op__).]
+resumed with __push_coro_op__/__pull_coro_op__).]
 
 
 
@@ -723,7 +653,7 @@ of `other`.]]
 [variablelist
 [[Effects:] [Gives execution control back to calling context by returning
 a value of type R. The return type of this function is a __tuple__ containing
-the arguments passed to __coro_op__.]]
+the arguments passed to __push_coro_op__.]]
 [[Throws:] [Nothing.]]
 ]
 

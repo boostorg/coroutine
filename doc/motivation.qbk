@@ -102,7 +102,7 @@ invalidated).
 
         // recursively walk the tree, delivering values in order
         void traverse(node::ptr_t n,
-                      boost::coroutines::coroutine<std::string>::push_type& out){
+                      boost::coroutines::asymmetric_coroutine<std::string>::push_type& out){
             if(n->left) traverse(n->left,out);
             out(n->value);
             if(n->right) traverse(n->right,out);
@@ -111,14 +111,14 @@ invalidated).
         // evaluation
         {
             node::ptr_t left_d(create_left_tree_from("d"));
-            boost::coroutines::coroutine<std::string>::pull_type left_d_reader(
-                [&]( boost::coroutines::coroutine<std::string>::push_type & out){
+            boost::coroutines::asymmetric_coroutine<std::string>::pull_type left_d_reader(
+                [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out){
                     traverse(left_d,out);
                 });
 
             node::ptr_t right_b(create_right_tree_from("b"));
-            boost::coroutines::coroutine<std::string>::pull_type right_b_reader(
-                [&]( boost::coroutines::coroutine<std::string>::push_type & out){
+            boost::coroutines::asymmetric_coroutine<std::string>::pull_type right_b_reader(
+                [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out){
                     traverse(right_b,out);
                 });
 
@@ -131,14 +131,14 @@ invalidated).
         }
         {
             node::ptr_t left_d(create_left_tree_from("d"));
-            boost::coroutines::coroutine<std::string>::pull_type left_d_reader(
-                [&]( boost::coroutines::coroutine<std::string>::push_type & out){
+            boost::coroutines::asymmetric_coroutine<std::string>::pull_type left_d_reader(
+                [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out){
                     traverse(left_d,out);
                 });
 
             node::ptr_t right_x(create_right_tree_from("x"));
-            boost::coroutines::coroutine<std::string>::pull_type right_x_reader(
-                [&]( boost::coroutines::coroutine<std::string>::push_type & out){
+            boost::coroutines::asymmetric_coroutine<std::string>::pull_type right_x_reader(
+                [&]( boost::coroutines::asymmetric_coroutine<std::string>::push_type & out){
                     traverse(right_x,out);
                 });
 
@@ -157,11 +157,55 @@ invalidated).
         Done
 
 
+[heading merging two sorted arrays]
+
+This example demonstrates how symmetric coroutines merge two sorted arrays.
+
+        std::vector< int > merge( std::vector< int > const& a, std::vector< int > const& b)
+        {
+            std::vector< int > c;
+            std::size_t idx_a = 0, idx_b = 0;
+            boost::coroutines::symmetric_coroutine< void > * other_a = 0, * other_b = 0;
+
+            boost::coroutines::symmetric_coroutine< void > coro_a(
+                [&]( boost::coroutines::symmetric_coroutine< void >::self_type & self) {
+                    while ( idx_a < a.size() )
+                    {
+                        if ( b[idx_b] < a[idx_a])
+                            self( * other_b);
+                        c.push_back(a[idx_a++]);
+                    }
+                    while ( c.size() < a.size() + b.size())
+                        c.push_back( b[idx_b]); 
+                });
+
+            boost::coroutines::symmetric_coroutine< void > coro_b(
+                [&]( boost::coroutines::symmetric_coroutine< void >::self_type & self) {
+                    while ( idx_b < b.size() )
+                    {
+                        if ( a[idx_a] < b[idx_b])
+                            self( * other_a);
+                        c.push_back(b[idx_b++]);
+                    }
+                    while ( c.size() < ( a.size() + b.size() ) )
+                        c.push_back( a[idx_a]); 
+                });
+
+
+            other_a = & coro_a;
+            other_b = & coro_b;
+
+            coro_a();
+
+            return c;
+        }
+
+
 [heading chaining coroutines]
 
 The following example demonstrates how coroutines could be chained.
 
-        typedef boost::coroutines::coroutine<std::string> coro_t;
+        typedef boost::coroutines::asymmetric_coroutine<std::string> coro_t;
 
         // deliver each line of input stream to sink as a separate string
         void readlines(coro_t::push_type& sink, std::istream& in){
