@@ -87,8 +87,8 @@ public:
         return * this;
     }
 
-    template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X & x)
+    template< typename Coro >
+    symmetric_coroutine_self & operator()( Coro & other, typename Coro::value_type & x)
     {
         BOOST_ASSERT( other);
 
@@ -173,8 +173,8 @@ public:
         return * this;
     }
 
-    template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X & x)
+    template< typename Coro >
+    symmetric_coroutine_self & operator()( Coro & other, typename Coro::value_type & x)
     {
         BOOST_ASSERT( other);
 
@@ -245,8 +245,8 @@ public:
         return * this;
     }
 
-    template< typename Coro, typename X >
-    symmetric_coroutine_self & operator()( Coro & other, X & x)
+    template< typename Coro >
+    symmetric_coroutine_self & operator()( Coro & other, typename Coro::value_type & x)
     {
         BOOST_ASSERT( other);
 

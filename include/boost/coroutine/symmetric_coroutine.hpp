@@ -54,6 +54,7 @@ private:
     detail::coroutine_context   callee_;
 
 public:
+    typedef T                                       value_type;
     typedef detail::symmetric_coroutine_self< T >   self_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
@@ -340,6 +341,7 @@ private:
     detail::coroutine_context   callee_;
 
 public:
+    typedef T                                           value_type;
     typedef detail::symmetric_coroutine_self< T & >     self_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
@@ -618,6 +620,7 @@ private:
     detail::coroutine_context   callee_;
 
 public:
+    typedef void                                            value_type;
     typedef detail::symmetric_coroutine_self< void >        self_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
