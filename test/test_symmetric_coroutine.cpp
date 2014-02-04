@@ -107,8 +107,6 @@ public:
     { value1 = state; }
 };
 
-struct my_exception {};
-
 void empty( coro::symmetric_coroutine< void >::self_type &) {}
 
 void f2( coro::symmetric_coroutine< void >::self_type &)
@@ -437,26 +435,6 @@ void test_invalid_arg()
     BOOST_CHECK( value1);
 }
 
-void test_exceptions()
-{
-    bool thrown = false;
-    std::runtime_error ex("abc");
-    try
-    {
-        coro::symmetric_coroutine< void > coro( boost::bind( f9< std::runtime_error >, _1, ex) );
-        BOOST_CHECK( coro);
-        coro();
-        BOOST_CHECK( false);
-    }
-    catch ( std::runtime_error const&)
-    { thrown = true; }
-    catch ( std::exception const&)
-    {}
-    catch (...)
-    {}
-    BOOST_CHECK( thrown);
-}
-
 void test_yield_to_void()
 {
     value2 = 0;
@@ -573,7 +551,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_termination) );
     test->add( BOOST_TEST_CASE( & test_unwind) );
     test->add( BOOST_TEST_CASE( & test_no_unwind) );
-    test->add( BOOST_TEST_CASE( & test_exceptions) );
     test->add( BOOST_TEST_CASE( & test_yield_to_void) );
     test->add( BOOST_TEST_CASE( & test_yield_to_int) );
     test->add( BOOST_TEST_CASE( & test_yield_to_ref) );

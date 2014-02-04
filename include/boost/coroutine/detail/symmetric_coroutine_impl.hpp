@@ -46,7 +46,6 @@ private:
     typedef parameters< R >                           param_type;
 
     int                     flags_;
-    exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
@@ -56,7 +55,6 @@ private:
             * callee_,
             reinterpret_cast< intptr_t >( to),
             preserve_fpu() );
-        if ( except_) rethrow_exception( except_);
     }
 
     template< typename Other >
@@ -78,7 +76,6 @@ public:
                               coroutine_context * callee,
                               bool unwind, bool preserve_fpu) :
         flags_( 0),
-        except_(),
         caller_( caller),
         callee_( callee)
     {
@@ -199,7 +196,6 @@ private:
     typedef parameters< R & >                         param_type;
 
     int                     flags_;
-    exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
@@ -209,7 +205,6 @@ private:
             * callee_,
             reinterpret_cast< intptr_t >( to),
             preserve_fpu() );
-        if ( except_) rethrow_exception( except_);
     }
 
     template< typename Other >
@@ -231,7 +226,6 @@ public:
                               coroutine_context * callee,
                               bool unwind, bool preserve_fpu) :
         flags_( 0),
-        except_(),
         caller_( caller),
         callee_( callee)
     {
@@ -344,7 +338,6 @@ private:
     typedef parameters< void >                          param_type;
 
     int                     flags_;
-    exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
@@ -366,7 +359,6 @@ public:
                               coroutine_context * callee,
                               bool unwind, bool preserve_fpu) :
         flags_( 0),
-        except_(),
         caller_( caller),
         callee_( callee)
     {
@@ -411,7 +403,6 @@ public:
             * callee_,
             reinterpret_cast< intptr_t >( & to),
             preserve_fpu() );
-        if ( except_) rethrow_exception( except_);
     }
 
     template< typename X >

@@ -8,6 +8,7 @@
 #define BOOST_COROUTINES_DETAIL_TRAMPOLINE_H
 
 #include <cstddef>
+#include <exception>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -66,7 +67,7 @@ void trampoline( intptr_t vp)
         catch ( forced_unwind const&)
         {}
         catch (...)
-        { c.except_ = current_exception(); }
+        { std::terminate(); }
     }
 
     c.flags_ |= flag_complete;
@@ -107,7 +108,7 @@ void trampoline_void( intptr_t vp)
         catch ( forced_unwind const&)
         {}
         catch (...)
-        { c.except_ = current_exception(); }
+        { std::terminate(); }
     }
 
     c.flags_ |= flag_complete;
