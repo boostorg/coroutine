@@ -237,14 +237,10 @@ void test_move()
         coro::symmetric_coroutine< void > coro1;
         coro::symmetric_coroutine< void > coro2( empty);
         BOOST_CHECK( ! coro1);
-        BOOST_CHECK( coro1.empty() );
         BOOST_CHECK( coro2);
-        BOOST_CHECK( ! coro2.empty() );
         coro1 = boost::move( coro2);
         BOOST_CHECK( coro1);
-        BOOST_CHECK( ! coro1.empty() );
         BOOST_CHECK( ! coro2);
-        BOOST_CHECK( coro2.empty() );
     }
 
     {

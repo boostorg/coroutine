@@ -288,13 +288,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( symmetric_coroutine & other) BOOST_NOEXCEPT
     {
@@ -585,13 +582,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( symmetric_coroutine & other) BOOST_NOEXCEPT
     {
@@ -874,13 +868,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( symmetric_coroutine & other) BOOST_NOEXCEPT
     {
