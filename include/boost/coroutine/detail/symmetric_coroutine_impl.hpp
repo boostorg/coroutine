@@ -111,14 +111,6 @@ public:
         }
     }
 
-    void run() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! is_complete() );
-
-        param_type to;
-        run_( & to);
-    }
-
     void run( R r) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
@@ -259,14 +251,6 @@ public:
 
             BOOST_ASSERT( is_complete() );
         }
-    }
-
-    void run() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! is_complete() );
-
-        param_type to;
-        run_( & to);
     }
 
     void run( R & arg) BOOST_NOEXCEPT

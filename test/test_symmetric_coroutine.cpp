@@ -140,19 +140,6 @@ void f7( coro::symmetric_coroutine< int >::self_type & self)
     if ( self) value2 = self.get();
 }
 
-void f8( coro::symmetric_coroutine< int >::self_type & self)
-{
-    try
-    {
-        int i = self.get();
-        (void)i;
-    }
-    catch ( coro::invalid_result const&)
-    {
-        value1 = true; 
-    }
-}
-
 template< typename E >
 void f9( coro::symmetric_coroutine< void >::self_type &, E const& e)
 { throw e; }
@@ -249,7 +236,7 @@ void test_move()
         BOOST_CHECK( cp.state);
         BOOST_CHECK( ! value1);
         coro::symmetric_coroutine< int > coro( cp);
-        coro();
+        coro( 3);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( value1);
     }
@@ -260,7 +247,7 @@ void test_move()
         BOOST_CHECK( mv.state);
         BOOST_CHECK( ! value1);
         coro::symmetric_coroutine< int > coro( boost::move( mv) );
-        coro();
+        coro( 7);
         BOOST_CHECK( ! mv.state);
         BOOST_CHECK( value1);
     }
@@ -313,15 +300,6 @@ void test_pass_value()
     BOOST_CHECK_EQUAL( 0, value2);
     coro::symmetric_coroutine< X > coro( f3);
     BOOST_CHECK( coro);
-    coro();
-    BOOST_CHECK( ! coro);
-    BOOST_CHECK_EQUAL( ( int)7, x.i);
-    BOOST_CHECK_EQUAL( 0, value2);
-
-    BOOST_CHECK_EQUAL( ( int)7, x.i);
-    BOOST_CHECK_EQUAL( 0, value2);
-    coro = coro::symmetric_coroutine< X >( f3);
-    BOOST_CHECK( coro);
     coro(7);
     BOOST_CHECK( ! coro);
     BOOST_CHECK_EQUAL( ( int)7, x.i);
@@ -335,12 +313,6 @@ void test_pass_reference()
     X x;
     coro::symmetric_coroutine< X& > coro( f4);
     BOOST_CHECK( coro);
-    coro();
-    BOOST_CHECK( ! coro);
-    BOOST_CHECK( 0 == p);
-
-    coro = coro::symmetric_coroutine< X& >( f4);
-    BOOST_CHECK( coro);
     coro( x);
     BOOST_CHECK( ! coro);
     BOOST_CHECK( p == & x);
@@ -352,12 +324,6 @@ void test_pass_pointer()
 
     X x;
     coro::symmetric_coroutine< X* > coro( f5);
-    BOOST_CHECK( coro);
-    coro();
-    BOOST_CHECK( ! coro);
-    BOOST_CHECK( 0 == p);
-
-    coro = coro::symmetric_coroutine< X* >( f5);
     BOOST_CHECK( coro);
     coro( & x);
     BOOST_CHECK( ! coro);
@@ -417,18 +383,6 @@ void test_termination()
     coro(7);
     BOOST_CHECK( ! coro);
     BOOST_CHECK_EQUAL( ( int) 7, value2);
-}
-
-void test_invalid_arg()
-{
-    value1 = false;
-
-    coro::symmetric_coroutine< int > coro( f8);
-    BOOST_CHECK( coro);
-    BOOST_CHECK( ! value1);
-    coro();
-    BOOST_CHECK( ! coro);
-    BOOST_CHECK( value1);
 }
 
 void test_yield_to_void()
@@ -543,7 +497,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_pass_value) );
     test->add( BOOST_TEST_CASE( & test_pass_reference) );
     test->add( BOOST_TEST_CASE( & test_pass_pointer) );
-    test->add( BOOST_TEST_CASE( & test_invalid_arg) );
     test->add( BOOST_TEST_CASE( & test_termination) );
     test->add( BOOST_TEST_CASE( & test_unwind) );
     test->add( BOOST_TEST_CASE( & test_no_unwind) );

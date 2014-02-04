@@ -302,14 +302,6 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine & operator()() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( * this);
-
-        impl_->run();
-        return * this;
-    }
-
     symmetric_coroutine & operator()( T t) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
@@ -594,14 +586,6 @@ public:
         std::swap( stack_ctx_, other.stack_ctx_);
         std::swap( caller_, other.caller_);
         std::swap( callee_, other.callee_);
-    }
-
-    symmetric_coroutine & operator()() BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( * this);
-
-        impl_->run();
-        return * this;
     }
 
     symmetric_coroutine & operator()( T & t) BOOST_NOEXCEPT

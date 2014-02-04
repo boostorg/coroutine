@@ -85,7 +85,7 @@ duration_type measure_time_x( duration_type overhead)
         boost::coroutines::symmetric_coroutine< X > c( fn_x,
                 boost::coroutines::attributes( preserve_fpu) );
         time_point_type start( clock_type::now() );
-        c();
+        c( x);
         total += clock_type::now() - start;
     }
     total -= jobs * overhead; // overhead of measurement
