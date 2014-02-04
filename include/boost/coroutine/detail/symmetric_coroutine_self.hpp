@@ -43,17 +43,17 @@ private:
     R           *   result_;
 
 public:
-    symmetric_coroutine_self() :
+    symmetric_coroutine_self() BOOST_NOEXCEPT :
         impl_( 0),
         result_( 0)
     {}
 
-    symmetric_coroutine_self( impl_type * impl) :
+    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
         impl_( impl),
         result_( 0)
     { BOOST_ASSERT( impl_); }
 
-    symmetric_coroutine_self( impl_type * impl, R * result) :
+    symmetric_coroutine_self( impl_type * impl, R * result) BOOST_NOEXCEPT :
         impl_( impl),
         result_( result)
     { BOOST_ASSERT( impl_); }
@@ -129,17 +129,17 @@ private:
     R           *   result_;
 
 public:
-    symmetric_coroutine_self() :
+    symmetric_coroutine_self() BOOST_NOEXCEPT :
         impl_( 0),
         result_( 0)
     {}
 
-    symmetric_coroutine_self( impl_type * impl) :
+    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
         impl_( impl),
         result_( 0)
     { BOOST_ASSERT( impl_); }
 
-    symmetric_coroutine_self( impl_type * impl, R * result) :
+    symmetric_coroutine_self( impl_type * impl, R * result) BOOST_NOEXCEPT :
         impl_( impl),
         result_( result)
     { BOOST_ASSERT( impl_); }
@@ -212,11 +212,11 @@ private:
     impl_type   *   impl_;
 
 public:
-    symmetric_coroutine_self() :
+    symmetric_coroutine_self() BOOST_NOEXCEPT :
         impl_( 0)
     {}
 
-    symmetric_coroutine_self( impl_type * impl) :
+    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
         impl_( impl)
     { BOOST_ASSERT( impl_); }
 

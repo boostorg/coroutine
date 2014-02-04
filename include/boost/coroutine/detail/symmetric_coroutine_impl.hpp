@@ -49,7 +49,7 @@ private:
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
-    void run_( param_type * to)
+    void run_( param_type * to) BOOST_NOEXCEPT
     {
         caller_->jump(
             * callee_,
@@ -74,7 +74,7 @@ private:
 public:
     symmetric_coroutine_impl( coroutine_context * caller,
                               coroutine_context * callee,
-                              bool unwind, bool preserve_fpu) :
+                              bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
         caller_( caller),
         callee_( callee)
@@ -111,7 +111,7 @@ public:
         }
     }
 
-    void run()
+    void run() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -119,7 +119,7 @@ public:
         run_( & to);
     }
 
-    void run( R r)
+    void run( R r) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -127,7 +127,7 @@ public:
         run_( & to);
     }
 
-    void run( BOOST_RV_REF( R) r)
+    void run( BOOST_RV_REF( R) r) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -199,7 +199,7 @@ private:
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
-    void run_( param_type * to)
+    void run_( param_type * to) BOOST_NOEXCEPT
     {
         caller_->jump(
             * callee_,
@@ -224,7 +224,7 @@ private:
 public:
     symmetric_coroutine_impl( coroutine_context * caller,
                               coroutine_context * callee,
-                              bool unwind, bool preserve_fpu) :
+                              bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
         caller_( caller),
         callee_( callee)
@@ -261,7 +261,7 @@ public:
         }
     }
 
-    void run()
+    void run() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -269,7 +269,7 @@ public:
         run_( & to);
     }
 
-    void run( R & arg)
+    void run( R & arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -357,7 +357,7 @@ private:
 public:
     symmetric_coroutine_impl( coroutine_context * caller,
                               coroutine_context * callee,
-                              bool unwind, bool preserve_fpu) :
+                              bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
         caller_( caller),
         callee_( callee)
@@ -394,7 +394,7 @@ public:
         }
     }
 
-    void run()
+    void run() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -415,7 +415,7 @@ public:
         yield_to_( other, & to);
     }
 
-    void yield()
+    void yield() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 

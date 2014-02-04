@@ -56,7 +56,7 @@ private:
 public:
     typedef detail::symmetric_coroutine_self< T >   self_type;
 
-    symmetric_coroutine() :
+    symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -262,7 +262,7 @@ public:
     }
 #endif
 
-    ~symmetric_coroutine()
+    ~symmetric_coroutine() BOOST_NOEXCEPT
     {
         if ( 0 != stack_ctx_.sp)
         {
@@ -305,7 +305,7 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine & operator()()
+    symmetric_coroutine & operator()() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
@@ -313,7 +313,7 @@ public:
         return * this;
     }
 
-    symmetric_coroutine & operator()( T t)
+    symmetric_coroutine & operator()( T t) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
@@ -321,7 +321,7 @@ public:
         return * this;
     }
 
-    symmetric_coroutine & operator()( BOOST_RV_REF( T) t)
+    symmetric_coroutine & operator()( BOOST_RV_REF( T) t) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
@@ -338,7 +338,7 @@ private:
     friend class detail::symmetric_coroutine_self;
 
     typedef detail::symmetric_coroutine_impl< T & >     impl_type;
-    typedef detail::parameters< T & >                    param_type;
+    typedef detail::parameters< T & >                   param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine)
 
@@ -353,7 +353,7 @@ private:
 public:
     typedef detail::symmetric_coroutine_self< T & >     self_type;
 
-    symmetric_coroutine() :
+    symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -559,7 +559,7 @@ public:
     }
 #endif
 
-    ~symmetric_coroutine()
+    ~symmetric_coroutine() BOOST_NOEXCEPT
     {
         if ( 0 != stack_ctx_.sp)
         {
@@ -602,7 +602,7 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine & operator()()
+    symmetric_coroutine & operator()() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
@@ -610,7 +610,7 @@ public:
         return * this;
     }
 
-    symmetric_coroutine & operator()( T & t)
+    symmetric_coroutine & operator()( T & t) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
@@ -642,7 +642,7 @@ private:
 public:
     typedef detail::symmetric_coroutine_self< void >        self_type;
 
-    symmetric_coroutine() :
+    symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -848,7 +848,7 @@ public:
     }
 #endif
 
-    ~symmetric_coroutine()
+    ~symmetric_coroutine() BOOST_NOEXCEPT
     {
         if ( 0 != stack_ctx_.sp)
         {
@@ -891,7 +891,7 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine & operator()()
+    symmetric_coroutine & operator()() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
