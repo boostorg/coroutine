@@ -73,7 +73,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || ! has_result(); }
+    { return 0 == impl_ || 0 == result_; }
 
     void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
     {
@@ -103,13 +103,6 @@ public:
 
         result_ = impl_->yield_to( other.impl_);
         return * this;
-    }
-
-    bool has_result() const
-    {
-        BOOST_ASSERT( ! empty() );
-
-        return 0 != result_;
     }
 
     R get() const
@@ -166,7 +159,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || ! has_result(); }
+    { return 0 == impl_ || 0 == result_; }
 
     void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
     {
@@ -196,13 +189,6 @@ public:
 
         result_ = impl_->yield_to( other.impl_);
         return * this;
-    }
-
-    bool has_result() const
-    {
-        BOOST_ASSERT( ! empty() );
-
-        return 0 != result_;
     }
 
     R & get() const
