@@ -5,7 +5,7 @@
           http://www.boost.org/LICENSE_1_0.txt
 ]
 
-[section:asymmetric Asyymetric coroutine]
+[section:asymmetric Asymmetric coroutine]
 
 Two asymmetric coroutine types - __push_coro__ and __pull_coro__ - providing a
 unidirectional transfer of data.
@@ -354,12 +354,12 @@ resumed with __push_coro_op__/__pull_coro_op__).]
 
 
 
-[section:pull_coro Class `coroutine<>::pull_type`]
+[section:pull_coro Class `asymmetric_coroutine<>::pull_type`]
 
     #include <boost/coroutine/coroutine.hpp>
 
     template< typename R, typename StackAllocator = standard_stack_allocator >
-    class coroutine<>::pull_type
+    class asymmetric_coroutine<>::pull_type
     {
     public:
         pull_type();
@@ -478,9 +478,9 @@ passed to the coroutine-function).]]
 
 [heading `R get()()`]
 
-    R    coroutine<R>::pull_type::get();
-    R&   coroutine<R&>::pull_type::get();
-    void coroutine<void>pull_type::get()=delete;
+    R    asymmetric_coroutine<R>::pull_type::get();
+    R&   asymmetric_coroutine<R&>::pull_type::get();
+    void asymmetric_coroutine<void>pull_type::get()=delete;
 
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
@@ -524,12 +524,12 @@ of `other`.]]
 [endsect]
 
 
-[section:push_coro Class `coroutine<>::push_type`]
+[section:push_coro Class `asymmetric_coroutine<>::push_type`]
 
     #include <boost/coroutine/coroutine.hpp>
 
     template< typename Arg, typename StackAllocator = standard_stack_allocator >
-    class coroutine<>::push_type
+    class asymmetric_coroutine<>::push_type
     {
     public:
         push_type();
@@ -630,10 +630,10 @@ Otherwise false.]]
 
 [heading `push_type<> & operator()(Arg&& arg)`]
 
-        push_type& coroutine<Arg>::push_type::operator()(const Arg&);
-        push_type& coroutine<Arg>::push_type::operator()(Arg&&);
-        push_type& coroutine<Arg&>::push_type::operator()(Arg&);
-        push_type& coroutine<void>::push_type::operator()();
+        push_type& asymmetric_coroutine<Arg>::push_type::operator()(const Arg&);
+        push_type& asymmetric_coroutine<Arg>::push_type::operator()(Arg&&);
+        push_type& asymmetric_coroutine<Arg&>::push_type::operator()(Arg&);
+        push_type& asymmetric_coroutine<void>::push_type::operator()();
 
 [variablelist
 [[Preconditions:] [operator unspecified-bool-type() returns true for `*this`.]]
