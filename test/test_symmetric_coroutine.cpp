@@ -113,19 +113,16 @@ void f2( coro::symmetric_coroutine< void >::self_type &)
 { ++value2; }
 
 void f3( coro::symmetric_coroutine< X >::self_type & self)
-{ if ( self) value2 = self.get().i; }
+{ value2 = self.get().i; }
 
 void f4( coro::symmetric_coroutine< X& >::self_type & self)
 {
-    if ( self)
-    {
-       X & x = self.get();
-       p = & x;
-    }
+    X & x = self.get();
+    p = & x;
 }
 
 void f5( coro::symmetric_coroutine< X* >::self_type & self)
-{ if ( self) p = self.get(); }
+{ p = self.get(); }
 
 void f6( coro::symmetric_coroutine< void >::self_type & self)
 {
@@ -135,9 +132,9 @@ void f6( coro::symmetric_coroutine< void >::self_type & self)
 
 void f7( coro::symmetric_coroutine< int >::self_type & self)
 {
-    if ( self) value2 = self.get();
+    value2 = self.get();
     self( *term_coro);
-    if ( self) value2 = self.get();
+    value2 = self.get();
 }
 
 template< typename E >
@@ -175,16 +172,6 @@ void f12( coro::symmetric_coroutine< X& >::self_type & self,
 void f121( coro::symmetric_coroutine< X& >::self_type & self)
 { p = & self.get(); }
 
-void f13( coro::symmetric_coroutine< int >::self_type & self,
-          coro::symmetric_coroutine< int > & other)
-{
-    self( other);
-    value2 = self.get();
-}
-
-void f131( coro::symmetric_coroutine< int >::self_type & self)
-{ if ( self) value2 = self.get(); }
-
 void f14( coro::symmetric_coroutine< int >::self_type & self,
           coro::symmetric_coroutine< std::string > & other)
 {
@@ -194,7 +181,7 @@ void f14( coro::symmetric_coroutine< int >::self_type & self,
 }
 
 void f141( coro::symmetric_coroutine< std::string >::self_type & self)
-{ if ( self) value3 = self.get(); }
+{ value3 = self.get(); }
 
 void f15( coro::symmetric_coroutine< int >::self_type & self,
           int offset,
@@ -446,25 +433,6 @@ void test_yield_to_ref()
     BOOST_CHECK( p == & x2);
 }
 
-void test_yield_to_nothing()
-{
-    value2 = 0;
-
-    coro::symmetric_coroutine< int > coro_other( f131);
-    coro::symmetric_coroutine< int > coro( boost::bind( f13, _1, boost::ref( coro_other) ) );
-    BOOST_CHECK( coro_other);
-    BOOST_CHECK( coro);
-    BOOST_CHECK_EQUAL( ( int) 0, value2);
-    coro(3);
-    BOOST_CHECK( ! coro_other);
-    BOOST_CHECK( coro);
-    BOOST_CHECK_EQUAL( ( int) 0, value2);
-    coro(7);
-    BOOST_CHECK( ! coro_other);
-    BOOST_CHECK( ! coro);
-    BOOST_CHECK_EQUAL( ( int) 7, value2);
-}
-
 void test_yield_to_different()
 {
     value2 = 0;
@@ -503,7 +471,6 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_yield_to_void) );
     test->add( BOOST_TEST_CASE( & test_yield_to_int) );
     test->add( BOOST_TEST_CASE( & test_yield_to_ref) );
-    test->add( BOOST_TEST_CASE( & test_yield_to_nothing) );
     test->add( BOOST_TEST_CASE( & test_yield_to_different) );
 
     return test;

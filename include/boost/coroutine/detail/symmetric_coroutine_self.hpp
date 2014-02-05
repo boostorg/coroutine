@@ -71,7 +71,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || 0 == result_; }
+    { return  0 == impl_; }
 
     void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
     {
@@ -103,11 +103,10 @@ public:
         return * this;
     }
 
-    R get() const
+    R get() const BOOST_NOEXCEPT
     {
-        if ( ! * this)
-            boost::throw_exception(
-                invalid_result() );
+        BOOST_ASSERT( 0 != result_);
+
         return * result_; 
     }
 };
@@ -157,7 +156,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || 0 == result_; }
+    { return  0 == impl_; }
 
     void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
     {
@@ -189,11 +188,10 @@ public:
         return * this;
     }
 
-    R & get() const
+    R & get() const BOOST_NOEXCEPT
     {
-        if ( ! * this)
-            boost::throw_exception(
-                invalid_result() );
+        BOOST_ASSERT( 0 != result_);
+
         return * result_; 
     }
 };
@@ -235,7 +233,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 != impl_; }
+    { return  0 == impl_; }
 
     void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
     { std::swap( impl_, other.impl_); }

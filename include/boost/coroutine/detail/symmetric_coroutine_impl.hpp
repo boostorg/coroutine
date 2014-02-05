@@ -68,6 +68,7 @@ private:
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
+        BOOST_ASSERT( from->data);
         return from->data;
     }
 
@@ -139,6 +140,7 @@ public:
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
+        BOOST_ASSERT( from->data);
         return from->data;
     }
 
@@ -210,6 +212,7 @@ private:
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
+        BOOST_ASSERT( from->data);
         return from->data;
     }
 
@@ -273,6 +276,7 @@ public:
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
+        BOOST_ASSERT( from->data);
         return from->data;
     }
 
