@@ -11,7 +11,6 @@
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
 #include <boost/utility/explicit_operator_bool.hpp>
-#include <boost/throw_exception.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/detail/coroutine_context.hpp>
@@ -31,6 +30,9 @@ template< typename R >
 class symmetric_coroutine_self
 {
 private:
+    template< typename X, typename Y, typename Z >
+    friend void trampoline( intptr_t);
+
     typedef parameters< R >                     param_type;
     typedef symmetric_coroutine_impl< R >       impl_type;
 
@@ -39,21 +41,18 @@ private:
     impl_type   *   impl_;
     R           *   result_;
 
-public:
-    symmetric_coroutine_self() BOOST_NOEXCEPT :
-        impl_( 0),
-        result_( 0)
-    {}
-
-    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
-        impl_( impl),
-        result_( 0)
-    { BOOST_ASSERT( impl_); }
-
     symmetric_coroutine_self( impl_type * impl, R * result) BOOST_NOEXCEPT :
         impl_( impl),
         result_( result)
-    { BOOST_ASSERT( impl_); }
+    {
+        BOOST_ASSERT( impl_);
+        BOOST_ASSERT( 0 != result_);
+    }
+
+public:
+    symmetric_coroutine_self() BOOST_NOEXCEPT :
+        impl_( 0)
+    {}
 
     symmetric_coroutine_self( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT :
         impl_( 0),
@@ -115,6 +114,9 @@ template< typename R >
 class symmetric_coroutine_self< R & >
 {
 private:
+    template< typename X, typename Y, typename Z >
+    friend void trampoline( intptr_t);
+
     typedef parameters< R & >                   param_type;
     typedef symmetric_coroutine_impl< R & >     impl_type;
 
@@ -125,21 +127,18 @@ private:
     impl_type   *   impl_;
     R           *   result_;
 
-public:
-    symmetric_coroutine_self() BOOST_NOEXCEPT :
-        impl_( 0),
-        result_( 0)
-    {}
-
-    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
-        impl_( impl),
-        result_( 0)
-    { BOOST_ASSERT( impl_); }
-
     symmetric_coroutine_self( impl_type * impl, R * result) BOOST_NOEXCEPT :
         impl_( impl),
         result_( result)
-    { BOOST_ASSERT( impl_); }
+    {
+        BOOST_ASSERT( impl_);
+        BOOST_ASSERT( 0 != result_);
+    }
+
+public:
+    symmetric_coroutine_self() BOOST_NOEXCEPT :
+        impl_( 0)
+    {}
 
     symmetric_coroutine_self( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT :
         impl_( 0),
@@ -201,6 +200,9 @@ template<>
 class symmetric_coroutine_self< void >
 {
 private:
+    template< typename X, typename Y, typename Z >
+    friend void trampoline_void( intptr_t);
+
     typedef parameters< void >                  param_type;
     typedef symmetric_coroutine_impl< void >    impl_type;
 
@@ -208,14 +210,14 @@ private:
 
     impl_type   *   impl_;
 
+    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
+        impl_( impl)
+    { BOOST_ASSERT( impl_); }
+
 public:
     symmetric_coroutine_self() BOOST_NOEXCEPT :
         impl_( 0)
     {}
-
-    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
-        impl_( impl)
-    { BOOST_ASSERT( impl_); }
 
     symmetric_coroutine_self( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT :
         impl_( 0)
