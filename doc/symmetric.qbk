@@ -8,13 +8,13 @@
 [section:symmetric Symmetric coroutine]
 
 In contrast to asymmetric coroutines, were the relationship between caller and
-calle ist fixed, symmetric coroutines are able to transfer execution control to
-any other (symmetric) coroutine. E.g. a symmetric coroutine is not required to
-return to its caller.
+callee ist fixed, are symmetric coroutines capable to transfer execution control
+to any other (symmetric) coroutine. E.g. a symmetric coroutine is not required
+to return to its caller.
 
 
 [heading __scoro__]
-__scoro__ transfers data to another execution context.
+__scoro__ starts a symmetric coroutine and transfers parameter to its __coro_fn__.
 The first template parameter defining the transferred parameter type.
 The constructor of __scoro__ takes a function (__coro_fn__) accepting a
 reference to a __self_scoro__ as argument. Instantiating a __scoro__ does
@@ -26,32 +26,22 @@ values from another execution context with this kind of coroutine.
 
 
 [heading __self_scoro__]
-__push_coro__ transfers data to the other execution context (== pushed-to).
+__self_scoro_op__ ist used to transfers data to another execution context -
+which might be a __scoro__ or called with no argument back to the excecution
+context were the chain of symmetric coroutines has been started (invocation of
+__scoro_op__).
 The class has only one template parameter defining the transferred parameter
 type.
-The constructor of __push_coro__ takes a function (__coro_fn__) accepting a
-reference to a __pull_coro__ as argument. In contrast to __pull_coro__,
-instantiating a __push_coro__ does not pass the control of execution to
-__coro_fn__ - instead the first call of __push_coro_op__ synthesizes a
-complementary __pull_coro__ and passes it as reference to __coro_fn__.
-
-The interface does not contain a ['get()]-function: you can not retrieve
-values from another execution context with this kind of coroutine.
+Data transferred to the coroutine are accessed through __self_scoro_get__.
 
 
 [heading coroutine-function]
-The __coro_fn__ returns ['void] and takes its counterpart-coroutine as
-argument, so that using the coroutine passed as argument to __coro_fn__ is the
-only way to transfer data and execution control back to the caller.
-Both coroutine types take the same template argument.
-For __pull_coro__ the __coro_fn__ is entered at __pull_coro__ construction.
-For __push_coro__ the __coro_fn__ is not entered at __push_coro__ construction
-but entered by the first invocation of __push_coro_op__.
-After execution control is returned from __coro_fn__ the state of the
-coroutine can be checked via
-__pull_coro_bool__ returning true if the coroutine is still valid (__coro_fn__
-has not terminated). Unless T is void, true also implies that a data value is
-available.
+The __coro_fn__ returns ['void] and takes __self_scoro__, providing
+coroutine functionality inside the coroutine-fn, as argument, so that using this
+instance passed as argument to __coro_fn__ is the only way to transfer data and
+execution control.
+__scoro__ does not enter the __coro_fn__ at __scoro__ construction but entered
+by the first invocation of __scoro_op__.
 
 
 [heading passing data from a pull-coroutine to main-context]
@@ -65,68 +55,34 @@ still valid and a data value is available or __coro_fn__ has terminated
 (__pull_coro__ is invalid; no data value available). Access to the transferred
 data value is given by __pull_coro_get__.
 
-        boost::coroutines::asymmetric_coroutine<int>::pull_type source( // constructor enters coroutine-function
-            [&](boost::coroutines::asymmetric_coroutine<int>::push_type& sink){
-                sink(1); // push {1} back to main-context
-                sink(1); // push {1} back to main-context
-                sink(2); // push {2} back to main-context
-                sink(3); // push {3} back to main-context
-                sink(5); // push {5} back to main-context
-                sink(8); // push {8} back to main-context
-            });
-
-        while(source){            // test if pull-coroutine is valid
-            int ret=source.get(); // access data value
-            source();             // context-switch to coroutine-function
-        }
-
 
 [heading passing data from main-context to a symmetric-coroutine]
 In order to transfer data to a __scoro__ from the main-context the framework
 synthesizes a __self_scoro__ associated with the __scoro__ instance in the
 main-context. The synthesized __self_scoro__ is passed as argument to
 __coro_fn__.
-The main-context must call this __scoro_op__ in order to transfer each data
-value into the __coro_fn__.
+The main-context must call __scoro_op__ in order to transfer each data value
+into the __coro_fn__.
 Access to the transferred data value is given by __self_scoro_get__.
 
         boost::coroutines::symmetric_coroutine<int> coro( // constructor does NOT enter coroutine-function
             [&](boost::coroutines::symmetric_coroutine<int>::self_type& self){
-                if (self) {
+                for (;;) {
                     std::cout << self.get() <<  " ";
-                }
+                    self(); // jump back to starting context
+                 }
             });
 
-        coro(7); // transfer {7} to coroutine-function
-
-
-[heading accessing parameters]
-Parameters returned from or transferred to the __coro_fn__ can be accessed with
-__self_scoro_get__.
-
-Splitting-up the access of parameters from context switch function enables to
-check if __self_scoro__ is valid after return from ___self_scoro_op__, e.g.
-__self_scoro__ has values.
-
-        boost::coroutines::symmetric_coroutine<boost::tuple<int,int>> coro(
-            [&](boost::coroutines::symmetric_coroutine<boost::tuple<int,int>>::self_type& self){
-                // access tuple {7,11}; x==7 y==1
-                int x,y;
-                boost::tie(x,y)=self.get();
-            });
-
-        coro(boost::make_tuple(7,11));
+        coro(1); // transfer {1} to coroutine-function
+        coro(2); // transfer {2} to coroutine-function
+        coro(3); // transfer {3} to coroutine-function
+        coro(4); // transfer {4} to coroutine-function
+        coro(5); // transfer {5} to coroutine-function
 
 
 [heading exceptions]
-An exception thrown inside a __pull_coro__'s __coro_fn__ before its first call
-to __push_coro_op__ will be re-thrown by the __pull_coro__ constructor. After a
-__pull_coro__'s __coro_fn__'s first call to __push_coro_op__, any subsequent
-exception inside that __coro_fn__ will be re-thrown by __pull_coro_op__.
-__pull_coro_get__ does not throw.
-
-An exception thrown inside a __push_coro__'s __coro_fn__ will be re-thrown by
-__push_coro_op__.
+An exception thrown and not catched inside a __scoro__'s __coro_fn__ will call
+__terminate__.
 
 [important Code executed by coroutine must not prevent the propagation of the
 __forced_unwind__ exception.  Absorbing that exception will cause stack
@@ -174,14 +130,14 @@ After unwinding, a __coro__ is complete.
             boost::coroutines::symmetric_coroutine<void> coro(
                 [&](boost::coroutines::symmetric_coroutine<void>::self_type& self){
                     X x;
-                   std::cout<<"fn()"<<std::endl;
-                   // transfer execution control to other coroutine
-                   self( other_coro, 7);
+                    std::cout<<"fn()"<<std::endl;
+                    // transfer execution control to other coroutine
+                    self( other_coro, 7);
                 });
 
             coro();
 
-            std::cout<<"coro is complete: "<<std::boolalpha<<coro<<"\n";
+            std::cout<<"coro is complete: "<<std::boolalpha<<!coro<<"\n";
         }
 
         std::cout<<"Done"<<std::endl;
@@ -196,7 +152,7 @@ After unwinding, a __coro__ is complete.
 
 [heading Exit a __coro_fn__]
 __coro_fn__ is exited with a simple return statement jumping back to the calling
-__scoro_op__ the chain of symmetric coroutines. E.g. symmetric coroutines do
+__scoro_op__ at the start of symmetric coroutine chain. E.g. symmetric coroutines do
 not have a strong, fixed relationship to the caller as asymmetric coroutines.
 The __scoro__ becomes complete, e.g. __scoro_bool__ will return 'false'.
 
@@ -205,86 +161,46 @@ resumed with __scoro_op__).]
 
 
 
-[section:pull_coro Class `coroutine<>::pull_type`]
+[section:self_coro Class `symmetric_coroutine<>::self_type`]
 
-    #include <boost/coroutine/coroutine.hpp>
+    #include <boost/coroutine/symmetric_coroutine.hpp>
 
     template< typename R, typename StackAllocator = standard_stack_allocator >
-    class coroutine<>::pull_type
+    class symmetric_coroutine<>::self_type
     {
     public:
-        pull_type();
+        self_type( self_type const& other)=delete;
 
-        template< typename Fn >
-        pull_type( Fn fn, attributes const& attr = attributes() );
+        self_type & operator=( self_type const& other)=delete;
 
-        template< typename Fn >
-        pull_type( Fn && fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator() );
+        self_type( self_type && other) noexcept;
 
-        pull_type( pull_type && other);
+        self_type & operator=( self_type && other) noexcept;
 
-        pull_type & operator=( pull_type && other);
+        void swap( self_type & other) noexcept;
 
-        operator unspecified-bool-type() const;
+        self_type & operator()();
 
-        bool operator!() const;
+        template< typename X >
+        self_type & operator()( symmetric_coroutine< X > & other, X & x);
 
-        void swap( pull_type & other);
+        template< typename X >
+        self_type & operator()( symmetric_coroutine< X > & other);
 
-        bool empty() const;
-
-        pull_type & operator()();
-
-        bool has_result() const;
-
-        R get() const;
+        R get() const noexcept;
     };
 
     template< typename R >
-    void swap( pull_type< R > & l, pull_type< R > & r);
+    void swap( symmetric_coroutine< R >::self_type & l, symmetric_coroutine< R >::self_type & r);
 
-    template< typename R >
-    range_iterator< pull_type< R > >::type begin( pull_type< R > &);
-
-    template< typename R >
-    range_iterator< pull_type< R > >::type end( pull_type< R > &);
-
-[heading `pull_type()`]
-[variablelist
-[[Effects:] [Creates a coroutine representing __not_a_coro__.]]
-[[Throws:] [Nothing.]]
-]
-
-[heading `template< typename Fn >
-          pull_type( Fn fn, attributes const& attr)`]
-[variablelist
-[[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
-when ! is_stack_unbound().]]
-[[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
-determines stack clean-up and preserving floating-point registers.]]
-[[Throws:] [Exceptions thrown inside __coro_fn__.]]
-]
-
-[heading `template< typename Fn >
-          pull_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
-[variablelist
-[[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
-when ! is_stack_unbound().]]
-[[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
-determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used.]]
-[[Throws:] [Exceptions thrown inside __coro_fn__.]]
-]
-
-[heading `pull_type( pull_type && other)`]
+[heading `self_type( self_type && other)`]
 [variablelist
 [[Effects:] [Moves the internal data of `other` to `*this`.
 `other` becomes __not_a_coro__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `pull_type & operator=( pull_type && other)`]
+[heading `self_type & operator=( self_type && other)`]
 [variablelist
 [[Effects:] [Destroys the internal data of `*this` and moves the
 internal data of `other` to `*this`. `other` becomes __not_a_coro__.]]
@@ -293,26 +209,19 @@ internal data of `other` to `*this`. `other` becomes __not_a_coro__.]]
 
 [heading `operator unspecified-bool-type() const`]
 [variablelist
-[[Returns:] [If `*this` refers to __not_a_coro__ or the coroutine-function
-has returned (completed), the function returns false. Otherwise true.]]
+[[Returns:] [If `*this` refers to __not_a_coro__, the function returns false.
+Otherwise true.]]
 [[Throws:] [Nothing.]]
 ]
 
 [heading `bool operator!() const`]
-[variablelist
-[[Returns:] [If `*this` refers to __not_a_coro__ or the coroutine-function
-has returned (completed), the function returns true. Otherwise false.]]
-[[Throws:] [Nothing.]]
-]
-
-[heading `bool empty()`]
 [variablelist
 [[Returns:] [If `*this` refers to __not_a_coro__, the function returns true.
 Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `pull_type<> & operator()()`]
+[heading `self_type & operator()()`]
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
 [[Effects:] [Execution control is transferred to __coro_fn__ (no parameter are
@@ -320,18 +229,11 @@ passed to the coroutine-function).]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
 ]
 
-[heading `bool has_result()`]
-[variablelist
-[[Preconditions:] [`*this` is not a __not_a_coro__.]]
-[[Returns:] [If `*this` has a, the function returns true. Otherwise false.]]
-[[Throws:] [Nothing.]]
-]
-
 [heading `R get()()`]
 
-    R    coroutine<R>::pull_type::get();
-    R&   coroutine<R&>::pull_type::get();
-    void coroutine<void>pull_type::get()=delete;
+    R    symmetric_oroutine<R>::self_type::get();
+    R&   symmetric_oroutine<R&>::self_type::get();
+    void symmetric_oroutine<void>self_type::get()=delete;
 
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
@@ -340,7 +242,7 @@ __push_coro_op__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `void swap( pull_type & other)`]
+[heading `void swap( self_type & other)`]
 [variablelist
 [[Effects:] [Swaps the internal data from `*this` with the values
 of `other`.]]
@@ -350,108 +252,88 @@ of `other`.]]
 [heading Non-member function `swap()`]
 
     template< typename R >
-    void swap( pull_type< R > & l, pull_type< R > & r);
+    void swap( symmetric_coroutine< R >::self_type & l, symmetric_coroutine< R >::self_type & r);
 
 [variablelist
 [[Effects:] [As if 'l.swap( r)'.]]
 ]
 
-[heading Non-member function `begin( pull_type< R > &)`]
-    template< typename R >
-    range_iterator< pull_type< R > >::type begin( pull_type< R > &);
-
-[variablelist
-[[Returns:] [Returns a range-iterator (input-iterator).]]
-]
-
-[heading Non-member function `end( pull_type< R > &)`]
-    template< typename R >
-    range_iterator< pull_type< R > >::type end( pull_type< R > &);
-
-[variablelist
-[[Returns:] [Returns a end range-iterator (input-iterator).]]
-]
-
 [endsect]
 
 
-[section:push_coro Class `coroutine<>::push_type`]
+[section:symmetric_coro Class `symmetric_coroutine<>`]
 
-    #include <boost/coroutine/coroutine.hpp>
+    #include <boost/coroutine/symmetric_coroutine.hpp>
 
     template< typename Arg, typename StackAllocator = standard_stack_allocator >
-    class coroutine<>::push_type
+    class symmetric_coroutine<>
     {
     public:
-        push_type();
+        symmetric_coroutine();
 
         template< typename Fn >
-        push_type( Fn fn, attributes const& attr = attributes() );
+        symmetric_coroutine( Fn fn, attributes const& attr = attributes() );
 
         template< typename Fn >
-        push_type( Fn && fn, attributes const& attr = attributes(),
+        symmetric_coroutine( Fn && fn, attributes const& attr = attributes(),
                    StackAllocator stack_alloc = StackAllocator() );
 
-        push_type( push_type && other);
+        symmetric_coroutine( symmetric_coroutine cosnt& other)=delete;
 
-        push_type & operator=( push_type && other);
+        symmetric_coroutine & operator=( symmetric_coroutine const& other)=delete;
+
+        symmetric_coroutine( symmetric_coroutine && other);
+
+        symmetric_coroutine & operator=( symmetric_coroutine && other);
+
+        ~symmetric_coroutine();
 
         operator unspecified-bool-type() const;
 
         bool operator!() const;
 
-        void swap( push_type & other);
+        void swap( symmetric_coroutine & other);
 
-        bool empty() const;
-
-        push_type & operator()( Arg&& arg);
+        symmetric_coroutine & operator()( Arg&& arg);
     };
 
     template< typename Arg >
-    void swap( push_type< Arg > & l, push_type< Arg > & r);
+    void swap( symmetric_coroutine< Arg > & l, symmetric_coroutine< Arg > & r);
 
-    template< typename Arg >
-    range_iterator< push_type< Arg > >::type begin( push_type< Arg > &);
-
-    template< typename Arg >
-    range_iterator< push_type< Arg > >::type end( push_type< Arg > &);
-
-[heading `push_type()`]
+[heading `symmetric_coroutine()`]
 [variablelist
 [[Effects:] [Creates a coroutine representing __not_a_coro__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator, typename Allocator >
-          push_type( Fn fn, attributes const& attr, StackAllocator const& stack_alloc, Allocator const& alloc)`]
+[heading `template< typename Fn, typename StackAllocator >
+          symmetric_coroutine( Fn fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used and internal
-data are allocated by Allocator.]]
+For allocating/deallocating the stack `stack_alloc` is used.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator, typename Allocator >
-          push_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc, Allocator const& alloc)`]
+[heading `template< typename Fn, typename StackAllocator >
+          symmetric_coroutine( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used and internal
-data are allocated by Allocator.]]
+For allocating/deallocating the stack `stack_alloc` is used.]]
 ]
 
-[heading `push_type( push_type && other)`]
+[heading `symmetric_coroutine( symmetric_coroutine && other)`]
 [variablelist
 [[Effects:] [Moves the internal data of `other` to `*this`.
 `other` becomes __not_a_coro__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `push_type & operator=( push_type && other)`]
+[heading `symmetric_coroutine & operator=( symmetric_coroutine && other)`]
 [variablelist
 [[Effects:] [Destroys the internal data of `*this` and moves the
 internal data of `other` to `*this`. `other` becomes __not_a_coro__.]]
@@ -472,19 +354,12 @@ has returned (completed), the function returns true. Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `bool empty()`]
-[variablelist
-[[Returns:] [If `*this` refers to __not_a_coro__, the function returns true.
-Otherwise false.]]
-[[Throws:] [Nothing.]]
-]
+[heading `symmetric_coroutine<> & operator()(Arg&& arg)`]
 
-[heading `push_type<> & operator()(Arg&& arg)`]
-
-        push_type& coroutine<Arg>::push_type::operator()(const Arg&);
-        push_type& coroutine<Arg>::push_type::operator()(Arg&&);
-        push_type& coroutine<Arg&>::push_type::operator()(Arg&);
-        push_type& coroutine<void>::push_type::operator()();
+        symmetric_coroutine& coroutine<Arg>::operator()(const Arg&);
+        symmetric_coroutine& coroutine<Arg>::operator()(Arg&&);
+        symmetric_coroutine& coroutine<Arg&>::operator()(Arg&);
+        symmetric_coroutine& coroutine<void>::operator()();
 
 [variablelist
 [[Preconditions:] [operator unspecified-bool-type() returns true for `*this`.]]
@@ -493,44 +368,20 @@ Otherwise false.]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
 ]
 
-[heading `void swap( push_type & other)`]
+[heading `void swap( symmetric_coroutine & other)`]
 [variablelist
 [[Effects:] [Swaps the internal data from `*this` with the values
 of `other`.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `T caller_type::operator()( R)`]
-[variablelist
-[[Effects:] [Gives execution control back to calling context by returning
-a value of type R. The return type of this function is a __tuple__ containing
-the arguments passed to __acoro_op__.]]
-[[Throws:] [Nothing.]]
-]
-
 [heading Non-member function `swap()`]
 
     template< typename Arg >
-    void swap( push_type< Arg > & l, push_type< Arg > & r);
+    void swap( symmetric_coroutine< Arg > & l, symmetric_coroutine< Arg > & r);
 
 [variablelist
 [[Effects:] [As if 'l.swap( r)'.]]
-]
-
-[heading Non-member function `begin( push_type< Arg > &)`]
-    template< typename Arg >
-    range_iterator< push_type< Arg > >::type begin( push_type< Arg > &);
-
-[variablelist
-[[Returns:] [Returns a range-iterator (output-iterator).]]
-]
-
-[heading Non-member function `end( push_type< Arg > &)`]
-    template< typename Arg >
-    range_iterator< push_type< Arg > >::type end( push_type< Arg > &);
-
-[variablelist
-[[Returns:] [Returns a end range-iterator (output-iterator).]]
 ]
 
 [endsect]

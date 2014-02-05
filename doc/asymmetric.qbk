@@ -289,7 +289,7 @@ After unwinding, a __coro__ is complete.
             sink();
             sink();
 
-            std::cout<<"sink is complete: "<<std::boolalpha<<sink<<"\n";
+            std::cout<<"sink is complete: "<<std::boolalpha<<!sink<<"\n";
         }
 
         std::cout<<"Done"<<std::endl;
@@ -356,7 +356,7 @@ resumed with __push_coro_op__/__pull_coro_op__).]
 
 [section:pull_coro Class `asymmetric_coroutine<>::pull_type`]
 
-    #include <boost/coroutine/coroutine.hpp>
+    #include <boost/coroutine/asymmetric_coroutine.hpp>
 
     template< typename R, typename StackAllocator = standard_stack_allocator >
     class asymmetric_coroutine<>::pull_type
@@ -526,7 +526,7 @@ of `other`.]]
 
 [section:push_coro Class `asymmetric_coroutine<>::push_type`]
 
-    #include <boost/coroutine/coroutine.hpp>
+    #include <boost/coroutine/asymmetric_coroutine.hpp>
 
     template< typename Arg, typename StackAllocator = standard_stack_allocator >
     class asymmetric_coroutine<>::push_type
