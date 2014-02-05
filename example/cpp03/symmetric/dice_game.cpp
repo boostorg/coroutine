@@ -24,11 +24,11 @@ private:
         return dist( gen);
     }
 
-    void run_( coro_t::self_type & self)
+    void run_( coro_t::yield_type & yield)
     {
         int sum = 0;
         while ( ( sum += die() ) < 100)
-            self( nxt->coro);
+            yield( nxt->coro);
         std::cout << "player " << id << " winns" << std::endl;
     }
 

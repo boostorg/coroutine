@@ -71,7 +71,7 @@ public:
         state( true)
     {}
 
-    void operator()( coro::symmetric_coroutine< int >::self_type &)
+    void operator()( coro::symmetric_coroutine< int >::yield_type &)
     { value1 = state; }
 };
 
@@ -103,105 +103,105 @@ public:
         return * this;
     }
 
-    void operator()( coro::symmetric_coroutine< int >::self_type &)
+    void operator()( coro::symmetric_coroutine< int >::yield_type &)
     { value1 = state; }
 };
 
-void empty( coro::symmetric_coroutine< void >::self_type &) {}
+void empty( coro::symmetric_coroutine< void >::yield_type &) {}
 
-void f2( coro::symmetric_coroutine< void >::self_type &)
+void f2( coro::symmetric_coroutine< void >::yield_type &)
 { ++value2; }
 
-void f3( coro::symmetric_coroutine< X >::self_type & self)
-{ value2 = self.get().i; }
+void f3( coro::symmetric_coroutine< X >::yield_type & yield)
+{ value2 = yield.get().i; }
 
-void f4( coro::symmetric_coroutine< X& >::self_type & self)
+void f4( coro::symmetric_coroutine< X& >::yield_type & yield)
 {
-    X & x = self.get();
+    X & x = yield.get();
     p = & x;
 }
 
-void f5( coro::symmetric_coroutine< X* >::self_type & self)
-{ p = self.get(); }
+void f5( coro::symmetric_coroutine< X* >::yield_type & yield)
+{ p = yield.get(); }
 
-void f6( coro::symmetric_coroutine< void >::self_type & self)
+void f6( coro::symmetric_coroutine< void >::yield_type & yield)
 {
     Y y;
-    self( *term_coro);
+    yield( *term_coro);
 }
 
-void f7( coro::symmetric_coroutine< int >::self_type & self)
+void f7( coro::symmetric_coroutine< int >::yield_type & yield)
 {
-    value2 = self.get();
-    self( *term_coro);
-    value2 = self.get();
+    value2 = yield.get();
+    yield( *term_coro);
+    value2 = yield.get();
 }
 
 template< typename E >
-void f9( coro::symmetric_coroutine< void >::self_type &, E const& e)
+void f9( coro::symmetric_coroutine< void >::yield_type &, E const& e)
 { throw e; }
 
-void f10( coro::symmetric_coroutine< int >::self_type & self,
+void f10( coro::symmetric_coroutine< int >::yield_type & yield,
           coro::symmetric_coroutine< int > & other)
 {
-    int i = self.get();
-    self( other, i);
-    value2 = self.get();
+    int i = yield.get();
+    yield( other, i);
+    value2 = yield.get();
 }
 
-void f101( coro::symmetric_coroutine< int >::self_type & self)
-{ value2 = self.get(); }
+void f101( coro::symmetric_coroutine< int >::yield_type & yield)
+{ value2 = yield.get(); }
 
-void f11( coro::symmetric_coroutine< void >::self_type & self,
+void f11( coro::symmetric_coroutine< void >::yield_type & yield,
           coro::symmetric_coroutine< void > & other)
 {
-    self( other);
+    yield( other);
     value2 = 7;
 }
 
-void f111( coro::symmetric_coroutine< void >::self_type &)
+void f111( coro::symmetric_coroutine< void >::yield_type &)
 { value2 = 3; }
 
-void f12( coro::symmetric_coroutine< X& >::self_type & self,
+void f12( coro::symmetric_coroutine< X& >::yield_type & yield,
           coro::symmetric_coroutine< X& > & other)
 {
-    self( other, self.get());
-    p = & self.get();
+    yield( other, yield.get());
+    p = & yield.get();
 }
 
-void f121( coro::symmetric_coroutine< X& >::self_type & self)
-{ p = & self.get(); }
+void f121( coro::symmetric_coroutine< X& >::yield_type & yield)
+{ p = & yield.get(); }
 
-void f14( coro::symmetric_coroutine< int >::self_type & self,
+void f14( coro::symmetric_coroutine< int >::yield_type & yield,
           coro::symmetric_coroutine< std::string > & other)
 {
-    std::string str( boost::lexical_cast< std::string >( self.get() ) );
-    self( other, str);
-    value2 = self.get();
+    std::string str( boost::lexical_cast< std::string >( yield.get() ) );
+    yield( other, str);
+    value2 = yield.get();
 }
 
-void f141( coro::symmetric_coroutine< std::string >::self_type & self)
-{ value3 = self.get(); }
+void f141( coro::symmetric_coroutine< std::string >::yield_type & yield)
+{ value3 = yield.get(); }
 
-void f15( coro::symmetric_coroutine< int >::self_type & self,
+void f15( coro::symmetric_coroutine< int >::yield_type & yield,
           int offset,
           coro::symmetric_coroutine< int > & other)
 {
-    int x = self.get();
+    int x = yield.get();
     value2 += x + offset;
-    self( other, x);
-    x = self.get();
+    yield( other, x);
+    x = yield.get();
     value2 += x + offset;
-    self( other, x);
+    yield( other, x);
 }
 
-void f151( coro::symmetric_coroutine< int >::self_type & self,
+void f151( coro::symmetric_coroutine< int >::yield_type & yield,
           int offset)
 {
-    int x = self.get();
+    int x = yield.get();
     value2 += x + offset;
-    self();
-    x = self.get();
+    yield();
+    x = yield.get();
     value2 += x + offset;
 }
 

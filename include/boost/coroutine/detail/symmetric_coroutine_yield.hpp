@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_SELF_H
-#define BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_SELF_H
+#ifndef BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_YIELD_H
+#define BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_YIELD_H
 
 #include <algorithm>
 
@@ -29,7 +29,7 @@ namespace coroutines {
 namespace detail {
 
 template< typename R >
-class symmetric_coroutine_self
+class symmetric_coroutine_yield
 {
 private:
     template< typename X, typename Y, typename Z >
@@ -38,12 +38,12 @@ private:
     typedef parameters< R >                     param_type;
     typedef symmetric_coroutine_impl< R >       impl_type;
 
-    BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_self)
+    BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_yield)
 
     impl_type   *   impl_;
     R           *   result_;
 
-    symmetric_coroutine_self( impl_type * impl, R * result) BOOST_NOEXCEPT :
+    symmetric_coroutine_yield( impl_type * impl, R * result) BOOST_NOEXCEPT :
         impl_( impl),
         result_( result)
     {
@@ -52,18 +52,18 @@ private:
     }
 
 public:
-    symmetric_coroutine_self() BOOST_NOEXCEPT :
+    symmetric_coroutine_yield() BOOST_NOEXCEPT :
         impl_( 0)
     {}
 
-    symmetric_coroutine_self( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT :
+    symmetric_coroutine_yield( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT :
         impl_( 0),
         result_( 0)
     { swap( other); }
 
-    symmetric_coroutine_self & operator=( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT
+    symmetric_coroutine_yield & operator=( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT
     {
-        symmetric_coroutine_self tmp( boost::move( other) );
+        symmetric_coroutine_yield tmp( boost::move( other) );
         swap( tmp);
         return * this;
     }
@@ -73,20 +73,20 @@ public:
     bool operator!() const BOOST_NOEXCEPT
     { return  0 == impl_; }
 
-    void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
+    void swap( symmetric_coroutine_yield & other) BOOST_NOEXCEPT
     {
         std::swap( impl_, other.impl_);
         std::swap( result_, other.result_);
     }
 
-    symmetric_coroutine_self & operator()()
+    symmetric_coroutine_yield & operator()()
     {
         result_ = impl_->yield();
         return * this;
     }
 
     template< typename Coro >
-    symmetric_coroutine_self & operator()( Coro & other, typename Coro::value_type & x)
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x)
     {
         BOOST_ASSERT( other);
 
@@ -95,7 +95,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_self & operator()( Coro & other)
+    symmetric_coroutine_yield & operator()( Coro & other)
     {
         BOOST_ASSERT( other);
 
@@ -112,7 +112,7 @@ public:
 };
 
 template< typename R >
-class symmetric_coroutine_self< R & >
+class symmetric_coroutine_yield< R & >
 {
 private:
     template< typename X, typename Y, typename Z >
@@ -123,12 +123,12 @@ private:
 
     struct dummy {};
 
-    BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_self)
+    BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_yield)
 
     impl_type   *   impl_;
     R           *   result_;
 
-    symmetric_coroutine_self( impl_type * impl, R * result) BOOST_NOEXCEPT :
+    symmetric_coroutine_yield( impl_type * impl, R * result) BOOST_NOEXCEPT :
         impl_( impl),
         result_( result)
     {
@@ -137,18 +137,18 @@ private:
     }
 
 public:
-    symmetric_coroutine_self() BOOST_NOEXCEPT :
+    symmetric_coroutine_yield() BOOST_NOEXCEPT :
         impl_( 0)
     {}
 
-    symmetric_coroutine_self( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT :
+    symmetric_coroutine_yield( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT :
         impl_( 0),
         result_( 0)
     { swap( other); }
 
-    symmetric_coroutine_self & operator=( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT
+    symmetric_coroutine_yield & operator=( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT
     {
-        symmetric_coroutine_self tmp( boost::move( other) );
+        symmetric_coroutine_yield tmp( boost::move( other) );
         swap( tmp);
         return * this;
     }
@@ -158,20 +158,20 @@ public:
     bool operator!() const BOOST_NOEXCEPT
     { return  0 == impl_; }
 
-    void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
+    void swap( symmetric_coroutine_yield & other) BOOST_NOEXCEPT
     {
         std::swap( impl_, other.impl_);
         std::swap( result_, other.result_);
     }
 
-    symmetric_coroutine_self & operator()()
+    symmetric_coroutine_yield & operator()()
     {
         result_ = impl_->yield();
         return * this;
     }
 
     template< typename Coro >
-    symmetric_coroutine_self & operator()( Coro & other, typename Coro::value_type & x)
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x)
     {
         BOOST_ASSERT( other);
 
@@ -180,7 +180,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_self & operator()( Coro & other)
+    symmetric_coroutine_yield & operator()( Coro & other)
     {
         BOOST_ASSERT( other);
 
@@ -197,7 +197,7 @@ public:
 };
 
 template<>
-class symmetric_coroutine_self< void >
+class symmetric_coroutine_yield< void >
 {
 private:
     template< typename X, typename Y, typename Z >
@@ -206,26 +206,26 @@ private:
     typedef parameters< void >                  param_type;
     typedef symmetric_coroutine_impl< void >    impl_type;
 
-    BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_self)
+    BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_yield)
 
     impl_type   *   impl_;
 
-    symmetric_coroutine_self( impl_type * impl) BOOST_NOEXCEPT :
+    symmetric_coroutine_yield( impl_type * impl) BOOST_NOEXCEPT :
         impl_( impl)
     { BOOST_ASSERT( impl_); }
 
 public:
-    symmetric_coroutine_self() BOOST_NOEXCEPT :
+    symmetric_coroutine_yield() BOOST_NOEXCEPT :
         impl_( 0)
     {}
 
-    symmetric_coroutine_self( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT :
+    symmetric_coroutine_yield( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT :
         impl_( 0)
     { swap( other); }
 
-    symmetric_coroutine_self & operator=( BOOST_RV_REF( symmetric_coroutine_self) other) BOOST_NOEXCEPT
+    symmetric_coroutine_yield & operator=( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT
     {
-        symmetric_coroutine_self tmp( boost::move( other) );
+        symmetric_coroutine_yield tmp( boost::move( other) );
         swap( tmp);
         return * this;
     }
@@ -235,17 +235,17 @@ public:
     bool operator!() const BOOST_NOEXCEPT
     { return  0 == impl_; }
 
-    void swap( symmetric_coroutine_self & other) BOOST_NOEXCEPT
+    void swap( symmetric_coroutine_yield & other) BOOST_NOEXCEPT
     { std::swap( impl_, other.impl_); }
 
-    symmetric_coroutine_self & operator()()
+    symmetric_coroutine_yield & operator()()
     {
         impl_->yield();
         return * this;
     }
 
     template< typename Coro >
-    symmetric_coroutine_self & operator()( Coro & other, typename Coro::value_type & x)
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x)
     {
         BOOST_ASSERT( other);
 
@@ -254,7 +254,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_self & operator()( Coro & other)
+    symmetric_coroutine_yield & operator()( Coro & other)
     {
         BOOST_ASSERT( other);
 
@@ -264,7 +264,7 @@ public:
 };
 
 template< typename R >
-void swap( symmetric_coroutine_self< R > & l, symmetric_coroutine_self< R > & r)
+void swap( symmetric_coroutine_yield< R > & l, symmetric_coroutine_yield< R > & r)
 { l.swap( r); }
 
 }}}
@@ -273,4 +273,4 @@ void swap( symmetric_coroutine_self< R > & l, symmetric_coroutine_self< R > & r)
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_SELF_H
+#endif // BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_YIELD_H

@@ -21,12 +21,12 @@ private:
     std::size_t                 max_;
     std::vector< int >      &   to_;
 
-    void run_( coro_t::self_type & self)
+    void run_( coro_t::yield_type & yield)
     {
         while ( idx < from.size() )
         {
             if ( other->from[other->idx] < from[idx])
-                self( other->coro);
+                yield( other->coro);
             to_.push_back(from[idx++]);
         }
         while ( to_.size() < max_)

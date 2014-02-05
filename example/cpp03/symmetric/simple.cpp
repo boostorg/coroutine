@@ -15,21 +15,21 @@ typedef boost::coroutines::symmetric_coroutine< void >  coro_t;
 coro_t * c1 = 0;
 coro_t * c2 = 0;
 
-void foo( coro_t::self_type & self)
+void foo( coro_t::yield_type & yield)
 {
     std::cout << "foo1" << std::endl;
-    self( * c2);
+    yield( * c2);
     std::cout << "foo2" << std::endl;
-    self( * c2);
+    yield( * c2);
     std::cout << "foo3" << std::endl;
 }
 
-void bar( coro_t::self_type & self)
+void bar( coro_t::yield_type & yield)
 {
     std::cout << "bar1" << std::endl;
-    self( * c1);
+    yield( * c1);
     std::cout << "bar2" << std::endl;
-    self( * c1);
+    yield( * c1);
     std::cout << "bar3" << std::endl;
 }
 

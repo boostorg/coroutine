@@ -60,10 +60,10 @@ void trampoline( intptr_t vp)
                     reinterpret_cast< intptr_t >(  & c),
                     c.preserve_fpu() ) ) );
 
-        // create self_type
-        Self self( & c, from->data);
+        // create yield_type
+        Self yield( & c, from->data);
         try
-        { fn( self); }
+        { fn( yield); }
         catch ( forced_unwind const&)
         {}
         catch (...)
@@ -101,10 +101,10 @@ void trampoline_void( intptr_t vp)
             reinterpret_cast< intptr_t >(  & c),
             c.preserve_fpu() );
 
-        // create self_type
-        Self self( & c);
+        // create yield_type
+        Self yield( & c);
         try
-        { fn( self); }
+        { fn( yield); }
         catch ( forced_unwind const&)
         {}
         catch (...)

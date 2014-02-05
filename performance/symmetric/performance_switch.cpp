@@ -33,13 +33,13 @@ struct X
 
 const X x("abc");
 
-void fn_void( boost::coroutines::symmetric_coroutine< void >::self_type &)
+void fn_void( boost::coroutines::symmetric_coroutine< void >::yield_type &)
 {}
 
-void fn_int( boost::coroutines::symmetric_coroutine< int >::self_type &)
+void fn_int( boost::coroutines::symmetric_coroutine< int >::yield_type &)
 {}
 
-void fn_x( boost::coroutines::symmetric_coroutine< X >::self_type &)
+void fn_x( boost::coroutines::symmetric_coroutine< X >::yield_type &)
 {}
 
 duration_type measure_time_void( duration_type overhead)

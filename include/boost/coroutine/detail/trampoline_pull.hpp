@@ -62,9 +62,9 @@ void trampoline_pull( intptr_t vp)
 
         // create push_coroutine
         typename Self::impl_type b( c.callee_, c.caller_, false, c.preserve_fpu() );
-        Self self( & b);
+        Self yield( & b);
         try
-        { fn( self); }
+        { fn( yield); }
         catch ( forced_unwind const&)
         {}
         catch (...)
@@ -108,9 +108,9 @@ void trampoline_pull_void( intptr_t vp)
 
         // create push_coroutine
         typename Self::impl_type b( c.callee_, c.caller_, false, c.preserve_fpu() );
-        Self self( & b);
+        Self yield( & b);
         try
-        { fn( self); }
+        { fn( yield); }
         catch ( forced_unwind const&)
         {}
         catch (...)

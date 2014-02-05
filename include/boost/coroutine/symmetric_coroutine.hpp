@@ -22,7 +22,7 @@
 #include <boost/coroutine/detail/parameters.hpp>
 #include <boost/coroutine/detail/setup.hpp>
 #include <boost/coroutine/detail/symmetric_coroutine_impl.hpp>
-#include <boost/coroutine/detail/symmetric_coroutine_self.hpp>
+#include <boost/coroutine/detail/symmetric_coroutine_yield.hpp>
 #include <boost/coroutine/detail/trampoline.hpp>
 #include <boost/coroutine/stack_allocator.hpp>
 
@@ -38,7 +38,7 @@ class symmetric_coroutine
 {
 private:
     template< typename X >
-    friend class detail::symmetric_coroutine_self;
+    friend class detail::symmetric_coroutine_yield;
 
     typedef detail::symmetric_coroutine_impl< Arg >   impl_type;
     typedef detail::parameters< Arg >                 param_type;
@@ -55,7 +55,7 @@ private:
 
 public:
     typedef Arg                                       value_type;
-    typedef detail::symmetric_coroutine_self< Arg >   self_type;
+    typedef detail::symmetric_coroutine_yield< Arg >   yield_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
@@ -67,7 +67,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( self_type &);
+	typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine( coroutine_fn fn,
                                   attributes const& attr = attributes() ) :
@@ -79,7 +79,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< coroutine_fn, impl_type, self_type >,
+            detail::trampoline< coroutine_fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -101,7 +101,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< coroutine_fn, impl_type, self_type >,
+            detail::trampoline< coroutine_fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -123,7 +123,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -146,7 +146,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -172,7 +172,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -198,7 +198,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -224,7 +224,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -251,7 +251,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -325,7 +325,7 @@ class symmetric_coroutine< Arg &, StackAllocator >
 {
 private:
     template< typename X >
-    friend class detail::symmetric_coroutine_self;
+    friend class detail::symmetric_coroutine_yield;
 
     typedef detail::symmetric_coroutine_impl< Arg & >     impl_type;
     typedef detail::parameters< Arg & >                   param_type;
@@ -342,7 +342,7 @@ private:
 
 public:
     typedef Arg                                           value_type;
-    typedef detail::symmetric_coroutine_self< Arg & >     self_type;
+    typedef detail::symmetric_coroutine_yield< Arg & >     yield_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
@@ -354,7 +354,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( self_type &);
+	typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine( coroutine_fn fn,
                                   attributes const& attr = attributes() ) :
@@ -366,7 +366,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< coroutine_fn, impl_type, self_type >,
+            detail::trampoline< coroutine_fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -388,7 +388,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< coroutine_fn, impl_type, self_type >,
+            detail::trampoline< coroutine_fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -410,7 +410,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -433,7 +433,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -459,7 +459,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -485,7 +485,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -511,7 +511,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -538,7 +538,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline< Fn, impl_type, self_type >,
+            detail::trampoline< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -604,7 +604,7 @@ class symmetric_coroutine< void, StackAllocator >
 {
 private:
     template< typename X >
-    friend class detail::symmetric_coroutine_self;
+    friend class detail::symmetric_coroutine_yield;
 
     typedef detail::symmetric_coroutine_impl< void >        impl_type;
     typedef detail::parameters< void >                      param_type;
@@ -621,7 +621,7 @@ private:
 
 public:
     typedef void                                            value_type;
-    typedef detail::symmetric_coroutine_self< void >        self_type;
+    typedef detail::symmetric_coroutine_yield< void >        yield_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
@@ -633,7 +633,7 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( self_type &);
+	typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine( coroutine_fn fn,
                                   attributes const& attr = attributes() ) :
@@ -645,7 +645,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< coroutine_fn, impl_type, self_type >,
+            detail::trampoline_void< coroutine_fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -667,7 +667,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< coroutine_fn, impl_type, self_type >,
+            detail::trampoline_void< coroutine_fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -689,7 +689,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< Fn, impl_type, self_type >,
+            detail::trampoline_void< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -712,7 +712,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< Fn, impl_type, self_type >,
+            detail::trampoline_void< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -738,7 +738,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< Fn, impl_type, self_type >,
+            detail::trampoline_void< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -764,7 +764,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< Fn, impl_type, self_type >,
+            detail::trampoline_void< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -790,7 +790,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< Fn, impl_type, self_type >,
+            detail::trampoline_void< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
@@ -817,7 +817,7 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         callee_ = detail::coroutine_context(
-            detail::trampoline_void< Fn, impl_type, self_type >,
+            detail::trampoline_void< Fn, impl_type, yield_type >,
             & stack_ctx_);
         detail::setup< Fn > to( fn, & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(

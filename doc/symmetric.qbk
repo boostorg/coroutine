@@ -17,26 +17,26 @@ to return to its caller.
 __scoro__ starts a symmetric coroutine and transfers parameter to its __coro_fn__.
 The first template parameter defining the transferred parameter type.
 The constructor of __scoro__ takes a function (__coro_fn__) accepting a
-reference to a __self_scoro__ as argument. Instantiating a __scoro__ does
+reference to a __yield_scoro__ as argument. Instantiating a __scoro__ does
 not pass the control of execution to __coro_fn__ - instead the first call of
-__scoro_op__ synthesizes a __self_scoro__ passed it as reference to __coro_fn__.
+__scoro_op__ synthesizes a __yield_scoro__ passed it as reference to __coro_fn__.
 
 The interface does not contain a ['get()]-function: you can not retrieve
 values from another execution context with this kind of coroutine.
 
 
-[heading __self_scoro__]
-__self_scoro_op__ ist used to transfers data to another execution context -
+[heading __yield_scoro__]
+__yield_scoro_op__ ist used to transfers data to another execution context -
 which might be a __scoro__ or called with no argument back to the excecution
 context were the chain of symmetric coroutines has been started (invocation of
 __scoro_op__).
 The class has only one template parameter defining the transferred parameter
 type.
-Data transferred to the coroutine are accessed through __self_scoro_get__.
+Data transferred to the coroutine are accessed through __yield_scoro_get__.
 
 
 [heading coroutine-function]
-The __coro_fn__ returns ['void] and takes __self_scoro__, providing
+The __coro_fn__ returns ['void] and takes __yield_scoro__, providing
 coroutine functionality inside the coroutine-fn, as argument, so that using this
 instance passed as argument to __coro_fn__ is the only way to transfer data and
 execution control.
@@ -58,18 +58,18 @@ data value is given by __pull_coro_get__.
 
 [heading passing data from main-context to a symmetric-coroutine]
 In order to transfer data to a __scoro__ from the main-context the framework
-synthesizes a __self_scoro__ associated with the __scoro__ instance in the
-main-context. The synthesized __self_scoro__ is passed as argument to
+synthesizes a __yield_scoro__ associated with the __scoro__ instance in the
+main-context. The synthesized __yield_scoro__ is passed as argument to
 __coro_fn__.
 The main-context must call __scoro_op__ in order to transfer each data value
 into the __coro_fn__.
-Access to the transferred data value is given by __self_scoro_get__.
+Access to the transferred data value is given by __yield_scoro_get__.
 
         boost::coroutines::symmetric_coroutine<int> coro( // constructor does NOT enter coroutine-function
-            [&](boost::coroutines::symmetric_coroutine<int>::self_type& self){
+            [&](boost::coroutines::symmetric_coroutine<int>::yield_type& yield){
                 for (;;) {
-                    std::cout << self.get() <<  " ";
-                    self(); // jump back to starting context
+                    std::cout << yield.get() <<  " ";
+                    yield(); // jump back to starting context
                  }
             });
 
@@ -128,11 +128,11 @@ After unwinding, a __coro__ is complete.
 
         {
             boost::coroutines::symmetric_coroutine<void> coro(
-                [&](boost::coroutines::symmetric_coroutine<void>::self_type& self){
+                [&](boost::coroutines::symmetric_coroutine<void>::yield_type& yield){
                     X x;
                     std::cout<<"fn()"<<std::endl;
                     // transfer execution control to other coroutine
-                    self( other_coro, 7);
+                    yield( other_coro, 7);
                 });
 
             coro();
@@ -161,46 +161,46 @@ resumed with __scoro_op__).]
 
 
 
-[section:self_coro Class `symmetric_coroutine<>::self_type`]
+[section:yield_coro Class `symmetric_coroutine<>::yield_type`]
 
     #include <boost/coroutine/symmetric_coroutine.hpp>
 
     template< typename R, typename StackAllocator = standard_stack_allocator >
-    class symmetric_coroutine<>::self_type
+    class symmetric_coroutine<>::yield_type
     {
     public:
-        self_type( self_type const& other)=delete;
+        yield_type( yield_type const& other)=delete;
 
-        self_type & operator=( self_type const& other)=delete;
+        yield_type & operator=( yield_type const& other)=delete;
 
-        self_type( self_type && other) noexcept;
+        yield_type( yield_type && other) noexcept;
 
-        self_type & operator=( self_type && other) noexcept;
+        yield_type & operator=( yield_type && other) noexcept;
 
-        void swap( self_type & other) noexcept;
+        void swap( yield_type & other) noexcept;
 
-        self_type & operator()();
-
-        template< typename X >
-        self_type & operator()( symmetric_coroutine< X > & other, X & x);
+        yield_type & operator()();
 
         template< typename X >
-        self_type & operator()( symmetric_coroutine< X > & other);
+        yield_type & operator()( symmetric_coroutine< X > & other, X & x);
+
+        template< typename X >
+        yield_type & operator()( symmetric_coroutine< X > & other);
 
         R get() const noexcept;
     };
 
     template< typename R >
-    void swap( symmetric_coroutine< R >::self_type & l, symmetric_coroutine< R >::self_type & r);
+    void swap( symmetric_coroutine< R >::yield_type & l, symmetric_coroutine< R >::yield_type & r);
 
-[heading `self_type( self_type && other)`]
+[heading `yield_type( yield_type && other)`]
 [variablelist
 [[Effects:] [Moves the internal data of `other` to `*this`.
 `other` becomes __not_a_coro__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `self_type & operator=( self_type && other)`]
+[heading `yield_type & operator=( yield_type && other)`]
 [variablelist
 [[Effects:] [Destroys the internal data of `*this` and moves the
 internal data of `other` to `*this`. `other` becomes __not_a_coro__.]]
@@ -221,7 +221,7 @@ Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `self_type & operator()()`]
+[heading `yield_type & operator()()`]
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
 [[Effects:] [Execution control is transferred to __coro_fn__ (no parameter are
@@ -231,9 +231,9 @@ passed to the coroutine-function).]]
 
 [heading `R get()()`]
 
-    R    symmetric_oroutine<R>::self_type::get();
-    R&   symmetric_oroutine<R&>::self_type::get();
-    void symmetric_oroutine<void>self_type::get()=delete;
+    R    symmetric_oroutine<R>::yield_type::get();
+    R&   symmetric_oroutine<R&>::yield_type::get();
+    void symmetric_oroutine<void>yield_type::get()=delete;
 
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
@@ -242,7 +242,7 @@ __push_coro_op__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `void swap( self_type & other)`]
+[heading `void swap( yield_type & other)`]
 [variablelist
 [[Effects:] [Swaps the internal data from `*this` with the values
 of `other`.]]
@@ -252,7 +252,7 @@ of `other`.]]
 [heading Non-member function `swap()`]
 
     template< typename R >
-    void swap( symmetric_coroutine< R >::self_type & l, symmetric_coroutine< R >::self_type & r);
+    void swap( symmetric_coroutine< R >::yield_type & l, symmetric_coroutine< R >::yield_type & r);
 
 [variablelist
 [[Effects:] [As if 'l.swap( r)'.]]

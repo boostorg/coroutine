@@ -91,7 +91,7 @@ In contrast to a stackless coroutine a stackful coroutine allows to suspend
 from nested stackframes. The execution resumes at exact the same point in the
 code as it was suspended before.
 With a stackless coroutine, only the top-level routine may be suspended. Any
-routine called by that top-level routine may not itself suspend. This prohibits
+routine called by that top-level routine may not ityield suspend. This prohibits
 providing suspend/resume operations in routines within a general-purpose library.
 
 [heading first-class continuation]

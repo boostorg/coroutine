@@ -168,11 +168,11 @@ This example demonstrates how symmetric coroutines merge two sorted arrays.
             boost::coroutines::symmetric_coroutine< void > * other_a = 0, * other_b = 0;
 
             boost::coroutines::symmetric_coroutine< void > coro_a(
-                [&]( boost::coroutines::symmetric_coroutine< void >::self_type & self) {
+                [&]( boost::coroutines::symmetric_coroutine< void >::yield_type & yield) {
                     while ( idx_a < a.size() )
                     {
                         if ( b[idx_b] < a[idx_a])
-                            self( * other_b);
+                            yield( * other_b);
                         c.push_back(a[idx_a++]);
                     }
                     while ( c.size() < a.size() + b.size())
@@ -180,11 +180,11 @@ This example demonstrates how symmetric coroutines merge two sorted arrays.
                 });
 
             boost::coroutines::symmetric_coroutine< void > coro_b(
-                [&]( boost::coroutines::symmetric_coroutine< void >::self_type & self) {
+                [&]( boost::coroutines::symmetric_coroutine< void >::yield_type & yield) {
                     while ( idx_b < b.size() )
                     {
                         if ( a[idx_a] < b[idx_b])
-                            self( * other_a);
+                            yield( * other_a);
                         c.push_back(b[idx_b++]);
                     }
                     while ( c.size() < ( a.size() + b.size() ) )

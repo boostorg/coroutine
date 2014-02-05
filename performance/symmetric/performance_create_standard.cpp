@@ -24,7 +24,7 @@ boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserve
 boost::coroutines::flag_unwind_t unwind_stack = boost::coroutines::stack_unwind;
 boost::uint64_t jobs = 1000;
 
-void fn( coro_type::self_type &) {}
+void fn( coro_type::yield_type &) {}
 
 duration_type measure_time( duration_type overhead)
 {
