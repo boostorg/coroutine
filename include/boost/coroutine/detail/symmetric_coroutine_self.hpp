@@ -25,9 +25,6 @@
 
 namespace boost {
 namespace coroutines {
-
-struct stack_context;
-
 namespace detail {
 
 template< typename R >
