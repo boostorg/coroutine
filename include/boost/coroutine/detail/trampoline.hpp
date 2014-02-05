@@ -60,7 +60,7 @@ void trampoline( intptr_t vp)
                     reinterpret_cast< intptr_t >(  & c),
                     c.preserve_fpu() ) ) );
 
-        // create push_coroutine
+        // create self_type
         Self self( & c, from->data);
         try
         { fn( self); }
@@ -101,7 +101,7 @@ void trampoline_void( intptr_t vp)
             reinterpret_cast< intptr_t >(  & c),
             c.preserve_fpu() );
 
-        // create push_coroutine
+        // create self_type
         Self self( & c);
         try
         { fn( self); }
