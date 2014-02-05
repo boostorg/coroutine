@@ -165,9 +165,9 @@ This example demonstrates how symmetric coroutines merge two sorted arrays.
         {
             std::vector< int > c;
             std::size_t idx_a = 0, idx_b = 0;
-            boost::coroutines::symmetric_coroutine< void > * other_a = 0, * other_b = 0;
+            boost::coroutines::symmetric_coroutine< void >::call_type * other_a = 0, * other_b = 0;
 
-            boost::coroutines::symmetric_coroutine< void > coro_a(
+            boost::coroutines::symmetric_coroutine< void >::call_type coro_a(
                 [&]( boost::coroutines::symmetric_coroutine< void >::yield_type & yield) {
                     while ( idx_a < a.size() )
                     {
@@ -179,7 +179,7 @@ This example demonstrates how symmetric coroutines merge two sorted arrays.
                         c.push_back( b[idx_b]); 
                 });
 
-            boost::coroutines::symmetric_coroutine< void > coro_b(
+            boost::coroutines::symmetric_coroutine< void >::call_type coro_b(
                 [&]( boost::coroutines::symmetric_coroutine< void >::yield_type & yield) {
                     while ( idx_b < b.size() )
                     {

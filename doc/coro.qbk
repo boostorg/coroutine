@@ -39,7 +39,7 @@
 [def __boost_utility__ [*Boost.Utility]]
 [def __boost_version__ [*Boost-1.52.0]]
 
-[def __call_coro___ ['symmetric_coroutine<>::call_type]]
+[def __call_coro__ ['symmetric_coroutine<>::call_type]]
 [def __coro__ ['coroutine]]
 [def __coro_fn__ ['coroutine-function]]
 [def __coros__ ['coroutines]]
