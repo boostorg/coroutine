@@ -32,7 +32,7 @@ bool value1 = false;
 int value2 = 0;
 std::string value3;
 
-coro::symmetric_coroutine< void > * term_coro = 0;
+coro::symmetric_coroutine< void >::call_type * term_coro = 0;
 
 struct X
 {
@@ -142,7 +142,7 @@ void f9( coro::symmetric_coroutine< void >::yield_type &, E const& e)
 { throw e; }
 
 void f10( coro::symmetric_coroutine< int >::yield_type & yield,
-          coro::symmetric_coroutine< int > & other)
+          coro::symmetric_coroutine< int >::call_type & other)
 {
     int i = yield.get();
     yield( other, i);
@@ -153,7 +153,7 @@ void f101( coro::symmetric_coroutine< int >::yield_type & yield)
 { value2 = yield.get(); }
 
 void f11( coro::symmetric_coroutine< void >::yield_type & yield,
-          coro::symmetric_coroutine< void > & other)
+          coro::symmetric_coroutine< void >::call_type & other)
 {
     yield( other);
     value2 = 7;
@@ -163,7 +163,7 @@ void f111( coro::symmetric_coroutine< void >::yield_type &)
 { value2 = 3; }
 
 void f12( coro::symmetric_coroutine< X& >::yield_type & yield,
-          coro::symmetric_coroutine< X& > & other)
+          coro::symmetric_coroutine< X& >::call_type & other)
 {
     yield( other, yield.get());
     p = & yield.get();
@@ -173,7 +173,7 @@ void f121( coro::symmetric_coroutine< X& >::yield_type & yield)
 { p = & yield.get(); }
 
 void f14( coro::symmetric_coroutine< int >::yield_type & yield,
-          coro::symmetric_coroutine< std::string > & other)
+          coro::symmetric_coroutine< std::string >::call_type & other)
 {
     std::string str( boost::lexical_cast< std::string >( yield.get() ) );
     yield( other, str);
@@ -185,7 +185,7 @@ void f141( coro::symmetric_coroutine< std::string >::yield_type & yield)
 
 void f15( coro::symmetric_coroutine< int >::yield_type & yield,
           int offset,
-          coro::symmetric_coroutine< int > & other)
+          coro::symmetric_coroutine< int >::call_type & other)
 {
     int x = yield.get();
     value2 += x + offset;
@@ -208,8 +208,8 @@ void f151( coro::symmetric_coroutine< int >::yield_type & yield,
 void test_move()
 {
     {
-        coro::symmetric_coroutine< void > coro1;
-        coro::symmetric_coroutine< void > coro2( empty);
+        coro::symmetric_coroutine< void >::call_type coro1;
+        coro::symmetric_coroutine< void >::call_type coro2( empty);
         BOOST_CHECK( ! coro1);
         BOOST_CHECK( coro2);
         coro1 = boost::move( coro2);
@@ -222,7 +222,7 @@ void test_move()
         copyable cp( 3);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( ! value1);
-        coro::symmetric_coroutine< int > coro( cp);
+        coro::symmetric_coroutine< int >::call_type coro( cp);
         coro( 3);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( value1);
@@ -233,7 +233,7 @@ void test_move()
         moveable mv( 7);
         BOOST_CHECK( mv.state);
         BOOST_CHECK( ! value1);
-        coro::symmetric_coroutine< int > coro( boost::move( mv) );
+        coro::symmetric_coroutine< int >::call_type coro( boost::move( mv) );
         coro( 7);
         BOOST_CHECK( ! mv.state);
         BOOST_CHECK( value1);
@@ -244,7 +244,7 @@ void test_complete()
 {
     value2 = 0;
 
-    coro::symmetric_coroutine< void > coro( f2);
+    coro::symmetric_coroutine< void >::call_type coro( f2);
     BOOST_CHECK( coro);
     coro();
     BOOST_CHECK( ! coro);
@@ -255,13 +255,13 @@ void test_yield()
 {
     value2 = 0;
 
-    coro::symmetric_coroutine< int > coro3(
+    coro::symmetric_coroutine< int >::call_type coro3(
         boost::bind( f151, _1, 3) );
     BOOST_CHECK( coro3);
-    coro::symmetric_coroutine< int > coro2(
+    coro::symmetric_coroutine< int >::call_type coro2(
         boost::bind( f15, _1, 2, boost::ref( coro3) ) );
     BOOST_CHECK( coro2);
-    coro::symmetric_coroutine< int > coro1(
+    coro::symmetric_coroutine< int >::call_type coro1(
         boost::bind( f15, _1, 1, boost::ref( coro2) ) );
     BOOST_CHECK( coro1);
 
@@ -285,7 +285,7 @@ void test_pass_value()
     X x(7);
     BOOST_CHECK_EQUAL( ( int)7, x.i);
     BOOST_CHECK_EQUAL( 0, value2);
-    coro::symmetric_coroutine< X > coro( f3);
+    coro::symmetric_coroutine< X >::call_type coro( f3);
     BOOST_CHECK( coro);
     coro(7);
     BOOST_CHECK( ! coro);
@@ -298,7 +298,7 @@ void test_pass_reference()
     p = 0;
 
     X x;
-    coro::symmetric_coroutine< X& > coro( f4);
+    coro::symmetric_coroutine< X& >::call_type coro( f4);
     BOOST_CHECK( coro);
     coro( x);
     BOOST_CHECK( ! coro);
@@ -310,7 +310,7 @@ void test_pass_pointer()
     p = 0;
 
     X x;
-    coro::symmetric_coroutine< X* > coro( f5);
+    coro::symmetric_coroutine< X* >::call_type coro( f5);
     BOOST_CHECK( coro);
     coro( & x);
     BOOST_CHECK( ! coro);
@@ -321,8 +321,8 @@ void test_unwind()
 {
     value2 = 0;
     {
-        coro::symmetric_coroutine< void > coro( f6);
-        coro::symmetric_coroutine< void > coro_e( empty);
+        coro::symmetric_coroutine< void >::call_type coro( f6);
+        coro::symmetric_coroutine< void >::call_type coro_e( empty);
         BOOST_CHECK( coro);
         BOOST_CHECK( coro_e);
         term_coro = & coro_e;
@@ -338,11 +338,11 @@ void test_no_unwind()
 {
     value2 = 0;
     {
-        coro::symmetric_coroutine< void > coro( f6,
+        coro::symmetric_coroutine< void >::call_type coro( f6,
             coro::attributes(
                 coro::stack_allocator::default_stacksize(),
                 coro::no_stack_unwind) );
-        coro::symmetric_coroutine< void > coro_e( empty);
+        coro::symmetric_coroutine< void >::call_type coro_e( empty);
         BOOST_CHECK( coro);
         BOOST_CHECK( coro_e);
         term_coro = & coro_e;
@@ -358,8 +358,8 @@ void test_termination()
 {
     value2 = 0;
 
-    coro::symmetric_coroutine< int > coro( f7);
-    coro::symmetric_coroutine< void > coro_e( empty);
+    coro::symmetric_coroutine< int >::call_type coro( f7);
+    coro::symmetric_coroutine< void >::call_type coro_e( empty);
     BOOST_CHECK( coro);
     BOOST_CHECK( coro_e);
     term_coro = & coro_e;
@@ -376,8 +376,8 @@ void test_yield_to_void()
 {
     value2 = 0;
 
-    coro::symmetric_coroutine< void > coro_other( f111);
-    coro::symmetric_coroutine< void > coro( boost::bind( f11, _1, boost::ref( coro_other) ) );
+    coro::symmetric_coroutine< void >::call_type coro_other( f111);
+    coro::symmetric_coroutine< void >::call_type coro( boost::bind( f11, _1, boost::ref( coro_other) ) );
     BOOST_CHECK( coro_other);
     BOOST_CHECK( coro);
     BOOST_CHECK_EQUAL( ( int) 0, value2);
@@ -395,8 +395,8 @@ void test_yield_to_int()
 {
     value2 = 0;
 
-    coro::symmetric_coroutine< int > coro_other( f101);
-    coro::symmetric_coroutine< int > coro( boost::bind( f10, _1, boost::ref( coro_other) ) );
+    coro::symmetric_coroutine< int >::call_type coro_other( f101);
+    coro::symmetric_coroutine< int >::call_type coro( boost::bind( f10, _1, boost::ref( coro_other) ) );
     BOOST_CHECK( coro_other);
     BOOST_CHECK( coro);
     BOOST_CHECK_EQUAL( ( int) 0, value2);
@@ -414,8 +414,8 @@ void test_yield_to_ref()
 {
     p = 0;
 
-    coro::symmetric_coroutine< X& > coro_other( f121);
-    coro::symmetric_coroutine< X& > coro( boost::bind( f12, _1, boost::ref( coro_other) ) );
+    coro::symmetric_coroutine< X& >::call_type coro_other( f121);
+    coro::symmetric_coroutine< X& >::call_type coro( boost::bind( f12, _1, boost::ref( coro_other) ) );
     BOOST_CHECK( coro_other);
     BOOST_CHECK( coro);
     BOOST_CHECK( 0 == p);
@@ -438,8 +438,8 @@ void test_yield_to_different()
     value2 = 0;
     value3 = "";
 
-    coro::symmetric_coroutine< std::string > coro_other( f141);
-    coro::symmetric_coroutine< int > coro( boost::bind( f14, _1, boost::ref( coro_other) ) );
+    coro::symmetric_coroutine< std::string >::call_type coro_other( f141);
+    coro::symmetric_coroutine< int >::call_type coro( boost::bind( f14, _1, boost::ref( coro_other) ) );
     BOOST_CHECK( coro_other);
     BOOST_CHECK( coro);
     BOOST_CHECK_EQUAL( ( int) 0, value2);

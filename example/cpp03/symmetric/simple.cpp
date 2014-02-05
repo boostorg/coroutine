@@ -12,8 +12,8 @@
 
 typedef boost::coroutines::symmetric_coroutine< void >  coro_t;
 
-coro_t * c1 = 0;
-coro_t * c2 = 0;
+coro_t::call_type * c1 = 0;
+coro_t::call_type * c2 = 0;
 
 void foo( coro_t::yield_type & yield)
 {
@@ -35,8 +35,8 @@ void bar( coro_t::yield_type & yield)
 
 int main( int argc, char * argv[])
 {
-    coro_t coro1( foo);
-    coro_t coro2( bar);
+    coro_t::call_type coro1( foo);
+    coro_t::call_type coro2( bar);
     c1 = & coro1;
     c2 = & coro2;
     coro1();

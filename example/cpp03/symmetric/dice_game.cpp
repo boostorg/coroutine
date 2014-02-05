@@ -38,7 +38,7 @@ private:
 public:
     int                             id;
     player                      *   nxt;
-    coro_t                          coro;
+    coro_t::call_type               coro;
     boost::random::random_device    gen;
 
     player( int id_) :

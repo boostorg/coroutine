@@ -46,7 +46,7 @@ duration_type measure_time_void( duration_type overhead)
 {
     duration_type total = duration_type::zero();
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< void > c( fn_void,
+        boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
                 boost::coroutines::attributes( preserve_fpu) );
         time_point_type start( clock_type::now() );
         c();
@@ -64,7 +64,7 @@ duration_type measure_time_int( duration_type overhead)
     int i = 3;
     duration_type total = duration_type::zero();
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< int > c( fn_int,
+        boost::coroutines::symmetric_coroutine< int >::call_type c( fn_int,
                 boost::coroutines::attributes( preserve_fpu) );
         time_point_type start( clock_type::now() );
         c( i);
@@ -82,7 +82,7 @@ duration_type measure_time_x( duration_type overhead)
     X x("abc");
     duration_type total = duration_type::zero();
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< X > c( fn_x,
+        boost::coroutines::symmetric_coroutine< X >::call_type c( fn_x,
                 boost::coroutines::attributes( preserve_fpu) );
         time_point_type start( clock_type::now() );
         c( x);
@@ -100,7 +100,7 @@ cycle_type measure_cycles_void( cycle_type overhead)
 {
     cycle_type total = 0;
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< void > c( fn_void,
+        boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
             boost::coroutines::attributes( preserve_fpu) );
         cycle_type start( cycles() );
         c();
@@ -118,7 +118,7 @@ cycle_type measure_cycles_int( cycle_type overhead)
     int i = 3;
     cycle_type total = 0;
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< int > c( fn_int,
+        boost::coroutines::symmetric_coroutine< int >::call_type c( fn_int,
             boost::coroutines::attributes( preserve_fpu) );
         cycle_type start( cycles() );
         c( i);
@@ -136,7 +136,7 @@ cycle_type measure_cycles_x( cycle_type overhead)
     X x("abc");
     cycle_type total = 0;
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< X > c( fn_x,
+        boost::coroutines::symmetric_coroutine< X >::call_type c( fn_x,
             boost::coroutines::attributes( preserve_fpu) );
         cycle_type start( cycles() );
         c( x);

@@ -40,7 +40,7 @@ public:
     std::vector< int >  const&  from;
     std::size_t                 idx;
     merger                  *   other;
-    coro_t                      coro;
+    coro_t::call_type           coro;
 
     merger( std::vector< int > const& from_, std::vector< int > & to, std::size_t max) :
         max_( max),

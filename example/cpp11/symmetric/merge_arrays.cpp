@@ -17,9 +17,9 @@ std::vector< int > merge( std::vector< int > const& a, std::vector< int > const&
 {
     std::vector< int > c;
     std::size_t idx_a = 0, idx_b = 0;
-    coro_t * other_a = 0, * other_b = 0;
+    coro_t::call_type * other_a = 0, * other_b = 0;
 
-    coro_t coro_a(
+    coro_t::call_type coro_a(
         [&]( coro_t::yield_type & yield) {
             while ( idx_a < a.size() )
             {
@@ -31,7 +31,7 @@ std::vector< int > merge( std::vector< int > const& a, std::vector< int > const&
                 c.push_back( b[idx_b]); 
         });
 
-    coro_t coro_b(
+    coro_t::call_type coro_b(
         [&]( coro_t::yield_type & yield) {
             while ( idx_b < b.size() )
             {
