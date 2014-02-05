@@ -7,6 +7,8 @@
 #ifndef BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_SELF_H
 #define BOOST_COROUTINES_DETAIL_SYMMETRIC_COROUTINE_SELF_H
 
+#include <algorithm>
+
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
@@ -262,6 +264,10 @@ public:
         return * this;
     }
 };
+
+template< typename R >
+void swap( symmetric_coroutine_self< R > & l, symmetric_coroutine_self< R > & r)
+{ l.swap( r); }
 
 }}}
 
