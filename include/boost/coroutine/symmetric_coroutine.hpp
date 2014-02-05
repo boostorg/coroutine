@@ -33,15 +33,15 @@
 namespace boost {
 namespace coroutines {
 
-template< typename T, typename StackAllocator = standard_stack_allocator >
+template< typename Arg, typename StackAllocator = standard_stack_allocator >
 class symmetric_coroutine
 {
 private:
     template< typename X >
     friend class detail::symmetric_coroutine_self;
 
-    typedef detail::symmetric_coroutine_impl< T >   impl_type;
-    typedef detail::parameters< T >                 param_type;
+    typedef detail::symmetric_coroutine_impl< Arg >   impl_type;
+    typedef detail::parameters< Arg >                 param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine)
 
@@ -54,8 +54,8 @@ private:
     detail::coroutine_context   callee_;
 
 public:
-    typedef T                                       value_type;
-    typedef detail::symmetric_coroutine_self< T >   self_type;
+    typedef Arg                                       value_type;
+    typedef detail::symmetric_coroutine_self< Arg >   self_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
@@ -303,32 +303,32 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine & operator()( T t) BOOST_NOEXCEPT
+    symmetric_coroutine & operator()( Arg arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
-        impl_->run( t);
+        impl_->run( arg);
         return * this;
     }
 
-    symmetric_coroutine & operator()( BOOST_RV_REF( T) t) BOOST_NOEXCEPT
+    symmetric_coroutine & operator()( BOOST_RV_REF( Arg) arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
-        impl_->run( forward< T >( t) );
+        impl_->run( forward< Arg >( arg) );
         return * this;
     }
 };
 
-template< typename T, typename StackAllocator >
-class symmetric_coroutine< T &, StackAllocator >
+template< typename Arg, typename StackAllocator >
+class symmetric_coroutine< Arg &, StackAllocator >
 {
 private:
     template< typename X >
     friend class detail::symmetric_coroutine_self;
 
-    typedef detail::symmetric_coroutine_impl< T & >     impl_type;
-    typedef detail::parameters< T & >                   param_type;
+    typedef detail::symmetric_coroutine_impl< Arg & >     impl_type;
+    typedef detail::parameters< Arg & >                   param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine)
 
@@ -341,8 +341,8 @@ private:
     detail::coroutine_context   callee_;
 
 public:
-    typedef T                                           value_type;
-    typedef detail::symmetric_coroutine_self< T & >     self_type;
+    typedef Arg                                           value_type;
+    typedef detail::symmetric_coroutine_self< Arg & >     self_type;
 
     symmetric_coroutine() BOOST_NOEXCEPT :
         impl_( 0),
@@ -590,11 +590,11 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine & operator()( T & t) BOOST_NOEXCEPT
+    symmetric_coroutine & operator()( Arg & arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
-        impl_->run( t);
+        impl_->run( arg);
         return * this;
     }
 };
