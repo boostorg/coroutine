@@ -75,6 +75,7 @@
 [def __pull_coro_op__ ['asymmetric_coroutine<>::pull_type::operator()]]
 [def __push_coro__ ['asymmetric_coroutine<>::push_type]]
 [def __push_coro_bool__ ['asymmetric_coroutine<>::push_type::operator bool]]
+[def __push_coro_it__ ['asymmetric_coroutine<>::push_type::iterator]]
 [def __push_coro_op__ ['asymmetric_coroutine<>::push_type::operator()]]
 [def __scoro__ ['symmetric_coroutine<>]]
 [def __segmented_allocator__ ['segmented_stack_allocator]]

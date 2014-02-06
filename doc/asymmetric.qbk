@@ -41,11 +41,8 @@ are overloaded. The increment-operation switches the context and transfers data.
         for(auto i:source)
             std::cout << i <<  " ";
 
-        std::cout << "\nDone" << std::endl;
-
         output:
         1 1 2 3 5 8 13 21 34 55
-        Done
 
 In this example a __pull_coro__ is created in the main execution context taking
 a lambda function (== __coro_fn__) which calculates Fibonacci numbers in a
@@ -75,7 +72,7 @@ complementary __pull_coro__ and passes it as reference to __coro_fn__.
 The interface does not contain a ['get()]-function: you can not retrieve
 values from another execution context with this kind of coroutine.
 
-__push_coro__ provides output iterators (__push_coro__iterator) and
+__push_coro__ provides output iterators (__push_coro_it__) and
 __begin__/__end__ are overloaded. The increment-operation switches the context
 and transfers data.
 
@@ -292,8 +289,6 @@ After unwinding, a __coro__ is complete.
             std::cout<<"sink is complete: "<<std::boolalpha<<!sink<<"\n";
         }
 
-        std::cout<<"Done"<<std::endl;
-
         output:
             X()
             fn(): 0
@@ -304,7 +299,6 @@ After unwinding, a __coro__ is complete.
             fn(): 5
             sink is complete: false
             ~X()
-            Done
 
 
 [heading Range iterators]
@@ -324,11 +318,8 @@ __pull_coro__ can be used via input-iterators using __begin__ and __end__.
         for (auto i:source)
             std::cout << i <<  " ";
 
-        std::cout << "\nDone" << std::endl;
-
         output:
             2 4 8 16 32 64 128 256
-            Done
 
 Output-iterators can be created from __push_coro__.
 
@@ -346,11 +337,11 @@ Output-iterators can be created from __push_coro__.
 
 [heading Exit a __coro_fn__]
 __coro_fn__ is exited with a simple return statement jumping back to the calling
-routine. The __pull_coro__/__push_coro__ becomes complete, e.g. __pull_coro_bool__/
+routine. The __pull_coro__, __push_coro__ becomes complete, e.g. __pull_coro_bool__,
 __push_coro_bool__ will return 'false'.
 
 [important After returning from __coro_fn__ the __coro__ is complete (can not
-resumed with __push_coro_op__/__pull_coro_op__).]
+resumed with __push_coro_op__, __pull_coro_op__).]
 
 
 

@@ -30,7 +30,7 @@ values from another execution context with this kind of coroutine.
 [heading __yield_coro__]
 __yield_coro_op__ ist used to transfers data and execution control to another
 context by calling __yield_coro_op__ with another __call_coro__ as first argument.
-If __yield_coro_op__ is invoked without __call__coro__ as argument the execution
+If __yield_coro_op__ is invoked without __call_coro__ as argument the execution
 control is transfered to the start of the __scoro__ sequence, e.g.
 invocation of __call_coro_op__.
 The class has only one template parameter defining the transferred parameter
@@ -197,14 +197,11 @@ After unwinding, a __coro__ is complete.
             std::cout<<"coro is complete: "<<std::boolalpha<<!coro<<"\n";
         }
 
-        std::cout<<"Done"<<std::endl;
-
         output:
             X()
             fn()
             coro is complete: false
             ~X()
-            Done
 
 
 [heading Exit a __coro_fn__]

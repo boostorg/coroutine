@@ -335,9 +335,9 @@ This code shows how coroutines could be chained.
 In the past the code using asio's ['asynchronous operations] was scattered by
 callbacks. __boost_asio__ provides with its new ['asynchronous result] feature a
 new way to simplify the code and make it easier to read
-([footnote Christopher Kohlhoff,
+[footnote Christopher Kohlhoff,
 [@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3747.pdf
-N3747 - A Synchronous Operations]]).
+N3747 - A Synchronous Operations]].
 __yield_context__ uses internally __boost_coroutine__:
 
         void echo(boost::asio::ip::tcp::socket& socket,boost::asio::yield_context yield){
