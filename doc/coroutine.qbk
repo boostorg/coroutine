@@ -7,13 +7,13 @@
 
 [section:coroutine Coroutine]
 
-__boost_coroutine__ provides two classes - implementations of asymmetric and
-symmetric coroutines.
+__boost_coroutine__ provides two implementations - asymmetric and symmetric
+coroutines.
 
-'Coroutine mechanisms that support concurrent programming usually provide
-symmetric coroutines to represent independent units of execution. On the other
-hand, coroutine mechanisms intended for implementing constructs that produce
-sequences of values typically provide asymmetric coroutines.'
+Symmetric coroutines occure usually in the context of concurrent programming
+in order to represent independent units of execution.
+Implementations that produce sequences of values typically use asymmetric
+coroutines.
 [footnote Moura, Ana Lucia De and Ierusalimschy, Roberto.
 "Revisiting coroutines". ACM Trans. Program. Lang. Syst., Volume 31 Issue 2,
 February 2009, Article No. 6].
@@ -51,16 +51,17 @@ The constructor of coroutine allows to pass an customized ['stack-allocator].
 __call_coro__, __push_coro__ and __pull_coro__ does support segmented stacks
 (growing on demand).
 
-It is not always possible to estimated the required stack size - in most cases
+It is not always possible to estimate the required stack size - in most cases
 too much memory is allocated (waste of virtual address-space).
 
 At construction a coroutine starts with a default (minimal) stack size. This
 minimal stack size is the maximum of page size and the canonical size for signal
 stack (macro SIGSTKSZ on POSIX).
 
-At this time of writing only GCC (4.7)\cite{gccsplit} is known to support
-segmented stacks. With version 1.54 __boost_coroutine__ provides support for
-segmented stacks.
+At this time of writing only GCC (4.7)
+[footnote [@http://gcc.gnu.org/wiki/SplitStacks Ian Lance Taylor, Split Stacks in GCC]]
+is known to support segmented stacks. With version 1.54 __boost_coroutine__
+provides support for segmented stacks.
 
 The destructor releases the associated stack. The implementer is free to
 deallocate the stack or to cache it for later usage.
@@ -79,10 +80,11 @@ default.]
 On POSIX systems, the coroutine context switch does not preserve signal masks
 for performance reasons.
 
-A context switch is done via __push_coro_op__ and __pull_coro_op__.
+A context switch is done via __call_coro_op__, __push_coro_op__ and
+__pull_coro_op__.
 
-[warning Calling __call_coro_op__/__push_coro_op__/__pull_coro_op__ from inside the
-[_same] coroutine results in undefined behaviour.]
+[warning Calling __call_coro_op__, __push_coro_op__ and __pull_coro_op__ from
+inside the [_same] coroutine results in undefined behaviour.]
 
 
 [include asymmetric.qbk]

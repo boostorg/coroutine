@@ -8,9 +8,9 @@
 [section:symmetric Symmetric coroutine]
 
 In contrast to asymmetric coroutines, were the relationship between caller and
-callee ist fixed, are symmetric coroutines able to transfer execution control
+callee ist fixed, symmetric coroutines are able to transfer execution control
 to any other (symmetric) coroutine. E.g. a symmetric coroutine is not required
-to return to its caller.
+to return to its direct caller.
 
 
 [heading __call_coro__]
@@ -29,19 +29,86 @@ values from another execution context with this kind of coroutine.
 
 [heading __yield_coro__]
 __yield_coro_op__ ist used to transfers data and execution control to another
-context - which might be a __call_coro__ or called with no argument back to the
-excecution context were the chain of symmetric coroutines has been started
-(invocation of __call_coro_op__).
+context by calling __yield_coro_op__ with another __call_coro__ as first argument.
+If __yield_coro_op__ is invoked without __call__coro__ as argument the execution
+control is transfered to the start of the __scoro__ sequence, e.g.
+invocation of __call_coro_op__.
 The class has only one template parameter defining the transferred parameter
 type.
 Data transferred to the coroutine are accessed through __yield_coro_get__.
 
+[important __yield_coro__ can only be created by the framework.]
+
+        std::vector<int> merge(const std::vector<int>& a,const std::vector<int>& b)
+        {
+            std::vector<int> c;
+            std::size_t idx_a=0,idx_b=0;
+            boost::coroutines::symmetric_coroutine<void>::call_type* other_a=0,* other_b=0;
+
+            boost::coroutines::symmetric_coroutine<void>::call_type coro_a(
+                [&](boost::coroutines::symmetric_coroutine<void>::yield_type& yield) {
+                    while(idx_a<a.size())
+                    {
+                        if(b[idx_b]<a[idx_a])    // test if element in array b is less than in array a
+                            yield(*other_b);     // yield to coroutine coro_b
+                        c.push_back(a[idx_a++]); // add element to final array
+                    }
+                    // add remaining elements of array b
+                    while(c.size()<a.size()+b.size())
+                        c.push_back(b[idx_b]); 
+                });
+
+            boost::coroutines::symmetric_coroutine<void>::call_type coro_b(
+                [&](boost::coroutines::symmetric_coroutine<void>::yield_type& yield) {
+                    while(idx_b<b.size())
+                    {
+                        if (a[idx_a]<b[idx_b])   // test if element in array a is less than in array b
+                            yield(*other_a);     // yield to coroutine coro_a
+                        c.push_back(b[idx_b++]); // add element to final array
+                    }
+                    // add remaining elements of array a
+                    while(c.size()<(a.size()+b.size()))
+                        c.push_back(a[idx_a]); 
+                });
+
+
+            other_a = & coro_a;
+            other_b = & coro_b;
+
+            coro_a(); // enter coroutine-fn of coro_a
+
+            return c;
+        }
+
+        std::vector< int > a = {1,5,6,10};
+        std::vector< int > b = {2,4,7,8,9,13};
+        std::vector< int > c = merge(a,b);
+        print(a);
+        print(b);
+        print(c);
+
+        output:
+            a : 1 5 6 10 
+            b : 2 4 7 8 9 13 
+            c : 1 2 4 5 6 7 8 9 10 13 
+
+In this example two __call_coro__ are created in the main execution context
+accepting a lambda function (== __coro_fn__) which merges elements of two
+sorted arrays into a third array.
+`coro_a()` enters the __coro_fn__ of `coro_a` cycling through teh array and
+tests if the actuall element in the other array is less than the element in
+the local one. If so, toe coroutine yields to the other coroutine `coro_b`
+using `yield(*other_b)`. If the current element of the local array is less
+than the element of the other array, it is put to the third array.
+Because the coroutine jumps back to `coro_a()` (returning from this method)
+after leaving the __coro_fn__, the elements of the other array will appended
+at the end of the third array if all element of the local array are processed.
+
 
 [heading coroutine-function]
 The __coro_fn__ returns ['void] and takes __yield_coro__, providing
-coroutine functionality inside the coroutine-fn, as argument, so that using this
-instance passed as argument to __coro_fn__ is the only way to transfer data and
-execution control.
+coroutine functionality inside the coroutine-fn, as argument. Using this
+instance is the only way to transfer data and execution control.
 __call_coro__ does not enter the __coro_fn__ at __call_coro__ construction but
 entered by the first invocation of __call_coro_op__.
 
@@ -158,7 +225,7 @@ resumed with __call_coro_op__).]
     class symmetric_coroutine<>::call_type
     {
     public:
-        call_type();
+        call_type() noexcept;
 
         template< typename Fn >
         call_type( Fn fn, attributes const& attr = attributes() );
@@ -171,19 +238,19 @@ resumed with __call_coro_op__).]
 
         call_type & operator=( call_type const& other)=delete;
 
-        call_type( call_type && other);
+        ~call_type() noexcept;
 
-        call_type & operator=( call_type && other);
+        call_type( call_type && other) noexcept;
 
-        ~call_type();
+        call_type & operator=( call_type && other) noexcept;
 
         operator unspecified-bool-type() const;
 
-        bool operator!() const;
+        bool operator!() const noexcept;
 
-        void swap( call_type & other);
+        void swap( call_type & other) noexcept;
 
-        call_type & operator()( Arg&& arg);
+        call_type & operator()( Arg&& arg) noexcept;
     };
 
     template< typename Arg >
@@ -243,6 +310,13 @@ has returned (completed), the function returns true. Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
+[heading `void swap( call_type & other)`]
+[variablelist
+[[Effects:] [Swaps the internal data from `*this` with the values
+of `other`.]]
+[[Throws:] [Nothing.]]
+]
+
 [heading `call_type<> & operator()(Arg&& arg)`]
 
         symmetric_coroutine::call_type& coroutine<Arg>::call_type::operator()(const Arg&);
@@ -254,13 +328,6 @@ has returned (completed), the function returns true. Otherwise false.]]
 [[Preconditions:] [operator unspecified-bool-type() returns true for `*this`.]]
 [[Effects:] [Execution control is transferred to __coro_fn__ and the argument
 `arg` is passed to the coroutine-function.]]
-[[Throws:] [Exceptions thrown inside __coro_fn__.]]
-]
-
-[heading `void swap( call_type & other)`]
-[variablelist
-[[Effects:] [Swaps the internal data from `*this` with the values
-of `other`.]]
 [[Throws:] [Nothing.]]
 ]
 
@@ -285,6 +352,8 @@ of `other`.]]
     class symmetric_coroutine<>::yield_type
     {
     public:
+        yield_type() noexcept;
+
         yield_type( yield_type const& other)=delete;
 
         yield_type & operator=( yield_type const& other)=delete;
@@ -293,21 +362,31 @@ of `other`.]]
 
         yield_type & operator=( yield_type && other) noexcept;
 
+        operator unspecified-bool-type() const;
+
+        bool operator!() const noexcept;
+
         void swap( yield_type & other) noexcept;
 
         yield_type & operator()();
 
         template< typename X >
-        yield_type & operator()( symmetric_coroutine< X > & other, X & x);
+        yield_type & operator()( symmetric_coroutine< X >::call_type & other, X & x);
 
         template< typename X >
-        yield_type & operator()( symmetric_coroutine< X > & other);
+        yield_type & operator()( symmetric_coroutine< X >::call_type & other);
 
         R get() const noexcept;
     };
 
     template< typename R >
     void swap( symmetric_coroutine< R >::yield_type & l, symmetric_coroutine< R >::yield_type & r);
+
+[heading `yield_type()`]
+[variablelist
+[[Effects:] [Creates a coroutine representing __not_a_coro__.]]
+[[Throws:] [Nothing.]]
+]
 
 [heading `yield_type( yield_type && other)`]
 [variablelist
@@ -337,12 +416,27 @@ Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
+[heading `void swap( yield_type & other)`]
+[variablelist
+[[Effects:] [Swaps the internal data from `*this` with the values
+of `other`.]]
+[[Throws:] [Nothing.]]
+]
+
 [heading `yield_type & operator()()`]
+
+        yield_type & operator()();
+        template< typename X >
+        yield_type & operator()( symmetric_coroutine< X >::call_type & other, X & x);
+        template< typename X >
+        yield_type & operator()( symmetric_coroutine< X >::call_type & other);
+
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
-[[Effects:] [Execution control is transferred back to the starting point,
-e.g. invocation of __call_coro_op__.]]
-[[Throws:] [Exceptions thrown inside __coro_fn__.]]
+[[Effects:] [The first function transferres execution cotnrol back to the starting point,
+e.g. invocation of __call_coro_op__. The last two functions transfer the execution control
+to another symmetric coroutine. Parameter `x` is passed as value into `other`'s context.]]
+[[Throws:] [__forced_unwind__]]
 ]
 
 [heading `R get()()`]
@@ -358,13 +452,6 @@ __push_coro_op__.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `void swap( yield_type & other)`]
-[variablelist
-[[Effects:] [Swaps the internal data from `*this` with the values
-of `other`.]]
-[[Throws:] [Nothing.]]
-]
-
 [heading Non-member function `swap()`]
 
     template< typename R >
@@ -375,7 +462,6 @@ of `other`.]]
 ]
 
 [endsect]
-
 
 
 

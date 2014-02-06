@@ -7,8 +7,8 @@
 
 [section:asymmetric Asymmetric coroutine]
 
-Two asymmetric coroutine types - __push_coro__ and __pull_coro__ - providing a
-unidirectional transfer of data.
+Two asymmetric coroutine types - __push_coro__ and __pull_coro__ - provide a
+unidirectional transfer of data. 
 
 
 [heading __pull_coro__]
@@ -365,11 +365,10 @@ resumed with __push_coro_op__/__pull_coro_op__).]
         pull_type();
 
         template< typename Fn >
-        pull_type( Fn fn, attributes const& attr = attributes() );
+        pull_type( Fn && fn, attributes const& attr = attributes() );
 
         template< typename Fn >
-        pull_type( Fn && fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator() );
+        pull_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
 
         pull_type( pull_type && other);
 
@@ -406,7 +405,7 @@ resumed with __push_coro_op__/__pull_coro_op__).]
 ]
 
 [heading `template< typename Fn >
-          pull_type( Fn fn, attributes const& attr)`]
+          pull_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
@@ -526,7 +525,7 @@ of `other`.]]
 
 [section:push_coro Class `asymmetric_coroutine<>::push_type`]
 
-    #include <boost/coroutine/asymmetric_coroutine.hpp>
+    #include <boost/coroutine/asymmetric_coroutine.h,
 
     template< typename Arg, typename StackAllocator = standard_stack_allocator >
     class asymmetric_coroutine<>::push_type
@@ -535,11 +534,10 @@ of `other`.]]
         push_type();
 
         template< typename Fn >
-        push_type( Fn fn, attributes const& attr = attributes() );
+        push_type( Fn && fn, attributes const& attr = attributes());
 
         template< typename Fn >
-        push_type( Fn && fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator() );
+        push_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
 
         push_type( push_type && other);
 
@@ -571,26 +569,23 @@ of `other`.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator, typename Allocator >
-          push_type( Fn fn, attributes const& attr, StackAllocator const& stack_alloc, Allocator const& alloc)`]
+[heading `template< typename Fn >
+          push_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
-determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used and internal
-data are allocated by Allocator.]]
+determines stack clean-up and preserving floating-point registers.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator, typename Allocator >
-          push_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc, Allocator const& alloc)`]
+[heading `template< typename Fn >
+          push_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` > minimum_stacksize(), `size` < maximum_stacksize()
 when ! is_stack_unbound().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
-For allocating/deallocating the stack `stack_alloc` is used and internal
-data are allocated by Allocator.]]
+For allocating/deallocating the stack `stack_alloc` is used.]]
 ]
 
 [heading `push_type( push_type && other)`]
