@@ -33,26 +33,26 @@ struct X
 
 const X x("abc");
 
-void fn_void( boost::coroutines::symmetric_coroutine< void >::yield_type &)
-{}
+void fn_void( boost::coroutines::symmetric_coroutine< void >::yield_type & yield)
+{ while( true) yield(); }
 
-void fn_int( boost::coroutines::symmetric_coroutine< int >::yield_type &)
-{}
+void fn_int( boost::coroutines::symmetric_coroutine< int >::yield_type & yield)
+{ while( true) yield(); }
 
-void fn_x( boost::coroutines::symmetric_coroutine< X >::yield_type &)
-{}
+void fn_x( boost::coroutines::symmetric_coroutine< X >::yield_type & yield)
+{ while( true) yield(); }
 
 duration_type measure_time_void( duration_type overhead)
 {
-    duration_type total = duration_type::zero();
+    boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
+            boost::coroutines::attributes( preserve_fpu) );
+
+    time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
-                boost::coroutines::attributes( preserve_fpu) );
-        time_point_type start( clock_type::now() );
         c();
-        total += clock_type::now() - start;
     }
-    total -= jobs * overhead; // overhead of measurement
+    duration_type total = clock_type::now() - start;
+    total -= overhead_clock(); // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -61,16 +61,15 @@ duration_type measure_time_void( duration_type overhead)
 
 duration_type measure_time_int( duration_type overhead)
 {
-    int i = 3;
-    duration_type total = duration_type::zero();
+    boost::coroutines::symmetric_coroutine< int >::call_type c( fn_int,
+            boost::coroutines::attributes( preserve_fpu) );
+
+    time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< int >::call_type c( fn_int,
-                boost::coroutines::attributes( preserve_fpu) );
-        time_point_type start( clock_type::now() );
         c( i);
-        total += clock_type::now() - start;
     }
-    total -= jobs * overhead; // overhead of measurement
+    duration_type total = clock_type::now() - start;
+    total -= overhead_clock(); // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -79,16 +78,16 @@ duration_type measure_time_int( duration_type overhead)
 
 duration_type measure_time_x( duration_type overhead)
 {
+    boost::coroutines::symmetric_coroutine< X >::call_type c( fn_x,
+            boost::coroutines::attributes( preserve_fpu) );
+
     X x("abc");
-    duration_type total = duration_type::zero();
+    time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< X >::call_type c( fn_x,
-                boost::coroutines::attributes( preserve_fpu) );
-        time_point_type start( clock_type::now() );
         c( x);
-        total += clock_type::now() - start;
     }
-    total -= jobs * overhead; // overhead of measurement
+    duration_type total = clock_type::now() - start;
+    total -= overhead_clock(); // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -98,15 +97,15 @@ duration_type measure_time_x( duration_type overhead)
 # ifdef BOOST_CONTEXT_CYCLE
 cycle_type measure_cycles_void( cycle_type overhead)
 {
-    cycle_type total = 0;
+    boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
+        boost::coroutines::attributes( preserve_fpu) );
+
+    cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
-            boost::coroutines::attributes( preserve_fpu) );
-        cycle_type start( cycles() );
         c();
-        total += cycles() - start;
     }
-    total -= jobs * overhead; // overhead of measurement
+    cycle_type total = cycles() - start;
+    total -= overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -115,16 +114,15 @@ cycle_type measure_cycles_void( cycle_type overhead)
 
 cycle_type measure_cycles_int( cycle_type overhead)
 {
-    int i = 3;
-    cycle_type total = 0;
+    boost::coroutines::symmetric_coroutine< int >::call_type c( fn_int,
+        boost::coroutines::attributes( preserve_fpu) );
+
+    cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< int >::call_type c( fn_int,
-            boost::coroutines::attributes( preserve_fpu) );
-        cycle_type start( cycles() );
         c( i);
-        total += cycles() - start;
     }
-    total -= jobs * overhead; // overhead of measurement
+    cycle_type total = cycles() - start;
+    total -= overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -133,16 +131,16 @@ cycle_type measure_cycles_int( cycle_type overhead)
 
 cycle_type measure_cycles_x( cycle_type overhead)
 {
+    boost::coroutines::symmetric_coroutine< X >::call_type c( fn_x,
+        boost::coroutines::attributes( preserve_fpu) );
+
     X x("abc");
-    cycle_type total = 0;
+    cycle_type start( cycles() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        boost::coroutines::symmetric_coroutine< X >::call_type c( fn_x,
-            boost::coroutines::attributes( preserve_fpu) );
-        cycle_type start( cycles() );
         c( x);
-        total += cycles() - start;
     }
-    total -= jobs * overhead; // overhead of measurement
+    cycle_type total = cycles() - start;
+    total -= overhead; // overhead of measurement
     total /= jobs;  // loops
     total /= 2;  // 2x jump_fcontext
 
@@ -154,12 +152,11 @@ int main( int argc, char * argv[])
 {
     try
     {
-        bind_to_processor( 0);
-
-        bool preserve = false;
+        bool preserve = false, bind = false;
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")
+            ("bind,b", boost::program_options::value< bool >( & bind), "bind thread to CPU")
             ("fpu,f", boost::program_options::value< bool >( & preserve), "preserve FPU registers")
             ("jobs,j", boost::program_options::value< boost::uint64_t >( & jobs), "jobs to run");
 
@@ -178,6 +175,7 @@ int main( int argc, char * argv[])
         }
 
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
+        if ( bind) bind_to_processor( 0);
 
         duration_type overhead_c = overhead_clock();
         std::cout << "overhead " << overhead_c.count() << " nano seconds" << std::endl;

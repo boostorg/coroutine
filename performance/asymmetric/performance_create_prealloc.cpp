@@ -18,8 +18,8 @@
 #include "../cycle.hpp"
 #include "../preallocated_stack_allocator.hpp"
 
-typedef preallocated_stack_allocator                            stack_allocator;
-typedef boost::coroutines::asymmetric_coroutine< void, stack_allocator >   coro_type;
+typedef preallocated_stack_allocator                                        stack_allocator;
+typedef boost::coroutines::asymmetric_coroutine< void, stack_allocator >    coro_type;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::coroutines::flag_unwind_t unwind_stack = boost::coroutines::stack_unwind;
@@ -68,12 +68,11 @@ int main( int argc, char * argv[])
 {
     try
     {
-        bind_to_processor( 0);
-
-        bool preserve = false, unwind = true;
+        bool preserve = false, unwind = true, bind = false;
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")
+            ("bind,b", boost::program_options::value< bool >( & bind), "bind thread to CPU")
             ("fpu,f", boost::program_options::value< bool >( & preserve), "preserve FPU registers")
             ("unwind,u", boost::program_options::value< bool >( & unwind), "unwind coroutine-stack")
             ("jobs,j", boost::program_options::value< boost::uint64_t >( & jobs), "jobs to run");
@@ -94,6 +93,7 @@ int main( int argc, char * argv[])
 
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
         if ( ! unwind) unwind_stack = boost::coroutines::no_stack_unwind;
+        if ( bind) bind_to_processor( 0);
 
         duration_type overhead_c = overhead_clock();
         std::cout << "overhead " << overhead_c.count() << " nano seconds" << std::endl;

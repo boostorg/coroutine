@@ -151,12 +151,11 @@ int main( int argc, char * argv[])
 {
     try
     {
-        bind_to_processor( 0);
-
-        bool preserve = false;
+        bool preserve = false, unwind = true, bind = false;
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")
+            ("bind,b", boost::program_options::value< bool >( & bind), "bind thread to CPU")
             ("fpu,f", boost::program_options::value< bool >( & preserve), "preserve FPU registers")
             ("jobs,j", boost::program_options::value< boost::uint64_t >( & jobs), "jobs to run");
 
@@ -175,6 +174,7 @@ int main( int argc, char * argv[])
         }
 
         if ( preserve) preserve_fpu = boost::coroutines::fpu_preserved;
+        if ( bind) bind_to_processor( 0);
 
         duration_type overhead_c = overhead_clock();
         std::cout << "overhead " << overhead_c.count() << " nano seconds" << std::endl;
