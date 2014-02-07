@@ -112,7 +112,7 @@ public:
         }
     }
 
-    void run( R r) BOOST_NOEXCEPT
+    void run( R const& r) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
