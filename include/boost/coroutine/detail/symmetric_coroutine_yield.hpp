@@ -12,6 +12,8 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <boost/utility/explicit_operator_bool.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
@@ -37,6 +39,8 @@ private:
 
     typedef parameters< R >                     param_type;
     typedef symmetric_coroutine_impl< R >       impl_type;
+
+    struct dummy {};
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_yield)
 
@@ -86,7 +90,11 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x)
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type const& x,
+                                            typename disable_if<
+                                                is_same< typename Coro::value_type, void >,
+                                                dummy*
+                                            >::type = 0)
     {
         BOOST_ASSERT( other);
 
@@ -95,7 +103,11 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other)
+    symmetric_coroutine_yield & operator()( Coro & other,
+                                            typename enable_if<
+                                                is_same< typename Coro::value_type, void >,
+                                                dummy*
+                                            >::type = 0)
     {
         BOOST_ASSERT( other);
 
@@ -171,7 +183,11 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x)
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type const& x,
+                                            typename disable_if<
+                                                is_same< typename Coro::value_type, void >,
+                                                dummy*
+                                            >::type = 0)
     {
         BOOST_ASSERT( other);
 
@@ -180,7 +196,11 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other)
+    symmetric_coroutine_yield & operator()( Coro & other,
+                                            typename enable_if<
+                                                is_same< typename Coro::value_type, void >,
+                                                dummy*
+                                            >::type = 0)
     {
         BOOST_ASSERT( other);
 
@@ -205,6 +225,8 @@ private:
 
     typedef parameters< void >                  param_type;
     typedef symmetric_coroutine_impl< void >    impl_type;
+
+    struct dummy {};
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_yield)
 
@@ -245,7 +267,11 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x)
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type const& x,
+                                            typename disable_if<
+                                                is_same< typename Coro::value_type, void >,
+                                                dummy*
+                                            >::type = 0)
     {
         BOOST_ASSERT( other);
 
@@ -254,7 +280,11 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other)
+    symmetric_coroutine_yield & operator()( Coro & other,
+                                            typename enable_if<
+                                                is_same< typename Coro::value_type, void >,
+                                                dummy*
+                                            >::type = 0)
     {
         BOOST_ASSERT( other);
 
