@@ -163,13 +163,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( push_coroutine & other) BOOST_NOEXCEPT
     {
@@ -345,13 +342,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( push_coroutine & other) BOOST_NOEXCEPT
     {
@@ -526,13 +520,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( push_coroutine & other) BOOST_NOEXCEPT
     {
@@ -837,13 +828,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
     {
@@ -862,16 +850,9 @@ public:
         return * this;
     }
 
-    bool has_result() const
-    {
-        BOOST_ASSERT( ! empty() );
-
-        return impl_->has_result();
-    }
-
     R get() const
     {
-        BOOST_ASSERT( ! empty() );
+        BOOST_ASSERT( 0 != impl_);
 
         return impl_->get();
     }
@@ -886,7 +867,7 @@ public:
         {
             BOOST_ASSERT( c_);
 
-            if ( ! c_->has_result() )
+            if ( ! ( * c_) )
             {
                 c_ = 0;
                 val_ = 0;
@@ -1249,13 +1230,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
     {
@@ -1274,13 +1252,6 @@ public:
         return * this;
     }
 
-    bool has_result() const
-    {
-        BOOST_ASSERT( ! empty() );
-
-        return impl_->has_result();
-    }
-
     R & get() const
     { return impl_->get(); }
 
@@ -1294,7 +1265,7 @@ public:
         {
             BOOST_ASSERT( c_);
 
-            if ( ! c_->has_result() )
+            if ( ! ( * c_) )
             {
                 c_ = 0;
                 val_ = 0;
@@ -1667,13 +1638,10 @@ public:
         return * this;
     }
 
-    bool empty() const BOOST_NOEXCEPT
-    { return 0 == impl_; }
-
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return empty() || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
     {

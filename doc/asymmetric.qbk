@@ -371,11 +371,7 @@ resumed with __push_coro_op__, __pull_coro_op__).]
 
         void swap( pull_type & other);
 
-        bool empty() const;
-
         pull_type & operator()();
-
-        bool has_result() const;
 
         R get() const;
     };
@@ -444,26 +440,12 @@ has returned (completed), the function returns true. Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `bool empty()`]
-[variablelist
-[[Returns:] [If `*this` refers to __not_a_coro__, the function returns true.
-Otherwise false.]]
-[[Throws:] [Nothing.]]
-]
-
 [heading `pull_type<> & operator()()`]
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
 [[Effects:] [Execution control is transferred to __coro_fn__ (no parameter are
 passed to the coroutine-function).]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
-]
-
-[heading `bool has_result()`]
-[variablelist
-[[Preconditions:] [`*this` is not a __not_a_coro__.]]
-[[Returns:] [If `*this` has a, the function returns true. Otherwise false.]]
-[[Throws:] [Nothing.]]
 ]
 
 [heading `R get()()`]
@@ -540,8 +522,6 @@ of `other`.]]
 
         void swap( push_type & other);
 
-        bool empty() const;
-
         push_type & operator()( Arg arg);
     };
 
@@ -604,13 +584,6 @@ has returned (completed), the function returns false. Otherwise true.]]
 [variablelist
 [[Returns:] [If `*this` refers to __not_a_coro__ or the coroutine-function
 has returned (completed), the function returns true. Otherwise false.]]
-[[Throws:] [Nothing.]]
-]
-
-[heading `bool empty()`]
-[variablelist
-[[Returns:] [If `*this` refers to __not_a_coro__, the function returns true.
-Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 

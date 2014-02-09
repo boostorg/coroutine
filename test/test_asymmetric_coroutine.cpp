@@ -208,16 +208,12 @@ void test_move()
         coro::asymmetric_coroutine< void >::pull_type coro1;
         coro::asymmetric_coroutine< void >::pull_type coro2( f1);
         BOOST_CHECK( ! coro1);
-        BOOST_CHECK( coro1.empty() );
         BOOST_CHECK( coro2);
-        BOOST_CHECK( ! coro2.empty() );
         coro2();
         coro1 = boost::move( coro2);
         BOOST_CHECK( coro1);
-        BOOST_CHECK( ! coro1.empty() );
         coro1();
         BOOST_CHECK( ! coro2);
-        BOOST_CHECK( coro2.empty() );
     }
 
     {
