@@ -1006,7 +1006,7 @@ public:
             detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R &, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< coroutine_fn, impl_type > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
@@ -1030,7 +1030,7 @@ public:
             detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R &, StackAllocator >
             >,
             & stack_ctx_);
-        detail::setup< coroutine_fn, impl_type > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
         impl_ = reinterpret_cast< impl_type * >(
                 caller_.jump(
                     callee_,
