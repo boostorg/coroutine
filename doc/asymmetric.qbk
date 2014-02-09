@@ -542,7 +542,7 @@ of `other`.]]
 
         bool empty() const;
 
-        push_type & operator()( Arg&& arg);
+        push_type & operator()( Arg arg);
     };
 
     template< typename Arg >
@@ -614,10 +614,9 @@ Otherwise false.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `push_type<> & operator()(Arg&& arg)`]
+[heading `push_type<> & operator()(Arg arg)`]
 
-        push_type& asymmetric_coroutine<Arg>::push_type::operator()(const Arg&);
-        push_type& asymmetric_coroutine<Arg>::push_type::operator()(Arg&&);
+        push_type& asymmetric_coroutine<Arg>::push_type::operator()(Arg);
         push_type& asymmetric_coroutine<Arg&>::push_type::operator()(Arg&);
         push_type& asymmetric_coroutine<void>::push_type::operator()();
 

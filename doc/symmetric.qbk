@@ -247,7 +247,7 @@ resumed with __call_coro_op__).]
 
         void swap( call_type & other) noexcept;
 
-        call_type & operator()( Arg&& arg) noexcept;
+        call_type & operator()( Arg arg) noexcept;
     };
 
     template< typename Arg >
@@ -314,10 +314,9 @@ of `other`.]]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `call_type<> & operator()(Arg&& arg)`]
+[heading `call_type<> & operator()(Arg arg)`]
 
-        symmetric_coroutine::call_type& coroutine<Arg>::call_type::operator()(const Arg&);
-        symmetric_coroutine::call_type& coroutine<Arg>::call_type::operator()(Arg&&);
+        symmetric_coroutine::call_type& coroutine<Arg>::call_type::operator()(Arg);
         symmetric_coroutine::call_type& coroutine<Arg&>::call_type::operator()(Arg&);
         symmetric_coroutine::call_type& coroutine<void>::call_type::operator()();
 
