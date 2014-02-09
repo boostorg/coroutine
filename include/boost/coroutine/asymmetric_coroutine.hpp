@@ -180,19 +180,11 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    push_coroutine & operator()( Arg const& arg)
+    push_coroutine & operator()( Arg arg)
     {
         BOOST_ASSERT( * this);
 
         impl_->push( arg);
-        return * this;
-    }
-
-    push_coroutine & operator()( BOOST_RV_REF( Arg) arg)
-    {
-        BOOST_ASSERT( * this);
-
-        impl_->push( forward< Arg >( arg) );
         return * this;
     }
 
