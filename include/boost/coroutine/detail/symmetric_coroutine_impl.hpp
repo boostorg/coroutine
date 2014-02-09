@@ -112,15 +112,7 @@ public:
         }
     }
 
-    void run( R const& r) BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! is_complete() );
-
-        param_type to( const_cast< R * >( & r) );
-        run_( & to);
-    }
-
-    void run( BOOST_RV_REF( R) r) BOOST_NOEXCEPT
+    void run( R r) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
 
@@ -145,22 +137,22 @@ public:
     }
 
     template< typename X >
-    R * yield_to( symmetric_coroutine_impl< X > * other, X const& x)
+    R * yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_complete() );
 
-        typename symmetric_coroutine_impl< X >::param_type to( const_cast< X * >( & x) );
+        typename symmetric_coroutine_impl< X >::param_type to( & x);
         return yield_to_( other, & to);
     }
 
     template< typename X >
-    R * yield_to( symmetric_coroutine_impl< X & > * other, X const& x)
+    R * yield_to( symmetric_coroutine_impl< X & > * other, X & x)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_complete() );
 
-        typename symmetric_coroutine_impl< X & >::param_type to( const_cast< X * >( & x) );
+        typename symmetric_coroutine_impl< X & >::param_type to( & x);
         return yield_to_( other, & to);
     }
 
@@ -281,22 +273,22 @@ public:
     }
 
     template< typename X >
-    R * yield_to( symmetric_coroutine_impl< X > * other, X const& x)
+    R * yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_complete() );
 
-        typename symmetric_coroutine_impl< X >::param_type to( const_cast< X * >( & x) );
+        typename symmetric_coroutine_impl< X >::param_type to( & x);
         return yield_to_( other, & to);
     }
 
     template< typename X >
-    R * yield_to( symmetric_coroutine_impl< X & > * other, X const& x)
+    R * yield_to( symmetric_coroutine_impl< X & > * other, X & x)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_complete() );
 
-        typename symmetric_coroutine_impl< X & >::param_type to( const_cast< X * >( & x) );
+        typename symmetric_coroutine_impl< X & >::param_type to( & x);
         return yield_to_( other, & to);
     }
 
@@ -393,16 +385,6 @@ public:
             preserve_fpu() );
     }
 
-    template< typename X >
-    void yield_to( symmetric_coroutine_impl< X > * other, X x)
-    {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
-        typename symmetric_coroutine_impl< X >::param_type to( & x);
-        yield_to_( other, & to);
-    }
-
     void yield() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
@@ -418,22 +400,22 @@ public:
     }
 
     template< typename X >
-    void yield_to( symmetric_coroutine_impl< X > * other, X const& x)
+    void yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_complete() );
 
-        typename symmetric_coroutine_impl< X >::param_type to( const_cast< X * >( & x) );
+        typename symmetric_coroutine_impl< X >::param_type to( & x);
         yield_to_( other, & to);
     }
 
     template< typename X >
-    void yield_to( symmetric_coroutine_impl< X & > * other, X const& x)
+    void yield_to( symmetric_coroutine_impl< X & > * other, X & x)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_complete() );
 
-        typename symmetric_coroutine_impl< X & >::param_type to( const_cast< X * >( & x) );
+        typename symmetric_coroutine_impl< X & >::param_type to( & x);
         yield_to_( other, & to);
     }
 

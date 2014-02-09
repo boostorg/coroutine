@@ -90,7 +90,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type const& x,
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x,
                                             typename disable_if<
                                                 is_same< typename Coro::value_type, void >,
                                                 dummy*
@@ -183,7 +183,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type const& x,
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x,
                                             typename disable_if<
                                                 is_same< typename Coro::value_type, void >,
                                                 dummy*
@@ -267,7 +267,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type const& x,
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x,
                                             typename disable_if<
                                                 is_same< typename Coro::value_type, void >,
                                                 dummy*

@@ -303,19 +303,11 @@ public:
         std::swap( callee_, other.callee_);
     }
 
-    symmetric_coroutine_call & operator()( Arg const& arg) BOOST_NOEXCEPT
+    symmetric_coroutine_call & operator()( Arg arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
         impl_->run( arg);
-        return * this;
-    }
-
-    symmetric_coroutine_call & operator()( BOOST_RV_REF( Arg) arg) BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( * this);
-
-        impl_->run( forward< Arg >( arg) );
         return * this;
     }
 };
