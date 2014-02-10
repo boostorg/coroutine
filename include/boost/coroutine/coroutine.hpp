@@ -105,36 +105,20 @@ public:
 #else
     template< typename Fn >
     explicit push_coroutine( Fn fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                dummy*
-                             >::type = 0);
+                             attributes const& attr = attributes() );
 
     template< typename Fn >
     explicit push_coroutine( Fn fn, attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                 dummy*
-                             >::type = 0);
+                             StackAllocator const& stack_alloc);
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, push_coroutine >,
-                                 dummy*
-                             >::type = 0);
+                             attributes const& attr = attributes() );
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn) fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, push_coroutine >,
-                                 dummy*
-                             >::type = 0);
+                             StackAllocator const& stack_alloc);
 #endif
 
     ~push_coroutine()
@@ -294,37 +278,21 @@ public:
 #else
     template< typename Fn >
     explicit push_coroutine( Fn fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                 dummy*
-                             >::type = 0);
+                             attributes const& attr = attributes() );
 
     template< typename Fn >
     explicit push_coroutine( Fn fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                 dummy*
-                             >::type = 0);
+                             StackAllocator const& stack_alloc);
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, push_coroutine >,
-                                 dummy*
-                             >::type = 0);
+                             attributes const& attr = attributes() );
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn) fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, push_coroutine >,
-                                 dummy*
-                             >::type = 0);
+                             StackAllocator const& stack_alloc);
 #endif
 
     ~push_coroutine()
@@ -475,37 +443,21 @@ public:
 #else
     template< typename Fn >
     explicit push_coroutine( Fn fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                 dummy*
-                             >::type = 0);
+                             attributes const& attr = attributes() );
 
     template< typename Fn >
     explicit push_coroutine( Fn fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                dummy*
-                             >::type = 0);
+                             StackAllocator const& stack_alloc);
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, push_coroutine >,
-                                 dummy*
-                             >::type = 0);
+                             attributes const& attr = attributes() );
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn) fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, push_coroutine >,
-                                 dummy*
-                             >::type = 0);
+                             StackAllocator const& stack_alloc);
 #endif
 
     ~push_coroutine()
@@ -706,11 +658,7 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                        is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                        dummy*
-                                      >::type = 0) :
+                             attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -735,11 +683,7 @@ public:
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                        is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                        dummy*
-                                      >::type = 0) :
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -763,11 +707,7 @@ public:
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, pull_coroutine >,
-                                 dummy*
-                             >::type = 0) :
+                             attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -792,11 +732,7 @@ public:
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, pull_coroutine >,
-                                 dummy*
-                             >::type = 0) :
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -1118,11 +1054,7 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                        is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                        dummy*
-                                      >::type = 0) :
+                             attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -1147,11 +1079,7 @@ public:
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                        is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                        dummy*
-                                      >::type = 0) :
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -1175,11 +1103,7 @@ public:
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, pull_coroutine >,
-                                 dummy*
-                             >::type = 0) :
+                             attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -1204,11 +1128,7 @@ public:
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, pull_coroutine >,
-                                 dummy*
-                             >::type = 0) :
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -1534,10 +1454,7 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                        is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                        dummy* >::type = 0) :
+                             attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -1563,10 +1480,7 @@ public:
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                        is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                        dummy* >::type = 0) :
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -1591,11 +1505,7 @@ public:
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes(),
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, pull_coroutine >,
-                                 dummy*
-                             >::type = 0) :
+                             attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -1621,11 +1531,7 @@ public:
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
                              attributes const& attr,
-                             StackAllocator const& stack_alloc,
-                             typename disable_if<
-                                 is_same< typename decay< Fn >::type, pull_coroutine >,
-                                 dummy*
-                             >::type = 0) :
+                             StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -2012,11 +1918,7 @@ push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
-                                                       attributes const& attr,
-                                                       typename disable_if<
-                                                            is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                                            dummy*
-                                                       >::type) :
+                                                       attributes const& attr) :
     impl_( 0),
     stack_alloc_(),
     stack_ctx_(),
@@ -2042,11 +1944,7 @@ template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
                                                        attributes const& attr,
-                                                       StackAllocator const& stack_alloc,
-                                                       typename disable_if<
-                                                            is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                                            dummy*
-                                                       >::type) :
+                                                       StackAllocator const& stack_alloc) :
     impl_( 0),
     stack_alloc_( stack_alloc),
     stack_ctx_(),
@@ -2071,11 +1969,7 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
 template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
-                                                         attributes const& attr,
-                                                         typename disable_if<
-                                                              is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                                              dummy*
-                                                         >::type) :
+                                                         attributes const& attr) :
     impl_( 0),
     stack_alloc_(),
     stack_ctx_(),
@@ -2101,11 +1995,7 @@ template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
                                                          attributes const& attr,
-                                                         StackAllocator const& stack_alloc,
-                                                         typename disable_if<
-                                                              is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                                              dummy*
-                                                         >::type) :
+                                                         StackAllocator const& stack_alloc) :
     impl_( 0),
     stack_alloc_( stack_alloc),
     stack_ctx_(),
@@ -2130,11 +2020,7 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
 template< typename StackAllocator >
 template< typename Fn >
 push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
-                                                        attributes const& attr,
-                                                        typename disable_if<
-                                                             is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                                             dummy*
-                                                        >::type) :
+                                                        attributes const& attr) :
     impl_( 0),
     stack_alloc_(),
     stack_ctx_(),
@@ -2160,11 +2046,7 @@ template< typename StackAllocator >
 template< typename Fn >
 push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
                                                         attributes const& attr,
-                                                        StackAllocator const& stack_alloc,
-                                                        typename disable_if<
-                                                             is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                                             dummy*
-                                                        >::type) :
+                                                        StackAllocator const& stack_alloc) :
     impl_( 0),
     stack_alloc_( stack_alloc),
     stack_ctx_(),
@@ -2189,11 +2071,7 @@ push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
 template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                       attributes const& attr,
-                                                       typename disable_if<
-                                                           is_same< typename decay< Fn >::type, push_coroutine >,
-                                                           dummy*
-                                                       >::type) :
+                                                       attributes const& attr) :
     impl_( 0),
     stack_alloc_(),
     stack_ctx_(),
@@ -2219,11 +2097,7 @@ template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
                                                        attributes const& attr,
-                                                       StackAllocator const& stack_alloc,
-                                                       typename disable_if<
-                                                           is_same< typename decay< Fn >::type, push_coroutine >,
-                                                           dummy*
-                                                       >::type) :
+                                                       StackAllocator const& stack_alloc) :
     impl_( 0),
     stack_alloc_( stack_alloc),
     stack_ctx_(),
@@ -2248,11 +2122,7 @@ push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                         attributes const& attr,
-                                                         typename disable_if<
-                                                             is_same< typename decay< Fn >::type, push_coroutine >,
-                                                             dummy*
-                                                         >::type) :
+                                                         attributes const& attr) :
     impl_( 0),
     stack_alloc_(),
     stack_ctx_(),
@@ -2278,11 +2148,7 @@ template< typename Arg, typename StackAllocator >
 template< typename Fn >
 push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
                                                          attributes const& attr,
-                                                         StackAllocator const& stack_alloc,
-                                                         typename disable_if<
-                                                             is_same< typename decay< Fn >::type, push_coroutine >,
-                                                             dummy*
-                                                         >::type) :
+                                                         StackAllocator const& stack_alloc) :
     impl_( 0),
     stack_alloc_( stack_alloc),
     stack_ctx_(),
@@ -2307,11 +2173,7 @@ push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
 template< typename StackAllocator >
 template< typename Fn >
 push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                        attributes const& attr,
-                                                        typename disable_if<
-                                                            is_same< typename decay< Fn >::type, push_coroutine >,
-                                                            dummy*
-                                                        >::type) :
+                                                        attributes const& attr) :
     impl_( 0),
     stack_alloc_(),
     stack_ctx_(),
@@ -2337,11 +2199,7 @@ template< typename StackAllocator >
 template< typename Fn >
 push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
                                                         attributes const& attr,
-                                                        StackAllocator const& stack_alloc,
-                                                        typename disable_if<
-                                                            is_same< typename decay< Fn >::type, push_coroutine >,
-                                                            dummy*
-                                                        >::type) :
+                                                        StackAllocator const& stack_alloc) :
     impl_( 0),
     stack_alloc_( stack_alloc),
     stack_ctx_(),
