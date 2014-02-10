@@ -159,11 +159,7 @@ public:
 #else
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn,
-                                       attributes const& attr = attributes(),
-                                       typename disable_if<
-                                           is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                          dummy*
-                                       >::type = 0) :
+                                       attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -185,11 +181,7 @@ public:
 
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn, attributes const& attr,
-                                       StackAllocator const& stack_alloc,
-                                       typename disable_if<
-                                           is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                           dummy*
-                                       >::type = 0) :
+                                       StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -211,11 +203,7 @@ public:
 
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes(),
-                                       typename disable_if<
-                                           is_same< typename decay< Fn >::type, symmetric_coroutine_call >,
-                                           dummy*
-                                       >::type = 0) :
+                                       attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -238,11 +226,7 @@ public:
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
                                        attributes const& attr,
-                                       StackAllocator const& stack_alloc,
-                                       typename disable_if<
-                                           is_same< typename decay< Fn >::type, symmetric_coroutine_call >,
-                                           dummy*
-                                       >::type = 0) :
+                                       StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -438,11 +422,7 @@ public:
 #else
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn,
-                                       attributes const& attr = attributes(),
-                                       typename disable_if<
-                                           is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                          dummy*
-                                       >::type = 0) :
+                                       attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -464,11 +444,7 @@ public:
 
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn, attributes const& attr,
-                                       StackAllocator const& stack_alloc,
-                                       typename disable_if<
-                                           is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                           dummy*
-                                       >::type = 0) :
+                                       StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -490,11 +466,7 @@ public:
 
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes(),
-                                       typename disable_if<
-                                           is_same< typename decay< Fn >::type, symmetric_coroutine_call >,
-                                           dummy*
-                                       >::type = 0) :
+                                       attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -517,11 +489,7 @@ public:
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
                                        attributes const& attr,
-                                       StackAllocator const& stack_alloc,
-                                       typename disable_if<
-                                           is_same< typename decay< Fn >::type, symmetric_coroutine_call >,
-                                           dummy*
-                                       >::type = 0) :
+                                       StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -717,11 +685,7 @@ public:
 #else
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn,
-                                       attributes const& attr = attributes(),
-                                       typename disable_if<
-                                           is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                          dummy*
-                                       >::type = 0) :
+                                       attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -743,11 +707,7 @@ public:
 
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn, attributes const& attr,
-                                       StackAllocator const& stack_alloc,
-                                       typename disable_if<
-                                           is_convertible< Fn&, BOOST_RV_REF(Fn) >,
-                                           dummy*
-                                       >::type = 0) :
+                                       StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
@@ -769,11 +729,7 @@ public:
 
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes(),
-                                       typename disable_if<
-                                           is_same< typename decay< Fn >::type, symmetric_coroutine_call >,
-                                           dummy*
-                                       >::type = 0) :
+                                       attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
         stack_ctx_(),
@@ -796,11 +752,7 @@ public:
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
                                        attributes const& attr,
-                                       StackAllocator const& stack_alloc,
-                                       typename disable_if<
-                                           is_same< typename decay< Fn >::type, symmetric_coroutine_call >,
-                                           dummy*
-                                       >::type = 0) :
+                                       StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
         stack_ctx_(),
