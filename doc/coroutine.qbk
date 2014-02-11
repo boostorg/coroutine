@@ -10,13 +10,13 @@
 __boost_coroutine__ provides two implementations - asymmetric and symmetric
 coroutines.
 
-Symmetric coroutines occure usually in the context of concurrent programming
+Symmetric coroutines occur usually in the context of concurrent programming
 in order to represent independent units of execution.
 Implementations that produce sequences of values typically use asymmetric
 coroutines.
 [footnote Moura, Ana Lucia De and Ierusalimschy, Roberto.
 "Revisiting coroutines". ACM Trans. Program. Lang. Syst., Volume 31 Issue 2,
-February 2009, Article No. 6].
+February 2009, Article No. 6]
 
 
 [heading stackful]
@@ -42,16 +42,16 @@ leading to undefined behavior.
 [heading clean-up]
 On coroutine destruction the associated stack will be unwound.
 
-The constructor of coroutine allows to pass an customized ['stack-allocator].
+The constructor of coroutine allows you to pass a customized ['stack-allocator].
 ['stack-allocator] is free to deallocate the stack or cache it for future usage
 (for coroutines created later).
 
 
 [heading segmented stack]
-__call_coro__, __push_coro__ and __pull_coro__ does support segmented stacks
+__call_coro__, __push_coro__ and __pull_coro__ support segmented stacks
 (growing on demand).
 
-It is not always possible to estimate the required stack size - in most cases
+It is not always possible to accurately estimate the required stack size - in most cases
 too much memory is allocated (waste of virtual address-space).
 
 At construction a coroutine starts with a default (minimal) stack size. This
@@ -72,7 +72,7 @@ A coroutine saves and restores registers according to the underlying ABI on
 each context switch.
 
 Some applications do not use floating-point registers and can disable preserving
-fpu registers for performance reasons.
+FPU registers for performance reasons.
 
 [note According to the calling convention the FPU registers are preserved by
 default.]
@@ -85,6 +85,9 @@ __pull_coro_op__.
 
 [warning Calling __call_coro_op__, __push_coro_op__ and __pull_coro_op__ from
 inside the [_same] coroutine results in undefined behaviour.]
+
+[note Oliver: this mostly applies to symmetric coroutines? An asymmetric
+coroutine normally wouldn't even see its own coroutine object.]
 
 
 [include asymmetric.qbk]
