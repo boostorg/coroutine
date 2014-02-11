@@ -8,7 +8,7 @@
 [section:motivation Motivation]
 
 In order to support a broad range of execution control behaviour the coroutine
-types of __scoro__ and __scoro__ can be used to ['escape-and-reenter] loops, to
+types of __scoro__ and __acoro__ can be used to ['escape-and-reenter] loops, to
 ['escape-and-reenter] recursive computations and for ['cooperative] multitasking
 helping to solve problems in a much simpler and more elegant way than with only
 a single flow of control.
@@ -171,31 +171,33 @@ This example demonstrates how symmetric coroutines merge two sorted arrays.
                 [&]( boost::coroutines::symmetric_coroutine< void >::yield_type & yield) {
                     while ( idx_a < a.size() )
                     {
-                        if ( b[idx_b] < a[idx_a])
-                            yield( * other_b);
-                        c.push_back(a[idx_a++]);
+                        if(b[idx_b]<a[idx_a])    // test if element in array b is less than in array a
+                            yield(*other_b);     // yield to coroutine coro_b
+                        c.push_back(a[idx_a++]); // add element to final array
                     }
-                    while ( c.size() < a.size() + b.size())
-                        c.push_back( b[idx_b]);
+                    // add remaining elements of array b
+                    while ( idx_b < b.size())
+                        c.push_back( b[idx_b++]);
                 });
 
             boost::coroutines::symmetric_coroutine< void >::call_type coro_b(
                 [&]( boost::coroutines::symmetric_coroutine< void >::yield_type & yield) {
                     while ( idx_b < b.size() )
                     {
-                        if ( a[idx_a] < b[idx_b])
-                            yield( * other_a);
-                        c.push_back(b[idx_b++]);
+                        if (a[idx_a]<b[idx_b])   // test if element in array a is less than in array b
+                            yield(*other_a);     // yield to coroutine coro_a
+                        c.push_back(b[idx_b++]); // add element to final array
                     }
-                    while ( c.size() < ( a.size() + b.size() ) )
-                        c.push_back( a[idx_a]);
+                    // add remaining elements of array a
+                    while ( idx_a < a.size())
+                        c.push_back( a[idx_a++]);
                 });
 
 
             other_a = & coro_a;
             other_b = & coro_b;
 
-            coro_a();
+            coro_a(); // enter coroutine-fn of coro_a
 
             return c;
         }
@@ -337,8 +339,8 @@ callbacks. __boost_asio__ provides with its new ['asynchronous result] feature a
 new way to simplify the code and make it easier to read
 [footnote Christopher Kohlhoff,
 [@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3747.pdf
-N3747 - A Synchronous Operations]].
-__yield_context__ uses internally __boost_coroutine__:
+N3747 - Asynchronous Operations]].
+__yield_context__ internally uses __boost_coroutine__:
 
         void echo(boost::asio::ip::tcp::socket& socket,boost::asio::yield_context yield){
             char data[128];
