@@ -63,7 +63,7 @@ virtual addresses are used.]
 
         class protected_stack_allocator
         {
-            static bool is_stack_unbound();
+            static bool is_stack_unbounded();
 
             static std::size_t maximum_stacksize();
 
@@ -76,7 +76,7 @@ virtual addresses are used.]
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbound()`]
+[heading `static bool is_stack_unbounded()`]
 [variablelist
 [[Returns:] [Returns `true` if the environment defines no limit for the size of
 a stack.]]
@@ -84,7 +84,7 @@ a stack.]]
 
 [heading `static std::size_t maximum_stacksize()`]
 [variablelist
-[[Preconditions:] [`is_stack_unbound()` returns `false`.]]
+[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
 [[Returns:] [Returns the maximum size in bytes of stack defined by the
 environment.]]
 ]
@@ -133,7 +133,7 @@ end of each stack. The memory is simply managed by `std::malloc()` and
 
         class standard_stack_allocator
         {
-            static bool is_stack_unbound();
+            static bool is_stack_unbounded();
 
             static std::size_t maximum_stacksize();
 
@@ -146,7 +146,7 @@ end of each stack. The memory is simply managed by `std::malloc()` and
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbound()`]
+[heading `static bool is_stack_unbounded()`]
 [variablelist
 [[Returns:] [Returns `true` if the environment defines no limit for the size of
 a stack.]]
@@ -154,7 +154,7 @@ a stack.]]
 
 [heading `static std::size_t maximum_stacksize()`]
 [variablelist
-[[Preconditions:] [`is_stack_unbound()` returns `false`.]]
+[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
 [[Returns:] [Returns the maximum size in bytes of stack defined by the
 environment.]]
 ]

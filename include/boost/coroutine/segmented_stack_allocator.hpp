@@ -26,7 +26,7 @@ struct stack_context;
 class BOOST_COROUTINES_DECL segmented_stack_allocator
 {
 public:
-    static bool is_stack_unbound();
+    static bool is_stack_unbounded();
 
     static std::size_t default_stacksize();
 
