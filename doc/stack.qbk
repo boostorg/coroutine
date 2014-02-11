@@ -110,8 +110,8 @@ environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_stacksize() >= size` and
-`! is_stack_unbound() && ( maximum_stacksize() <= size)`.]]
+[[Preconditions:] [`minimum_stacksize() <= size` and
+`! is_stack_unbound() && ( maximum_stacksize() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
 to the stack and its actual size in `sctx`. Depending
 on the architecture (the stack grows downwards/upwards) the returned address is

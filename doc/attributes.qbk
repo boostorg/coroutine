@@ -61,7 +61,7 @@ and FPU registers are preserved.]]
 [heading `attributes( flag_fpu_t preserve_fpu)`]
 [variablelist
 [[Effects:] [Argument `preserve_fpu` determines if FPU register have to be
-preserved across context switches. THe default stacksize is used for the
+preserved across context switches. The default stacksize is used for the
 new coroutine and its stack will be unwound after termination.]]
 [[Throws:] [Nothing.]]
 ]
