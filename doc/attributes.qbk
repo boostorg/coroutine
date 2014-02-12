@@ -10,7 +10,17 @@
 Class `attributes` is used to transfers parameters required to setup a
 coroutine's context.
 
-[note Oliver: what are legal values to pass for `flag_unwind_t` and `flag_fpu_t`?]
+        enum flag_unwind_t
+        {
+            stack_unwind,
+            no_stack_unwind
+        };
+
+        enum flag_fpu_t
+        {
+            fpu_preserved,
+            fpu_not_preserved
+        };
 
         struct attributes
         {
