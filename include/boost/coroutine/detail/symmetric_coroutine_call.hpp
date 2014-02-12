@@ -276,7 +276,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
     void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
     {
@@ -539,7 +539,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
     void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
     {
@@ -802,7 +802,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return 0 == impl_ || impl_->is_complete(); }
+    { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
     void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
     {

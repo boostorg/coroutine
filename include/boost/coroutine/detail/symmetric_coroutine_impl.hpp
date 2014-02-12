@@ -51,6 +51,10 @@ private:
 
     void run_( param_type * to) BOOST_NOEXCEPT
     {
+        BOOST_ASSERT( ! is_running() );
+        BOOST_ASSERT( ! is_complete() );
+
+        flags_ |= flag_running;
         caller_->jump(
             * callee_,
             reinterpret_cast< intptr_t >( to),
@@ -60,13 +64,20 @@ private:
     template< typename Other >
     R * yield_to_( Other * other, typename Other::param_type * to)
     {
+        BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! other->is_running() );
+
         other->caller_ = caller_;
+        flags_ &= ~flag_running;
         param_type * from(
             reinterpret_cast< param_type * >(
                 callee_->jump(
                     * other->callee_,
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
+        flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
         BOOST_ASSERT( from->data);
         return from->data;
@@ -93,6 +104,9 @@ public:
     bool preserve_fpu() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_preserve_fpu); }
 
+    bool is_running() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_running); }
+
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
@@ -114,8 +128,6 @@ public:
 
     void run( R r) BOOST_NOEXCEPT
     {
-        BOOST_ASSERT( ! is_complete() );
-
         param_type to( const_cast< R * >( & r) );
         run_( & to);
     }
@@ -123,7 +135,9 @@ public:
     R * yield()
     {
         BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
 
+        flags_ &= ~flag_running;
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
@@ -131,6 +145,7 @@ public:
                     * caller_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
         BOOST_ASSERT( from->data);
         return from->data;
@@ -139,9 +154,6 @@ public:
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X >::param_type to( & x);
         return yield_to_( other, & to);
     }
@@ -149,9 +161,6 @@ public:
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X & > * other, X & x)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X & >::param_type to( & x);
         return yield_to_( other, & to);
     }
@@ -159,9 +168,6 @@ public:
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X > * other)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X >::param_type to;
         return yield_to_( other, & to);
     }
@@ -187,6 +193,10 @@ private:
 
     void run_( param_type * to) BOOST_NOEXCEPT
     {
+        BOOST_ASSERT( ! is_running() );
+        BOOST_ASSERT( ! is_complete() );
+
+        flags_ |= flag_running;
         caller_->jump(
             * callee_,
             reinterpret_cast< intptr_t >( to),
@@ -196,13 +206,20 @@ private:
     template< typename Other >
     R * yield_to_( Other * other, typename Other::param_type * to)
     {
+        BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! other->is_running() );
+
         other->caller_ = caller_;
+        flags_ &= ~flag_running;
         param_type * from(
             reinterpret_cast< param_type * >(
                 callee_->jump(
                     * other->callee_,
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
+        flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
         BOOST_ASSERT( from->data);
         return from->data;
@@ -229,6 +246,9 @@ public:
     bool preserve_fpu() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_preserve_fpu); }
 
+    bool is_running() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_running); }
+
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
@@ -250,8 +270,6 @@ public:
 
     void run( R & arg) BOOST_NOEXCEPT
     {
-        BOOST_ASSERT( ! is_complete() );
-
         param_type to( & arg);
         run_( & to);
     }
@@ -259,7 +277,9 @@ public:
     R * yield()
     {
         BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
 
+        flags_ &= ~flag_running;
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
@@ -267,6 +287,7 @@ public:
                     * caller_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
         BOOST_ASSERT( from->data);
         return from->data;
@@ -275,9 +296,6 @@ public:
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X >::param_type to( & x);
         return yield_to_( other, & to);
     }
@@ -285,9 +303,6 @@ public:
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X & > * other, X & x)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X & >::param_type to( & x);
         return yield_to_( other, & to);
     }
@@ -295,9 +310,6 @@ public:
     template< typename X >
     R * yield_to( symmetric_coroutine_impl< X > * other)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X >::param_type to;
         return yield_to_( other, & to);
     }
@@ -324,13 +336,20 @@ private:
     template< typename Other >
     void yield_to_( Other * other, typename Other::param_type * to)
     {
+        BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! other->is_running() );
+
         other->caller_ = caller_;
+        flags_ &= ~flag_running;
         param_type * from(
             reinterpret_cast< param_type * >(
                 callee_->jump(
                     * other->callee_,
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
+        flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
     }
 
@@ -355,6 +374,9 @@ public:
     bool preserve_fpu() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_preserve_fpu); }
 
+    bool is_running() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_running); }
+
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
@@ -376,9 +398,11 @@ public:
 
     void run() BOOST_NOEXCEPT
     {
+        BOOST_ASSERT( ! is_running() );
         BOOST_ASSERT( ! is_complete() );
 
         param_type to;
+        flags_ |= flag_running;
         caller_->jump(
             * callee_,
             reinterpret_cast< intptr_t >( & to),
@@ -388,7 +412,9 @@ public:
     void yield() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
 
+        flags_ &= ~flag_running;
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
@@ -396,15 +422,13 @@ public:
                     * caller_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
     }
 
     template< typename X >
     void yield_to( symmetric_coroutine_impl< X > * other, X x)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X >::param_type to( & x);
         yield_to_( other, & to);
     }
@@ -412,9 +436,6 @@ public:
     template< typename X >
     void yield_to( symmetric_coroutine_impl< X & > * other, X & x)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X & >::param_type to( & x);
         yield_to_( other, & to);
     }
@@ -422,9 +443,6 @@ public:
     template< typename X >
     void yield_to( symmetric_coroutine_impl< X > * other)
     {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( ! other->is_complete() );
-
         typename symmetric_coroutine_impl< X >::param_type to;
         yield_to_( other, & to);
     }
