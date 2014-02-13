@@ -351,8 +351,6 @@ __begin__ of an __push_coro__ compares equal to an iterator obtained from
 __end__ of that same __push_coro__ instance when its __push_coro_bool__ would
 return ['false].
 
-[note Oliver: I believe pull_type::iterator and push_type::iterator should
-both be described, at least to the level above, in the reference section.]
 
 [heading Exit a __coro_fn__]
 __coro_fn__ is exited with a simple return statement jumping back to the calling
@@ -414,7 +412,7 @@ resumed with __push_coro_op__, __pull_coro_op__).]
           pull_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
-when ! is_stack_unbound().]]
+when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`, and enters it.
 Argument `attr` determines stack clean-up and preserving floating-point
 registers.]]
@@ -425,7 +423,7 @@ registers.]]
           pull_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
-when ! is_stack_unbound().]]
+when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]
@@ -566,7 +564,7 @@ of `other`.]]
           push_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
-when ! is_stack_unbound().]]
+when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.]]
 ]
@@ -575,7 +573,7 @@ determines stack clean-up and preserving floating-point registers.]]
           push_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
-when ! is_stack_unbound().]]
+when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]

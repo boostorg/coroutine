@@ -38,7 +38,7 @@ namespace boost {
 namespace coroutines {
 
 bool
-segmented_stack_allocator::is_stack_unbound()
+segmented_stack_allocator::is_stack_unbounded()
 { return true; }
 
 std::size_t

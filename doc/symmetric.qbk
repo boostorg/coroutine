@@ -34,9 +34,6 @@ context by calling __yield_coro_op__ with another __call_coro__ as first argumen
 Alternatively, you may transfer control back to the code that called
 __call_coro_op__ by calling __yield_coro_op__ without a __call_coro__ argument.
 
-[note Oliver: is this behavior identical to `return`? If so, why provide an
-overload of __yield_coro_op__ for it?]
-
 The class has only one template parameter defining the transferred parameter
 type.
 Data transferred to the coroutine are accessed through __yield_coro_get__.
@@ -303,7 +300,7 @@ resumed with __call_coro_op__).]
           call_type( Fn fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
-when ! is_stack_unbound().]]
+when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]
@@ -313,7 +310,7 @@ For allocating/deallocating the stack `stack_alloc` is used.]]
           call_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
-when ! is_stack_unbound().]]
+when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]

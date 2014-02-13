@@ -98,6 +98,7 @@
 [include overview.qbk]
 [include intro.qbk]
 [include motivation.qbk]
+[include examples.qbk]
 [include coroutine.qbk]
 [include attributes.qbk]
 [include stack.qbk]

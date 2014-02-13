@@ -73,23 +73,11 @@ generators, infinite lists, pipes etc.
 [heading execution-transfer mechanism]
 Two categories of coroutines exist: symmetric and asymmetric coroutines.
 
-[note Oliver: I think the explanation about one operation vs. two operations
-is a bit confusing, especially since both kinds of coroutine are re-entered at
-the same point where they were suspended. May I suggest something like the
-following, derived from descriptions later in the documentation: "An
-asymmetric coroutine knows its invoker, using a special operation to
+An asymmetric coroutine knows its invoker, using a special operation to
 implicitly yield control specifically to its invoker. By contrast, all symmetric
 coroutines are equivalent; one symmetric coroutine may pass control to any
 other symmetric coroutine. Because of this, a symmetric coroutine ['must]
-specify the coroutine to which it intends to yield control."]
-
-A symmetric coroutine transfers the execution control only via one operation.
-The target coroutine must be explicitly specified in the transfer operation.
-Asymmetric coroutines provide two transfer operations:
-the ['suspend]-operation returns to the invoker by preserving the
-execution context and the ['resume]-operation restores the execution
-context, e.g. re-enters the coroutine at the same point as it was suspended
-before.
+specify the coroutine to which it intends to yield control.
 
 [$../../../../libs/coroutine/doc/images/foo_bar_seq.png [align center]]
 

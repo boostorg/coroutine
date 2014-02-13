@@ -62,6 +62,7 @@ void trampoline( intptr_t vp)
 
         // create yield_type
         Self yield( & c, from->data);
+        c.flags_ |= flag_running;
         try
         { fn( yield); }
         catch ( forced_unwind const&)
@@ -71,6 +72,7 @@ void trampoline( intptr_t vp)
     }
 
     c.flags_ |= flag_complete;
+    c.flags_ &= ~flag_running;
     c.callee_->jump( * c.caller_, 0, c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "coroutine is complete");
 }
@@ -112,6 +114,7 @@ void trampoline_void( intptr_t vp)
     }
 
     c.flags_ |= flag_complete;
+    c.flags_ &= ~flag_running;
     param_type to;
     c.callee_->jump(
         * c.caller_,

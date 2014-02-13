@@ -65,7 +65,7 @@ virtual addresses are used.]
 
         class protected_stack_allocator
         {
-            static bool is_stack_unbound();
+            static bool is_stack_unbounded();
 
             static std::size_t maximum_stacksize();
 
@@ -78,7 +78,7 @@ virtual addresses are used.]
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbound()`]
+[heading `static bool is_stack_unbounded()`]
 [variablelist
 [[Returns:] [Returns `true` if the environment defines no limit for the size of
 a stack.]]
@@ -90,7 +90,7 @@ of limits.]]
 
 [heading `static std::size_t maximum_stacksize()`]
 [variablelist
-[[Preconditions:] [`is_stack_unbound()` returns `false`.]]
+[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
 [[Returns:] [Returns the maximum size in bytes of stack defined by the
 environment.]]
 ]
@@ -111,7 +111,7 @@ environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
 [[Preconditions:] [`minimum_stacksize() <= size` and
-`! is_stack_unbound() && ( maximum_stacksize() >= size)`.]]
+`! is_stack_unbounded() && ( maximum_stacksize() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
 to the stack and its actual size in `sctx`. Depending
 on the architecture (the stack grows downwards/upwards) the returned address is
@@ -121,7 +121,7 @@ the highest/lowest address of the stack.]]
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
 [[Preconditions:] [`sctx.sp` is valid, `minimum_stacksize() <= sctx.size` and
-`! is_stack_unbound() && ( maximum_stacksize() >= sctx.size)`.]]
+`! is_stack_unbounded() && ( maximum_stacksize() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 
@@ -138,7 +138,7 @@ end of each stack. The memory is simply managed by `std::malloc()` and
 
         class standard_stack_allocator
         {
-            static bool is_stack_unbound();
+            static bool is_stack_unbounded();
 
             static std::size_t maximum_stacksize();
 
@@ -151,7 +151,7 @@ end of each stack. The memory is simply managed by `std::malloc()` and
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbound()`]
+[heading `static bool is_stack_unbounded()`]
 [variablelist
 [[Returns:] [Returns `true` if the environment defines no limit for the size of
 a stack.]]
@@ -159,7 +159,7 @@ a stack.]]
 
 [heading `static std::size_t maximum_stacksize()`]
 [variablelist
-[[Preconditions:] [`is_stack_unbound()` returns `false`.]]
+[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
 [[Returns:] [Returns the maximum size in bytes of stack defined by the
 environment.]]
 ]
@@ -180,7 +180,7 @@ environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
 [[Preconditions:] [`minimum_stacksize() <= size` and
-`! is_stack_unbound() && ( maximum_stacksize() >= size)`.]]
+`! is_stack_unbounded() && ( maximum_stacksize() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
 to the stack and its actual size in `sctx`.]]
 [[Returns:] [Returns pointer to the start address of the new stack. Depending
@@ -191,7 +191,7 @@ the highest/lowest address of the stack.]]
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
 [[Preconditions:] [`sctx.sp` is valid, `minimum_stacksize() <= sctx.size` and
-`! is_stack_unbound() && ( maximum_stacksize() >= sctx.size)`.]]
+`! is_stack_unbounded() && ( maximum_stacksize() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 

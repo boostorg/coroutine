@@ -22,8 +22,8 @@ namespace boost {
 namespace coroutines {
 
 bool
-standard_stack_allocator::is_stack_unbound()
-{ return protected_stack_allocator::is_stack_unbound(); }
+standard_stack_allocator::is_stack_unbounded()
+{ return protected_stack_allocator::is_stack_unbounded(); }
 
 std::size_t
 standard_stack_allocator::maximum_stacksize()
@@ -41,7 +41,7 @@ void
 standard_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 {
     BOOST_ASSERT( minimum_stacksize() <= size);
-    BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
+    BOOST_ASSERT( is_stack_unbounded() || ( maximum_stacksize() >= size) );
 
     void * limit = std::malloc( size);
     if ( ! limit) throw std::bad_alloc();
@@ -55,7 +55,7 @@ standard_stack_allocator::deallocate( stack_context & ctx)
 {
     BOOST_ASSERT( ctx.sp);
     BOOST_ASSERT( minimum_stacksize() <= ctx.size);
-    BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= ctx.size) );
+    BOOST_ASSERT( is_stack_unbounded() || ( maximum_stacksize() >= ctx.size) );
 
     void * limit = static_cast< char * >( ctx.sp) - ctx.size;
     std::free( limit);
