@@ -38,6 +38,36 @@ The class has only one template parameter defining the transferred parameter
 type.
 Data transferred to the coroutine are accessed through __yield_coro_get__.
 
+[*Oliver:] Given a __call_coro__ instance, can the framework readily locate
+its associated __yield_coro__ instance? If so, then could we support behavior
+like this?
+
+    boost::coroutines::symmetric_coroutine<int>::call_type* fwd_other_coro;
+
+    boost::coroutines::symmetric_coroutine<std::string>::call_type coro(
+        [&](boost::coroutines::symmetric_coroutine<std::string>::yield_type& yield) {
+            std::cout << "First string:  " << yield.get() << std::endl;
+            (*fwd_other_coro)(17);
+            std::cout << "Second string: " << yield.get() << std::endl;
+        });
+
+    boost::coroutines::symmetric_coroutine<int>::call_type other_coro(
+        [&](boost::coroutines::symmetric_coroutine<int>::yield_type& yield) {
+            std::cout << "my int: " << yield.get() << std::endl;
+            coro("second");
+            // instead of yield(coro, "second");
+        });
+
+    coro("first");
+
+In other words, could we eliminate the distinction between
+yield_type::operator()(call_type&, Arg) and call_type::operator()(Arg)? When
+some other symmetric_coroutine resumes this one by calling its
+call_type::operator(), could we implicitly update the cached value in this
+one's yield_type instance? If so, could we eliminate yield_type::operator()
+altogether and always pass control using call_type::operator()? If so, maybe
+we want to rename yield_type? param_type? self_type?
+
 [important __yield_coro__ can only be created by the framework.]
 
         std::vector<int> merge(const std::vector<int>& a,const std::vector<int>& b)
@@ -349,6 +379,14 @@ of `other`.]]
 
 [section:yield_coro Class `symmetric_coroutine<>::yield_type`]
 
+[note Oliver: if `yield_type` may not be instantiated by the user, I see no
+point in making any of its constructors `public`. Use `friend` for the
+framework to construct instances. Also, I'm doubtful about the wisdom of
+supporting `public` move assignment or `swap()`. What happens when user code
+moves (or swaps) from a `yield_type` instance owned by the framework? Won't
+the framework become seriously confused next time it tries to use that
+`yield_type` instance?]
+
     #include <boost/coroutine/symmetric_coroutine.hpp>
 
     template< typename R, typename StackAllocator = standard_stack_allocator >
@@ -410,6 +448,8 @@ internal data of `other` to `*this`. `other` becomes __not_a_coro__.]]
 [[Returns:] [If `*this` refers to __not_a_coro__, the function returns false.
 Otherwise true.]]
 [[Throws:] [Nothing.]]
+[[Note:] [Oliver: will a `yield_type` instantiated by the framework ever refer
+to __not_a_coro__? I'm not convinced of the usefulness of this method.]]
 ]
 
 [heading `bool operator!() const`]
@@ -417,6 +457,8 @@ Otherwise true.]]
 [[Returns:] [If `*this` refers to __not_a_coro__, the function returns true.
 Otherwise false.]]
 [[Throws:] [Nothing.]]
+[[Note:] [Oliver: will a `yield_type` instantiated by the framework ever refer
+to __not_a_coro__? I'm not convinced of the usefulness of this method.]]
 ]
 
 [heading `void swap( yield_type & other)`]

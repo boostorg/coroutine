@@ -86,6 +86,9 @@ __pull_coro_op__.
 [warning Calling __call_coro_op__, __push_coro_op__ and __pull_coro_op__ from
 inside the [_same] coroutine results in undefined behaviour.]
 
+[note Oliver: this mostly applies to symmetric coroutines? An asymmetric
+coroutine normally wouldn't even see its own coroutine object.]
+
 
 [include asymmetric.qbk]
 [include symmetric.qbk]
