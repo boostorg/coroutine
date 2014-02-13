@@ -82,10 +82,6 @@ virtual addresses are used.]
 [variablelist
 [[Returns:] [Returns `true` if the environment defines no limit for the size of
 a stack.]]
-[[Note:] [Oliver: I would prefer this to be called `is_stack_unbounded()`.
-"Bound" and "unbound" seem to be talking about what `boost::bind()` does -- or
-lambda capture. "Bounded" vs. "unbounded" talk about the presence or absence
-of limits.]]
 ]
 
 [heading `static std::size_t maximum_stacksize()`]
