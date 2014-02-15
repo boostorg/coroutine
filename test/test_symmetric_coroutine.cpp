@@ -205,6 +205,15 @@ void f151( coro::symmetric_coroutine< int >::yield_type & yield,
     value2 += x + offset;
 }
 
+void f16( coro::symmetric_coroutine< int >::yield_type & yield)
+{
+    while ( yield)
+    {
+        value2 = yield.get();
+        yield();
+    }
+}
+
 void test_move()
 {
     {
@@ -454,6 +463,40 @@ void test_yield_to_different()
     BOOST_CHECK_EQUAL( ( int) 7, value2);
 }
 
+void test_move_coro()
+{
+    value2 = 0;
+
+    coro::symmetric_coroutine< int >::call_type coro1( f16);
+    coro::symmetric_coroutine< int >::call_type coro2;
+    BOOST_CHECK( coro1);
+    BOOST_CHECK( ! coro2);
+
+    coro1( 1);
+    BOOST_CHECK_EQUAL( ( int)1, value2);
+
+    coro2 = boost::move( coro1);
+    BOOST_CHECK( ! coro1);
+    BOOST_CHECK( coro2);
+
+    coro2( 2);
+    BOOST_CHECK_EQUAL( ( int)2, value2);
+
+    coro1 = boost::move( coro2);
+    BOOST_CHECK( coro1);
+    BOOST_CHECK( ! coro2);
+
+    coro1( 3);
+    BOOST_CHECK_EQUAL( ( int)3, value2);
+
+    coro2 = boost::move( coro1);
+    BOOST_CHECK( ! coro1);
+    BOOST_CHECK( coro2);
+
+    coro2( 4);
+    BOOST_CHECK_EQUAL( ( int)4, value2);
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -472,6 +515,8 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_yield_to_int) );
     test->add( BOOST_TEST_CASE( & test_yield_to_ref) );
     test->add( BOOST_TEST_CASE( & test_yield_to_different) );
+    test->add( BOOST_TEST_CASE( & test_yield_to_different) );
+    test->add( BOOST_TEST_CASE( & test_move_coro) );
 
     return test;
 }
