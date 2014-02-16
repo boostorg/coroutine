@@ -35,13 +35,12 @@ namespace coroutines {
 namespace detail {
 
 // class hold stack-context and coroutines execution-context
-class BOOST_COROUTINES_DECL coroutine_context : private stack_context,
-                                                private context::fcontext_t
+class BOOST_COROUTINES_DECL coroutine_context : private stack_context
                     
 {
 private:
     stack_context       *   stack_ctx_;
-    context::fcontext_t *   ctx_;
+    context::fcontext_t     ctx_;
 
 public:
     typedef void( * ctx_fn)( intptr_t);
