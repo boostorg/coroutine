@@ -57,6 +57,65 @@ struct Y
     ~Y() 
     { value2 = 0; }
 };
+   
+template< typename X, typename I >
+void trampoline( coro::symmetric_coroutine< void* >::yield_type & yield)
+{
+    void * vp = yield.get();
+    X * x = static_cast< X * >( vp);
+    I i( yield);
+    x->d = & i;
+    i.suspend();
+    i.run();
+}
+
+struct B
+{
+    virtual ~B() {}
+
+    virtual void foo() = 0;
+};
+
+class D : public B
+{
+public:
+    int                                                 count;
+    coro::symmetric_coroutine< void* >::call_type       call;
+    coro::symmetric_coroutine< void* >::yield_type  *   yield;
+
+    D( coro::symmetric_coroutine< void* >::yield_type & yield_) :
+        B(),
+        count( 0),
+        call(),
+        yield( & yield_)
+    {}
+
+    void foo() {}
+
+    void resume()
+    { call( 0); }
+
+    void suspend()
+    { ( *yield)(); }
+
+    void run()
+    {
+        while ( yield && * yield)
+        {
+            ++count;
+            suspend();
+        }
+    }
+};
+
+struct T
+{
+    D   *   d;
+
+    T() :
+        d( 0)
+    {}
+};
 
 class copyable
 {
@@ -497,6 +556,23 @@ void test_move_coro()
     BOOST_CHECK_EQUAL( ( int)4, value2);
 }
 
+void test_vptr()
+{
+    D * d = 0;
+    T t;
+    coro::symmetric_coroutine< void* >::call_type call( trampoline< T, D >);
+    call( & t);
+    d = t.d;
+    BOOST_CHECK( 0 != d);
+    d->call = boost::move( call);
+
+    BOOST_CHECK_EQUAL( ( int) 0, d->count);
+    d->resume();
+    BOOST_CHECK_EQUAL( ( int) 1, d->count);
+    d->resume();
+    BOOST_CHECK_EQUAL( ( int) 2, d->count);
+}
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -517,6 +593,7 @@ boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
     test->add( BOOST_TEST_CASE( & test_yield_to_different) );
     test->add( BOOST_TEST_CASE( & test_yield_to_different) );
     test->add( BOOST_TEST_CASE( & test_move_coro) );
+    test->add( BOOST_TEST_CASE( & test_vptr) );
 
     return test;
 }
