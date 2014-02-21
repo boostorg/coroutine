@@ -76,9 +76,6 @@ public:
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
 
-    virtual ~pull_coroutine_impl()
-    {}
-
     bool force_unwind() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_force_unwind); }
 
@@ -131,7 +128,7 @@ public:
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return * result_; 
+        return * result_;
     }
 
     R * get_pointer() const
@@ -139,7 +136,7 @@ public:
         if ( ! has_result() )
             boost::throw_exception(
                 invalid_result() );
-        return result_; 
+        return result_;
     }
 };
 
@@ -187,9 +184,6 @@ public:
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
-
-    virtual ~pull_coroutine_impl()
-    {}
 
     bool force_unwind() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_force_unwind); }
@@ -283,9 +277,6 @@ public:
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
-
-    virtual ~pull_coroutine_impl()
-    {}
 
     bool force_unwind() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_force_unwind); }

@@ -60,9 +60,6 @@ public:
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
 
-    virtual ~push_coroutine_impl()
-    {}
-
     bool force_unwind() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_force_unwind); }
 
@@ -151,9 +148,6 @@ public:
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
 
-    virtual ~push_coroutine_impl()
-    {}
-
     bool force_unwind() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_force_unwind); }
 
@@ -226,9 +220,6 @@ public:
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
     }
-
-    virtual ~push_coroutine_impl()
-    {}
 
     bool force_unwind() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_force_unwind); }

@@ -73,14 +73,14 @@ std::size_t page_count( std::size_t stacksize)
 
 // Windows seams not to provide a limit for the stacksize
 bool
-protected_stack_allocator::is_stack_unbound()
+protected_stack_allocator::is_stack_unbounded()
 { return true; }
 
 std::size_t
 protected_stack_allocator::default_stacksize()
 {
     std::size_t size = 64 * 1024; // 64 kB
-    if ( is_stack_unbound() )
+    if ( is_stack_unbounded() )
         return (std::max)( size, minimum_stacksize() );
 
     BOOST_ASSERT( maximum_stacksize() >= minimum_stacksize() );
@@ -95,11 +95,11 @@ protected_stack_allocator::minimum_stacksize()
 { return MIN_STACKSIZE; }
 
 // because Windows seams not to provide a limit for maximum stacksize
-// maximum_stacksize() can never be called (pre-condition ! is_stack_unbound() )
+// maximum_stacksize() can never be called (pre-condition ! is_stack_unbounded() )
 std::size_t
 protected_stack_allocator::maximum_stacksize()
 {
-    BOOST_ASSERT( ! is_stack_unbound() );
+    BOOST_ASSERT( ! is_stack_unbounded() );
     return  1 * 1024 * 1024 * 1024; // 1GB
 }
 
@@ -107,7 +107,7 @@ void
 protected_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 {
     BOOST_ASSERT( minimum_stacksize() <= size);
-    BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= size) );
+    BOOST_ASSERT( is_stack_unbounded() || ( maximum_stacksize() >= size) );
 
     const std::size_t pages( page_count( size) ); // page at bottom will be used as guard-page
     BOOST_ASSERT_MSG( 2 <= pages, "at least two pages must fit into stack (one page is guard-page)");
@@ -138,7 +138,7 @@ protected_stack_allocator::deallocate( stack_context & ctx)
 {
     BOOST_ASSERT( ctx.sp);
     BOOST_ASSERT( minimum_stacksize() <= ctx.size);
-    BOOST_ASSERT( is_stack_unbound() || ( maximum_stacksize() >= ctx.size) );
+    BOOST_ASSERT( is_stack_unbounded() || ( maximum_stacksize() >= ctx.size) );
 
     void * limit = static_cast< char * >( ctx.sp) - ctx.size;
     ::VirtualFree( limit, 0, MEM_RELEASE);
