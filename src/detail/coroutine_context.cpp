@@ -45,7 +45,7 @@ coroutine_context::coroutine_context() :
 coroutine_context::coroutine_context( ctx_fn fn, stack_context * stack_ctx) :
     stack_context(),
     stack_ctx_( stack_ctx),
-    ctx_( context::make_fcontext( stack_ctx_->sp, fn) )
+    ctx_( context::make_fcontext( stack_ctx_->sp, stack_ctx_->size, fn) )
 {}
 
 coroutine_context::coroutine_context( coroutine_context const& other) :
