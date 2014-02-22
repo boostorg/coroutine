@@ -202,6 +202,15 @@ void f19( coro::asymmetric_coroutine< int* >::push_type & c, std::vector< int * 
 void f20( coro::asymmetric_coroutine< int >::push_type &)
 {}
 
+void f21( coro::asymmetric_coroutine< int >::pull_type & c)
+{
+    while ( c)
+    {
+        value1 = c.get();
+        c();
+    }
+}
+
 void test_move()
 {
     {
@@ -532,6 +541,39 @@ void test_invalid_result()
         catched = true; 
     }
     BOOST_CHECK( catched);
+}
+void test_move_coro()
+{
+    value1 = 0;
+
+    coro::asymmetric_coroutine< int >::push_type coro1( f21);
+    coro::asymmetric_coroutine< int >::push_type coro2;
+    BOOST_CHECK( coro1);
+    BOOST_CHECK( ! coro2);
+
+    coro1( 1);
+    BOOST_CHECK_EQUAL( ( int)1, value1);
+
+    coro2 = boost::move( coro1);
+    BOOST_CHECK( ! coro1);
+    BOOST_CHECK( coro2);
+
+    coro2( 2);
+    BOOST_CHECK_EQUAL( ( int)2, value1);
+
+    coro1 = boost::move( coro2);
+    BOOST_CHECK( coro1);
+    BOOST_CHECK( ! coro2);
+
+    coro1( 3);
+    BOOST_CHECK_EQUAL( ( int)3, value1);
+
+    coro2 = boost::move( coro1);
+    BOOST_CHECK( ! coro1);
+    BOOST_CHECK( coro2);
+
+    coro2( 4);
+    BOOST_CHECK_EQUAL( ( int)4, value1);
 }
 
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
