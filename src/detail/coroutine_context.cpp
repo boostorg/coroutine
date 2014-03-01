@@ -10,6 +10,7 @@
 #  include BOOST_ABI_PREFIX
 #endif
 
+#pragma warning(push)
 #pragma warning(disable:4355)
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
