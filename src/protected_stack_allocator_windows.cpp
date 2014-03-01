@@ -24,11 +24,6 @@ extern "C" {
 
 #include <boost/coroutine/stack_context.hpp>
 
-# if defined(BOOST_MSVC)
-# pragma warning(push)
-# pragma warning(disable:4244 4267)
-# endif
-
 // x86_64
 // test x86_64 before i386 because icc might
 // define __i686__ for x86_64 too
