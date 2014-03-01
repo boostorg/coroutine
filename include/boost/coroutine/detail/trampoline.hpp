@@ -59,6 +59,7 @@ void trampoline( intptr_t vp)
                     * c.caller_,
                     reinterpret_cast< intptr_t >(  & c),
                     c.preserve_fpu() ) ) );
+        c.flags_ |= flag_running;
 
         // create yield_type
         Self yield( & c, from->data);
@@ -102,6 +103,7 @@ void trampoline_void( intptr_t vp)
             * c.caller_,
             reinterpret_cast< intptr_t >(  & c),
             c.preserve_fpu() );
+        c.flags_ |= flag_running;
 
         // create yield_type
         Self yield( & c);
