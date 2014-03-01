@@ -20,7 +20,7 @@
 namespace boost {
 namespace coroutines {
 
-template< typename T, typename StackAllocator = standard_stack_allocator >
+template< typename T, typename StackAllocator = stack_allocator >
 struct symmetric_coroutine
 {
     typedef detail::symmetric_coroutine_call< T, StackAllocator >   call_type;
