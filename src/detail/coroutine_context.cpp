@@ -6,6 +6,12 @@
 
 #include "boost/coroutine/detail/coroutine_context.hpp"
 
+#ifdef BOOST_HAS_ABI_HEADERS
+#  include BOOST_ABI_PREFIX
+#endif
+
+#pragma warning(disable:4355)
+
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 extern "C" {
 
@@ -18,10 +24,6 @@ void __splitstack_releasecontext (void * [BOOST_COROUTINES_SEGMENTS]);
 void __splitstack_block_signals_context( void * [BOOST_COROUTINES_SEGMENTS], int *, int *);
 
 }
-#endif
-
-#ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_PREFIX
 #endif
 
 namespace boost {
@@ -90,6 +92,8 @@ coroutine_context::jump( coroutine_context & other, intptr_t param, bool preserv
 }
 
 }}}
+
+#pragma warning(pop)
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
