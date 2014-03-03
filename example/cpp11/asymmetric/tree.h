@@ -14,10 +14,10 @@
 #include <boost/config.hpp>
 #include <boost/intrusive_ptr.hpp>
 
-# if defined(BOOST_MSVC)
+#if defined(_MSC_VER)
 # pragma warning(push)
 # pragma warning(disable:4355)
-# endif
+#endif
 
 struct branch;
 struct leaf;
@@ -90,8 +90,8 @@ inline
 bool operator!=( leaf const& l, leaf  const& r)
 { return l.value != r.value; }
 
-# if defined(BOOST_MSVC)
+#if defined(_MSC_VER)
 # pragma warning(pop)
-# endif
+#endif
 
 #endif // TREE_H

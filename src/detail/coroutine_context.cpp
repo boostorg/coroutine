@@ -10,8 +10,10 @@
 #  include BOOST_ABI_PREFIX
 #endif
 
-#pragma warning(push)
-#pragma warning(disable:4355)
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable:4355)
+#endif
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 extern "C" {
@@ -94,7 +96,9 @@ coroutine_context::jump( coroutine_context & other, intptr_t param, bool preserv
 
 }}}
 
-#pragma warning(pop)
+#if defined(_MSC_VER)
+# pragma warning(pop)
+#endif
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX

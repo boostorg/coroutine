@@ -15,10 +15,10 @@
 #include <boost/coroutine/all.hpp>
 #include <boost/intrusive_ptr.hpp>
 
-# if defined(BOOST_MSVC)
+#if defined(_MSC_VER)
 # pragma warning(push)
 # pragma warning(disable:4355)
-# endif
+#endif
 
 struct branch;
 struct leaf;
@@ -117,9 +117,8 @@ void enumerate_leafs( boost::coroutines::asymmetric_coroutine< leaf & >::push_ty
     root->accept( v);
 }
 
-# if defined(BOOST_MSVC)
+#if defined(_MSC_VER)
 # pragma warning(pop)
-# endif
-
+#endif
 
 #endif // TREE_H
