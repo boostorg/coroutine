@@ -151,7 +151,7 @@ int main( int argc, char * argv[])
 {
     try
     {
-        bool preserve = false, unwind = true, bind = false;
+        bool preserve = false, bind = false;
         boost::program_options::options_description desc("allowed options");
         desc.add_options()
             ("help", "help message")
