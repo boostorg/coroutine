@@ -132,7 +132,7 @@ protected_stack_allocator::allocate( stack_context & ctx, std::size_t size)
     ::mmap( 0, size_, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 # endif
     ::close( fd);
-    if ( ! limit) throw std::bad_alloc();
+    if ( MAP_FAILED == limit) throw std::bad_alloc();
 
     std::memset( limit, '\0', size_);
 
