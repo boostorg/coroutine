@@ -6,6 +6,8 @@
 
 #include <boost/coroutine/segmented_stack_allocator.hpp>
 
+#include <stdexcept>
+
 #include <boost/assert.hpp>
 #include <boost/context/fcontext.hpp>
 
@@ -60,7 +62,9 @@ void
 segmented_stack_allocator::allocate( stack_context & ctx, std::size_t size)
 {
     void * limit = __splitstack_makecontext( size, ctx.segments_ctx, & ctx.size);
-    BOOST_ASSERT( limit);
+    if ( ! limit) throw std::bad_alloc();
+
+    // ctx.size is already filled by __splitstack_makecontext
     ctx.sp = static_cast< char * >( limit) + ctx.size;
 
     int off = 0;
