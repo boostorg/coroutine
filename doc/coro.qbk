@@ -82,6 +82,7 @@
 [def __server__ ['server]]
 [def __session__ ['session]]
 [def __stack_context__ ['stack_context]]
+[def __segmented_allocator__ ['segmented_stack_allocator]]
 [def __standard_allocator__ ['standard_stack_allocator]]
 [def __start__ ['session::start()]]
 [def __terminate__ ['std::terminate()]]

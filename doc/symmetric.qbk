@@ -96,8 +96,8 @@ Data transferred to the coroutine are accessed through __yield_coro_get__.
 In this example two __call_coro__ are created in the main execution context
 accepting a lambda function (== __coro_fn__) which merges elements of two
 sorted arrays into a third array.
-`coro_a()` enters the __coro_fn__ of `coro_a` cycling through teh array and
-tests if the actuall element in the other array is less than the element in
+`coro_a()` enters the __coro_fn__ of `coro_a` cycling through the array and
+tests if the actual element in the other array is less than the element in
 the local one. If so, toe coroutine yields to the other coroutine `coro_b`
 using `yield(*other_b)`. If the current element of the local array is less
 than the element of the other array, it is put to the third array.
@@ -436,7 +436,7 @@ of `other`.]]
 
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
-[[Effects:] [The first function transferres execution cotnrol back to the starting point,
+[[Effects:] [The first function transfers execution control back to the starting point,
 e.g. invocation of __call_coro_op__. The last two functions transfer the execution control
 to another symmetric coroutine. Parameter `x` is passed as value into `other`'s context.]]
 [[Throws:] [__forced_unwind__]]

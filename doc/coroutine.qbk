@@ -36,7 +36,7 @@ objects were RAII-classes (manage a resource via RAII pattern). When the first
 of the coroutine copies terminates (unwinds its stack), the RAII class
 destructors will release their managed resources. When the second copy
 terminates, the same destructors will try to doubly-release the same resources,
-leading to undefined behavior.
+leading to undefined behaviour.
 
 
 [heading clean-up]
@@ -51,8 +51,8 @@ The constructor of coroutine allows you to pass a customized ['stack-allocator].
 __call_coro__, __push_coro__ and __pull_coro__ support segmented stacks
 (growing on demand).
 
-It is not always possible to accurately estimate the required stack size - in most cases
-too much memory is allocated (waste of virtual address-space).
+It is not always possible to accurately estimate the required stack size - in
+most cases too much memory is allocated (waste of virtual address-space).
 
 At construction a coroutine starts with a default (minimal) stack size. This
 minimal stack size is the maximum of page size and the canonical size for signal
@@ -69,7 +69,7 @@ deallocate the stack or to cache it for later usage.
 
 [heading context switch]
 A coroutine saves and restores registers according to the underlying ABI on
-each context switch.
+each context switch (using __boost_context__).
 
 Some applications do not use floating-point registers and can disable preserving
 FPU registers for performance reasons.

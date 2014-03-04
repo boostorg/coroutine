@@ -11,11 +11,9 @@ Performance of __boost_coroutine__ was measured on the platforms shown in the
 following table. Performance measurements were taken using `rdtsc` and
 `boost::chrono::high_resolution_clock`, with overhead corrections, on x86
 platforms. In each case, cache warm-up was accounted for, and the one
-running thread was pinned to a single CPU. The code was compiled using the
-build options, 'variant = release cxxflags = -DBOOST_DISABLE_ASSERTS
-optimization = speed' (stack-unwinding disabled).
+running thread was pinned to a single CPU.
 
-[table Perfomance of asymmetric coroutines
+[table Performance of asymmetric coroutines
     [
         [Platform]
         [switch]
@@ -26,20 +24,20 @@ optimization = speed' (stack-unwinding disabled).
     [
         [i386 (AMD Athlon 64 DualCore 4400+, Linux 32bit)]
         [53 ns / 54 cycles]
-        [195 ms / 216006 cycles]
-        [9 ms / 9691 cycles]
+        [195 \u00b5s / 216006 cycles]
+        [9 \u00b5s / 9691 cycles]
         [629 ns / 603 cycles]
     ]
     [
         [x86_64 (Intel Core2 Q6700, Linux 64bit)]
         [12 ns / 39 cycles]
-        [37 ms / 101999 cycles]
-        [3 ms / 9719 cycles]
+        [37 \u00b5s / 101999 cycles]
+        [3 \u00b5s / 9719 cycles]
         [248 ns / 632 cycles]
     ]
 ]
 
-[table Perfomance of symmetric coroutines
+[table Performance of symmetric coroutines
     [
         [Platform]
         [switch]
@@ -50,14 +48,14 @@ optimization = speed' (stack-unwinding disabled).
     [
         [i386 (AMD Athlon 64 DualCore 4400+, Linux 32bit)]
         [50 ns / 52 cycles]
-        [221 ms / 214170 cycles]
+        [221 \u00b5s / 214170 cycles]
         [245 ns / 245 cycles]
         [481 ns / 501 cycles]
     ]
     [
         [x86_64 (Intel Core2 Q6700, Linux 64bit)]
         [10 ns / 33 cycles]
-        [35 ms / 90504 cycles]
+        [35 \u00b5s / 90504 cycles]
         [95 ns / 241 cycles]
         [199 ns / 508 cycles]
     ]
