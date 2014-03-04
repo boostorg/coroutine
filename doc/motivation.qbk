@@ -135,7 +135,7 @@ The application is not required to pass callback functions to asynchronous
 operations and and local state is kept as local variables. Therefore the code
 is much easier to read and understand.
 [footnote Christopher Kohlhoff,
-[@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3896.pdf
+[@ http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3896.pdf
 N3896 - Asynchronous Operations]].
 __yield_context__ internally uses __boost_coroutine__:
 
