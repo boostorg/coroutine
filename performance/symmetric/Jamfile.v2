@@ -18,9 +18,11 @@ project boost/coroutine/performance/symmetric
       <library>/boost/chrono//boost_chrono
       <library>/boost/coroutine//boost_coroutine
       <library>/boost/program_options//boost_program_options
-      <linkflags>"-lrt" 
+      <cxxflags>-DBOOST_DISABLE_ASSERTS
       <link>static
+      <optimization>speed
       <threading>multi
+      <variant>release
     ;
 
 alias sources
