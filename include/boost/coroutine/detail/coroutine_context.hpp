@@ -16,11 +16,6 @@
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/stack_context.hpp>
 
-#if defined(BOOST_MSVC)
-#pragma warning(push)
-#pragma warning(disable:4275)
-#endif
-
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -34,21 +29,25 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-
-class BOOST_COROUTINES_DECL coroutine_context : private context::fcontext_t,
-                                                private stack_context
+// class hold stack-context and coroutines execution-context
+class BOOST_COROUTINES_DECL coroutine_context : private stack_context
                     
 {
 private:
     stack_context       *   stack_ctx_;
-    context::fcontext_t *   ctx_;
+    context::fcontext_t     ctx_;
 
 public:
     typedef void( * ctx_fn)( intptr_t);
 
+    // default ctor represents the current execution-context
+    // stack_ctx_ and ctx_ point to this (default initialized)
     coroutine_context();
 
-    explicit coroutine_context( ctx_fn, stack_context *);
+    // ctor creates a new execution-context running coroutine-fn `fn`
+    // `ctx_` will be allocated on top of the stack managed by parameter
+    // `stack_ctx`
+    explicit coroutine_context( ctx_fn fn, stack_context * stack_ctx);
 
     coroutine_context( coroutine_context const&);
 
@@ -61,10 +60,6 @@ public:
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_SUFFIX
-#endif
-
-#if defined(BOOST_MSVC)
-#pragma warning(pop)
 #endif
 
 #endif // BOOST_COROUTINES_DETAIL_COROUTINE_CONTEXT_H

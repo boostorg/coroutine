@@ -8,11 +8,21 @@
 #define BOOST_COROUTINES_DETAIL_TRAMPOLINE_H
 
 #include <cstddef>
+#include <exception>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <boost/exception_ptr.hpp>
+#include <boost/move/move.hpp>
+
+#include <boost/coroutine/detail/config.hpp>
+#include <boost/coroutine/detail/flags.hpp>
+#include <boost/coroutine/detail/parameters.hpp>
+#include <boost/coroutine/detail/setup.hpp>
+#include <boost/coroutine/detail/setup.hpp>
+#include <boost/coroutine/exceptions.hpp>
+#include <boost/coroutine/flags.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -22,25 +32,97 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-template< typename Coroutine >
-void trampoline1( intptr_t vp)
+template< typename Fn, typename Coro, typename Self >
+void trampoline( intptr_t vp)
 {
+    typedef typename Coro::param_type   param_type;
+
     BOOST_ASSERT( vp);
 
-    reinterpret_cast< Coroutine * >( vp)->run();
+    setup< Fn > * from(
+        reinterpret_cast< setup< Fn > * >( vp) );
+
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+    Fn fn( forward< Fn >( from->fn) );
+#else
+    Fn fn( move( from->fn) );
+#endif
+    Coro c( from->caller, from->callee,
+            stack_unwind == from->attr.do_unwind,
+            fpu_preserved == from->attr.preserve_fpu);
+    from = 0;
+
+    {
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                c.callee_->jump(
+                    * c.caller_,
+                    reinterpret_cast< intptr_t >(  & c),
+                    c.preserve_fpu() ) ) );
+        c.flags_ |= flag_running;
+
+        // create yield_type
+        Self yield( & c, from->data);
+        c.flags_ |= flag_running;
+        try
+        { fn( yield); }
+        catch ( forced_unwind const&)
+        {}
+        catch (...)
+        { std::terminate(); }
+    }
+
+    c.flags_ |= flag_complete;
+    c.flags_ &= ~flag_running;
+    c.callee_->jump( * c.caller_, 0, c.preserve_fpu() );
+    BOOST_ASSERT_MSG( false, "coroutine is complete");
 }
 
-template< typename Coroutine, typename Arg >
-void trampoline2( intptr_t vp)
+template< typename Fn, typename Coro, typename Self >
+void trampoline_void( intptr_t vp)
 {
+    typedef typename Coro::param_type   param_type;
+
     BOOST_ASSERT( vp);
 
-    tuple< Coroutine *, Arg > * tpl(
-        reinterpret_cast< tuple< Coroutine *, Arg > * >( vp) );
-    Coroutine * coro( get< 0 >( * tpl) );
-    Arg arg( get< 1 >( * tpl) );
+    setup< Fn > * from(
+        reinterpret_cast< setup< Fn > * >( vp) );
 
-    coro->run( arg);
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
+    Fn fn( forward< Fn >( from->fn) );
+#else
+    Fn fn( move( from->fn) );
+#endif
+    Coro c( from->caller, from->callee,
+            stack_unwind == from->attr.do_unwind,
+            fpu_preserved == from->attr.preserve_fpu);
+    from = 0;
+
+    {
+        c.callee_->jump(
+            * c.caller_,
+            reinterpret_cast< intptr_t >(  & c),
+            c.preserve_fpu() );
+        c.flags_ |= flag_running;
+
+        // create yield_type
+        Self yield( & c);
+        try
+        { fn( yield); }
+        catch ( forced_unwind const&)
+        {}
+        catch (...)
+        { std::terminate(); }
+    }
+
+    c.flags_ |= flag_complete;
+    c.flags_ &= ~flag_running;
+    param_type to;
+    c.callee_->jump(
+        * c.caller_,
+        reinterpret_cast< intptr_t >( & to),
+        c.preserve_fpu() );
+    BOOST_ASSERT_MSG( false, "coroutine is complete");
 }
 
 }}}
