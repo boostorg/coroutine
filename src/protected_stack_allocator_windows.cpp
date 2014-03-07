@@ -112,8 +112,6 @@ protected_stack_allocator::allocate( stack_context & ctx, std::size_t size)
     void * limit = ::VirtualAlloc( 0, size_, MEM_COMMIT, PAGE_READWRITE);
     if ( ! limit) throw std::bad_alloc();
 
-    std::memset( limit, '\0', size_);
-
     DWORD old_options;
 #if defined(BOOST_DISABLE_ASSERTS)
     ::VirtualProtect(
