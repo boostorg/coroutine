@@ -134,8 +134,6 @@ protected_stack_allocator::allocate( stack_context & ctx, std::size_t size)
     ::close( fd);
     if ( MAP_FAILED == limit) throw std::bad_alloc();
 
-    std::memset( limit, '\0', size_);
-
     // conforming to POSIX.1-2001
 #if defined(BOOST_DISABLE_ASSERTS)
     ::mprotect( limit, pagesize(), PROT_NONE);
