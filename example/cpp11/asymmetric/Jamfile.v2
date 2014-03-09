@@ -41,6 +41,10 @@ exe layout
     : layout.cpp
     ;
 
+exe iterator_range
+    : iterator_range.cpp
+    ;
+
 #exe await_emu
 #    : await_emu.cpp
 #    ;
