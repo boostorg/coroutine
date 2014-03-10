@@ -45,9 +45,9 @@ private:
 
     typedef parameters< R >                           param_type;
 
-    int                     flags_;
-    coroutine_context   *   caller_;
-    coroutine_context   *   callee_;
+    int                 flags_;
+    coroutine_context   caller_;
+    coroutine_context   callee_;
 
     void run_( param_type * to) BOOST_NOEXCEPT
     {
@@ -55,8 +55,8 @@ private:
         BOOST_ASSERT( ! is_complete() );
 
         flags_ |= flag_running;
-        caller_->jump(
-            * callee_,
+        caller_.jump(
+            callee_,
             reinterpret_cast< intptr_t >( to),
             preserve_fpu() );
     }
@@ -73,8 +73,8 @@ private:
         flags_ &= ~flag_running;
         param_type * from(
             reinterpret_cast< param_type * >(
-                callee_->jump(
-                    * other->callee_,
+                callee_.jump(
+                    other->callee_,
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
         flags_ |= flag_running;
@@ -88,8 +88,8 @@ public:
                               coroutine_context * callee,
                               bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
-        caller_( caller),
-        callee_( callee)
+        caller_( * caller),
+        callee_( * callee)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -116,8 +116,8 @@ public:
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
-            caller_->jump(
-                * callee_,
+            caller_.jump(
+                callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
             flags_ &= ~flag_unwind_stack;
@@ -141,8 +141,8 @@ public:
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
-                callee_->jump(
-                    * caller_,
+                callee_.jump(
+                    caller_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         flags_ |= flag_running;
@@ -187,9 +187,9 @@ private:
 
     typedef parameters< R & >                         param_type;
 
-    int                     flags_;
-    coroutine_context   *   caller_;
-    coroutine_context   *   callee_;
+    int                 flags_;
+    coroutine_context   caller_;
+    coroutine_context   callee_;
 
     void run_( param_type * to) BOOST_NOEXCEPT
     {
@@ -197,8 +197,8 @@ private:
         BOOST_ASSERT( ! is_complete() );
 
         flags_ |= flag_running;
-        caller_->jump(
-            * callee_,
+        caller_.jump(
+            callee_,
             reinterpret_cast< intptr_t >( to),
             preserve_fpu() );
     }
@@ -215,8 +215,8 @@ private:
         flags_ &= ~flag_running;
         param_type * from(
             reinterpret_cast< param_type * >(
-                callee_->jump(
-                    * other->callee_,
+                callee_.jump(
+                    other->callee_,
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
         flags_ |= flag_running;
@@ -230,8 +230,8 @@ public:
                               coroutine_context * callee,
                               bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
-        caller_( caller),
-        callee_( callee)
+        caller_( * caller),
+        callee_( * callee)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -258,8 +258,8 @@ public:
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
-            caller_->jump(
-                * callee_,
+            caller_.jump(
+                callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
             flags_ &= ~flag_unwind_stack;
@@ -283,8 +283,8 @@ public:
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
-                callee_->jump(
-                    * caller_,
+                callee_.jump(
+                    caller_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         flags_ |= flag_running;
@@ -329,9 +329,9 @@ private:
 
     typedef parameters< void >                          param_type;
 
-    int                     flags_;
-    coroutine_context   *   caller_;
-    coroutine_context   *   callee_;
+    int                 flags_;
+    coroutine_context   caller_;
+    coroutine_context   callee_;
 
     template< typename Other >
     void yield_to_( Other * other, typename Other::param_type * to)
@@ -345,8 +345,8 @@ private:
         flags_ &= ~flag_running;
         param_type * from(
             reinterpret_cast< param_type * >(
-                callee_->jump(
-                    * other->callee_,
+                callee_.jump(
+                    other->callee_,
                     reinterpret_cast< intptr_t >( to),
                     preserve_fpu() ) ) );
         flags_ |= flag_running;
@@ -358,8 +358,8 @@ public:
                               coroutine_context * callee,
                               bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
-        caller_( caller),
-        callee_( callee)
+        caller_( * caller),
+        callee_( * callee)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -386,8 +386,8 @@ public:
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
-            caller_->jump(
-                * callee_,
+            caller_.jump(
+                callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
             flags_ &= ~flag_unwind_stack;
@@ -403,8 +403,8 @@ public:
 
         param_type to;
         flags_ |= flag_running;
-        caller_->jump(
-            * callee_,
+        caller_.jump(
+            callee_,
             reinterpret_cast< intptr_t >( & to),
             preserve_fpu() );
     }
@@ -418,8 +418,8 @@ public:
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
-                callee_->jump(
-                    * caller_,
+                callee_.jump(
+                     caller_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         flags_ |= flag_running;

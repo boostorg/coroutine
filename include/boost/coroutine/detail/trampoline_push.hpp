@@ -54,14 +54,14 @@ void trampoline_push( intptr_t vp)
     {
         param_type * from(
             reinterpret_cast< param_type * >(
-                c.callee_->jump(
-                    * c.caller_,
+                c.callee_.jump(
+                    c.caller_,
                     reinterpret_cast< intptr_t >(  & c),
                     c.preserve_fpu() ) ) );
         BOOST_ASSERT( from->data);
 
         // create push_coroutine
-        typename Self::impl_type b( c.callee_, c.caller_, false, c.preserve_fpu(), from->data);
+        typename Self::impl_type b( & c.callee_, & c.caller_, false, c.preserve_fpu(), from->data);
         Self yield( & b);
         try
         { fn( yield); }
@@ -73,8 +73,8 @@ void trampoline_push( intptr_t vp)
 
     c.flags_ |= flag_complete;
     param_type to;
-    c.callee_->jump(
-        * c.caller_,
+    c.callee_.jump(
+        c.caller_,
         reinterpret_cast< intptr_t >( & to),
         c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "push_coroutine is complete");
@@ -101,13 +101,13 @@ void trampoline_push_void( intptr_t vp)
     from = 0;
 
     {
-        c.callee_->jump(
-            * c.caller_,
+        c.callee_.jump(
+            c.caller_,
             reinterpret_cast< intptr_t >( & c),
             c.preserve_fpu() );
 
         // create push_coroutine
-        typename Self::impl_type b( c.callee_, c.caller_, false, c.preserve_fpu() );
+        typename Self::impl_type b( & c.callee_, & c.caller_, false, c.preserve_fpu() );
         Self yield( & b);
         try
         { fn( yield); }
@@ -119,8 +119,8 @@ void trampoline_push_void( intptr_t vp)
 
     c.flags_ |= flag_complete;
     param_type to;
-    c.callee_->jump(
-        * c.caller_,
+    c.callee_.jump(
+        c.caller_,
         reinterpret_cast< intptr_t >( & to),
         c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "push_coroutine is complete");
