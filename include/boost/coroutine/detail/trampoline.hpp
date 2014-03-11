@@ -55,8 +55,8 @@ void trampoline( intptr_t vp)
     {
         param_type * from(
             reinterpret_cast< param_type * >(
-                c.callee_->jump(
-                    * c.caller_,
+                c.callee_.jump(
+                    c.caller_,
                     reinterpret_cast< intptr_t >(  & c),
                     c.preserve_fpu() ) ) );
         c.flags_ |= flag_running;
@@ -74,7 +74,7 @@ void trampoline( intptr_t vp)
 
     c.flags_ |= flag_complete;
     c.flags_ &= ~flag_running;
-    c.callee_->jump( * c.caller_, 0, c.preserve_fpu() );
+    c.callee_.jump( c.caller_, 0, c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "coroutine is complete");
 }
 
@@ -99,8 +99,8 @@ void trampoline_void( intptr_t vp)
     from = 0;
 
     {
-        c.callee_->jump(
-            * c.caller_,
+        c.callee_.jump(
+            c.caller_,
             reinterpret_cast< intptr_t >(  & c),
             c.preserve_fpu() );
         c.flags_ |= flag_running;
@@ -118,8 +118,8 @@ void trampoline_void( intptr_t vp)
     c.flags_ |= flag_complete;
     c.flags_ &= ~flag_running;
     param_type to;
-    c.callee_->jump(
-        * c.caller_,
+    c.callee_.jump(
+        c.caller_,
         reinterpret_cast< intptr_t >( & to),
         c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "coroutine is complete");

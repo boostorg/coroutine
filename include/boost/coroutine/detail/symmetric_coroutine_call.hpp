@@ -50,8 +50,6 @@ private:
     impl_type       *   impl_;
     StackAllocator      stack_alloc_;
     stack_context       stack_ctx_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
 
 public:
     typedef Arg                                value_type;
@@ -60,9 +58,7 @@ public:
     symmetric_coroutine_call() BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -73,18 +69,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< coroutine_fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -95,18 +90,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< coroutine_fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -117,18 +111,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -140,18 +133,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -162,18 +154,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -184,18 +175,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -206,18 +196,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -229,18 +218,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -249,9 +237,8 @@ public:
 
     ~symmetric_coroutine_call() BOOST_NOEXCEPT
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -261,9 +248,7 @@ public:
     symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     { swap( other); }
 
     symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
@@ -283,8 +268,6 @@ public:
         std::swap( impl_, other.impl_);
         std::swap( stack_alloc_, other.stack_alloc_);
         std::swap( stack_ctx_, other.stack_ctx_);
-        std::swap( caller_, other.caller_);
-        std::swap( callee_, other.callee_);
     }
 
     symmetric_coroutine_call & operator()( Arg arg) BOOST_NOEXCEPT
@@ -313,8 +296,6 @@ private:
     impl_type       *   impl_;
     StackAllocator      stack_alloc_;
     stack_context       stack_ctx_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
 
 public:
     typedef Arg                                    value_type;
@@ -323,9 +304,7 @@ public:
     symmetric_coroutine_call() BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -336,18 +315,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< coroutine_fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -358,18 +336,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< coroutine_fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -380,18 +357,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -403,18 +379,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -425,18 +400,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -447,18 +421,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -469,18 +442,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -492,18 +464,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -512,9 +483,8 @@ public:
 
     ~symmetric_coroutine_call() BOOST_NOEXCEPT
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -524,9 +494,7 @@ public:
     symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     { swap( other); }
 
     symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
@@ -546,8 +514,6 @@ public:
         std::swap( impl_, other.impl_);
         std::swap( stack_alloc_, other.stack_alloc_);
         std::swap( stack_ctx_, other.stack_ctx_);
-        std::swap( caller_, other.caller_);
-        std::swap( callee_, other.callee_);
     }
 
     symmetric_coroutine_call & operator()( Arg & arg) BOOST_NOEXCEPT
@@ -576,8 +542,6 @@ private:
     impl_type       *   impl_;
     StackAllocator      stack_alloc_;
     stack_context       stack_ctx_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
 
 public:
     typedef void                                     value_type;
@@ -586,9 +550,7 @@ public:
     symmetric_coroutine_call() BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -599,18 +561,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< coroutine_fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -621,18 +582,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< coroutine_fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -643,18 +603,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -666,18 +625,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( forward< Fn >( fn), & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -688,18 +646,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -710,18 +667,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -732,18 +688,17 @@ public:
                                        attributes const& attr = attributes() ) :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -755,18 +710,17 @@ public:
                                        StackAllocator const& stack_alloc) :
         impl_( 0),
         stack_alloc_( stack_alloc),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
-        callee_ = coroutine_context(
+        coroutine_context callee(
             trampoline_void< Fn, impl_type, yield_type >,
-            & stack_ctx_);
-        setup< Fn > to( fn, & caller_, & callee_, attr);
+            stack_ctx_);
+        coroutine_context caller;
+        setup< Fn > to( fn, & caller, & callee, attr);
         impl_ = reinterpret_cast< impl_type * >(
-                caller_.jump(
-                    callee_,
+                caller.jump(
+                    callee,
                     reinterpret_cast< intptr_t >( & to),
                     fpu_preserved == attr.preserve_fpu) );
         BOOST_ASSERT( impl_);
@@ -775,9 +729,8 @@ public:
 
     ~symmetric_coroutine_call() BOOST_NOEXCEPT
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -787,9 +740,7 @@ public:
     symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
         impl_( 0),
         stack_alloc_(),
-        stack_ctx_(),
-        caller_(),
-        callee_()
+        stack_ctx_()
     { swap( other); }
 
     symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
@@ -809,8 +760,6 @@ public:
         std::swap( impl_, other.impl_);
         std::swap( stack_alloc_, other.stack_alloc_);
         std::swap( stack_ctx_, other.stack_ctx_);
-        std::swap( caller_, other.caller_);
-        std::swap( callee_, other.callee_);
     }
 
     symmetric_coroutine_call & operator()() BOOST_NOEXCEPT

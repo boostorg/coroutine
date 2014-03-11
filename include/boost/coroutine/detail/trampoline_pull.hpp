@@ -46,7 +46,11 @@ void trampoline_pull( intptr_t vp)
 #else
     Fn fn( move( from->fn) );
 #endif
-    Coro c( from->caller, from->callee,
+
+    coroutine_context caller( * from->caller);
+    coroutine_context callee( * from->callee);
+
+    Coro c( & caller, & callee,
             stack_unwind == from->attr.do_unwind,
             fpu_preserved == from->attr.preserve_fpu);
     from = 0;
@@ -61,7 +65,7 @@ void trampoline_pull( intptr_t vp)
         c.result_ = from->data;
 
         // create push_coroutine
-        typename Self::impl_type b( c.callee_, c.caller_, false, c.preserve_fpu() );
+        typename Self::impl_type b( & callee, & caller, false, c.preserve_fpu() );
         Self yield( & b);
         try
         { fn( yield); }
@@ -95,7 +99,11 @@ void trampoline_pull_void( intptr_t vp)
 #else
     Fn fn( move( from->fn) );
 #endif
-    Coro c( from->caller, from->callee,
+
+    coroutine_context caller( * from->caller);
+    coroutine_context callee( * from->callee);
+
+    Coro c( & caller, & callee,
             stack_unwind == from->attr.do_unwind,
             fpu_preserved == from->attr.preserve_fpu);
     from = 0;
@@ -107,7 +115,7 @@ void trampoline_pull_void( intptr_t vp)
             c.preserve_fpu() );
 
         // create push_coroutine
-        typename Self::impl_type b( c.callee_, c.caller_, false, c.preserve_fpu() );
+        typename Self::impl_type b( & callee, & caller, false, c.preserve_fpu() );
         Self yield( & b);
         try
         { fn( yield); }
