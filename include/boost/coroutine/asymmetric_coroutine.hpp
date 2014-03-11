@@ -117,8 +117,9 @@ public:
 
     ~push_coroutine()
     {
-        if ( 0 != impl_)
+        if ( 0 != stack_ctx_.sp)
         {
+            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -269,8 +270,9 @@ public:
 
     ~push_coroutine()
     {
-        if ( 0 != impl_)
+        if ( 0 != stack_ctx_.sp)
         {
+            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -420,8 +422,9 @@ public:
 
     ~push_coroutine()
     {
-        if ( 0 != impl_)
+        if ( 0 != stack_ctx_.sp)
         {
+            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -693,8 +696,9 @@ public:
 
     ~pull_coroutine()
     {
-        if ( 0 != impl_)
+        if ( 0 != stack_ctx_.sp)
         {
+            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -1060,8 +1064,9 @@ public:
 
     ~pull_coroutine()
     {
-        if ( 0 != impl_)
+        if ( 0 != stack_ctx_.sp)
         {
+            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;
@@ -1435,8 +1440,9 @@ public:
 
     ~pull_coroutine()
     {
-        if ( 0 != impl_)
+        if ( 0 != stack_ctx_.sp)
         {
+            BOOST_ASSERT( 0 != impl_);
             impl_->unwind_stack();
             stack_alloc_.deallocate( stack_ctx_);
             impl_ = 0;

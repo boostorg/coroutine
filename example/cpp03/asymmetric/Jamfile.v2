@@ -29,36 +29,6 @@ project boost/coroutine/example
       <threading>multi
     ;
 
-exe simple
-    : simple.cpp
-    ;
-exe chaining
-    : chaining.cpp
-    ;
-exe echo
-    : echo.cpp
-    ;
-exe exception
-    : exception.cpp
-    ;
-exe fibonacci
-    : fibonacci.cpp
-    ;
-exe layout
-    : layout.cpp
-    ;
-exe parallel
-    : parallel.cpp
-    ;
-exe power
-    : power.cpp
-    ;
-exe same_fringe
-    : same_fringe.cpp
-    ;
-exe segmented_stack
-    : segmented_stack.cpp
-    ;
-exe unwind
-    : unwind.cpp
+exe test_case
+    : test_case.cpp
     ;

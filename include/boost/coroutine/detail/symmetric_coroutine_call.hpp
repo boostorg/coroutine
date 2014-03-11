@@ -115,7 +115,6 @@ public:
     {
         stack_alloc_.allocate( stack_ctx_, attr.size);
         coroutine_context callee(
-            trampoline< coroutine_fn, impl_type, yield_type >,
             trampoline< Fn, impl_type, yield_type >,
             stack_ctx_);
         coroutine_context caller;

@@ -42,10 +42,10 @@ private:
 
     typedef parameters< Arg >                           param_type;
 
-    int                 flags_;
-    exception_ptr       except_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
+    int                     flags_;
+    exception_ptr           except_;
+    coroutine_context   *   caller_;
+    coroutine_context   *   callee_;
 
 public:
     push_coroutine_impl( coroutine_context * caller,
@@ -53,8 +53,8 @@ public:
                          bool unwind, bool preserve_fpu) :
         flags_( 0),
         except_(),
-        caller_( * caller),
-        callee_( * callee)
+        caller_( caller),
+        callee_( callee)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -78,8 +78,8 @@ public:
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
-            caller_.jump(
-                callee_,
+            caller_->jump(
+                * callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
             flags_ &= ~flag_unwind_stack;
@@ -95,8 +95,8 @@ public:
         param_type to( const_cast< Arg * >( & arg) );
         param_type * from(
             reinterpret_cast< param_type * >(
-                caller_.jump(
-                    callee_,
+                caller_->jump(
+                    * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
@@ -110,8 +110,8 @@ public:
         param_type to( const_cast< Arg * >( & arg) );
         param_type * from(
             reinterpret_cast< param_type * >(
-                caller_.jump(
-                    callee_,
+                caller_->jump(
+                    * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
@@ -130,10 +130,10 @@ private:
 
     typedef parameters< Arg & >                         param_type;
 
-    int                 flags_;
-    exception_ptr       except_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
+    int                     flags_;
+    exception_ptr           except_;
+    coroutine_context   *   caller_;
+    coroutine_context   *   callee_;
 
 public:
     push_coroutine_impl( coroutine_context * caller,
@@ -141,8 +141,8 @@ public:
                          bool unwind, bool preserve_fpu) :
         flags_( 0),
         except_(),
-        caller_( * caller),
-        callee_( * callee)
+        caller_( caller),
+        callee_( callee)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -166,8 +166,8 @@ public:
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
-            caller_.jump(
-                callee_,
+            caller_->jump(
+                * callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
             flags_ &= ~flag_unwind_stack;
@@ -183,8 +183,8 @@ public:
         param_type to( & arg);
         param_type * from(
             reinterpret_cast< param_type * >(
-                caller_.jump(
-                    callee_,
+                caller_->jump(
+                    * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();
@@ -203,10 +203,10 @@ private:
 
     typedef parameters< void >                          param_type;
 
-    int                 flags_;
-    exception_ptr       except_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
+    int                     flags_;
+    exception_ptr           except_;
+    coroutine_context   *   caller_;
+    coroutine_context   *   callee_;
 
 public:
     push_coroutine_impl( coroutine_context * caller,
@@ -214,8 +214,8 @@ public:
                          bool unwind, bool preserve_fpu) :
         flags_( 0),
         except_(),
-        caller_( * caller),
-        callee_( * callee)
+        caller_( caller),
+        callee_( callee)
     {
         if ( unwind) flags_ |= flag_force_unwind;
         if ( preserve_fpu) flags_ |= flag_preserve_fpu;
@@ -239,8 +239,8 @@ public:
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
-            caller_.jump(
-                callee_,
+            caller_->jump(
+                * callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
             flags_ &= ~flag_unwind_stack;
@@ -256,8 +256,8 @@ public:
         param_type to;
         param_type * from(
             reinterpret_cast< param_type * >(
-                caller_.jump(
-                    callee_,
+                caller_->jump(
+                    * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
         if ( from->do_unwind) throw forced_unwind();

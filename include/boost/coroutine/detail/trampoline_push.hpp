@@ -46,7 +46,11 @@ void trampoline_push( intptr_t vp)
 #else
     Fn fn( move( from->fn) );
 #endif
-    Coro c( from->caller, from->callee,
+
+    coroutine_context caller( * from->caller);
+    coroutine_context callee( * from->callee);
+
+    Coro c( & caller, & callee,
             stack_unwind == from->attr.do_unwind,
             fpu_preserved == from->attr.preserve_fpu);
     from = 0;
@@ -54,27 +58,30 @@ void trampoline_push( intptr_t vp)
     {
         param_type * from(
             reinterpret_cast< param_type * >(
-                c.callee_.jump(
-                    c.caller_,
+                c.callee_->jump(
+                    * c.caller_,
                     reinterpret_cast< intptr_t >(  & c),
                     c.preserve_fpu() ) ) );
-        BOOST_ASSERT( from->data);
+        if ( ! from->do_unwind)
+        {
+            BOOST_ASSERT( from->data);
 
-        // create push_coroutine
-        typename Self::impl_type b( & c.callee_, & c.caller_, false, c.preserve_fpu(), from->data);
-        Self yield( & b);
-        try
-        { fn( yield); }
-        catch ( forced_unwind const&)
-        {}
-        catch (...)
-        { c.except_ = current_exception(); }
+            // create push_coroutine
+            typename Self::impl_type b( & callee, & caller, false, c.preserve_fpu(), from->data);
+            Self yield( & b);
+            try
+            { fn( yield); }
+            catch ( forced_unwind const&)
+            {}
+            catch (...)
+            { c.except_ = current_exception(); }
+        }
     }
 
     c.flags_ |= flag_complete;
     param_type to;
-    c.callee_.jump(
-        c.caller_,
+    c.callee_->jump(
+        * c.caller_,
         reinterpret_cast< intptr_t >( & to),
         c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "push_coroutine is complete");
@@ -95,32 +102,40 @@ void trampoline_push_void( intptr_t vp)
 #else
     Fn fn( move( from->fn) );
 #endif
-    Coro c( from->caller, from->callee,
+
+    coroutine_context caller( * from->caller);
+    coroutine_context callee( * from->callee);
+
+    Coro c( & caller, & callee,
             stack_unwind == from->attr.do_unwind,
             fpu_preserved == from->attr.preserve_fpu);
     from = 0;
 
     {
-        c.callee_.jump(
-            c.caller_,
-            reinterpret_cast< intptr_t >( & c),
-            c.preserve_fpu() );
-
-        // create push_coroutine
-        typename Self::impl_type b( & c.callee_, & c.caller_, false, c.preserve_fpu() );
-        Self yield( & b);
-        try
-        { fn( yield); }
-        catch ( forced_unwind const&)
-        {}
-        catch (...)
-        { c.except_ = current_exception(); }
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                c.callee_->jump(
+                    * c.caller_,
+                    reinterpret_cast< intptr_t >( & c),
+                    c.preserve_fpu() ) ) );
+        if ( ! from->do_unwind)
+        {
+            // create push_coroutine
+            typename Self::impl_type b( & callee, & caller, false, c.preserve_fpu() );
+            Self yield( & b);
+            try
+            { fn( yield); }
+            catch ( forced_unwind const&)
+            {}
+            catch (...)
+            { c.except_ = current_exception(); }
+        }
     }
 
     c.flags_ |= flag_complete;
     param_type to;
-    c.callee_.jump(
-        c.caller_,
+    c.callee_->jump(
+        * c.caller_,
         reinterpret_cast< intptr_t >( & to),
         c.preserve_fpu() );
     BOOST_ASSERT_MSG( false, "push_coroutine is complete");
