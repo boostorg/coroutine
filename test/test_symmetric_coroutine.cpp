@@ -130,8 +130,11 @@ public:
         state( true)
     {}
 
-    void operator()( coro::symmetric_coroutine< int >::yield_type &)
-    { value1 = state; }
+    void operator()( coro::symmetric_coroutine< bool >::yield_type & yield)
+    {
+        if ( yield)
+            value1 = yield.get();
+    }
 };
 
 class moveable
@@ -290,8 +293,8 @@ void test_move()
         copyable cp( 3);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( ! value1);
-        coro::symmetric_coroutine< int >::call_type coro( cp);
-        coro( 3);
+        coro::symmetric_coroutine< bool >::call_type coro( cp);
+        coro( true);
         BOOST_CHECK( cp.state);
         BOOST_CHECK( value1);
     }
