@@ -57,19 +57,20 @@ void trampoline( intptr_t vp)
             reinterpret_cast< param_type * >(
                 c.callee_.jump(
                     c.caller_,
-                    reinterpret_cast< intptr_t >(  & c),
+                    reinterpret_cast< intptr_t >( & c),
                     c.preserve_fpu() ) ) );
-        c.flags_ |= flag_running;
-
-        // create yield_type
-        Self yield( & c, from->data);
-        c.flags_ |= flag_running;
-        try
-        { fn( yield); }
-        catch ( forced_unwind const&)
-        {}
-        catch (...)
-        { std::terminate(); }
+        if ( ! from->do_unwind)
+        {
+            // create yield_type
+            Self yield( & c, from->data);
+            c.flags_ |= flag_running;
+            try
+            { fn( yield); }
+            catch ( forced_unwind const&)
+            {}
+            catch (...)
+            { std::terminate(); }
+        }
     }
 
     c.flags_ |= flag_complete;
@@ -99,20 +100,24 @@ void trampoline_void( intptr_t vp)
     from = 0;
 
     {
-        c.callee_.jump(
-            c.caller_,
-            reinterpret_cast< intptr_t >(  & c),
-            c.preserve_fpu() );
-        c.flags_ |= flag_running;
-
-        // create yield_type
-        Self yield( & c);
-        try
-        { fn( yield); }
-        catch ( forced_unwind const&)
-        {}
-        catch (...)
-        { std::terminate(); }
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                c.callee_.jump(
+                    c.caller_,
+                    reinterpret_cast< intptr_t >( & c),
+                    c.preserve_fpu() ) ) );
+        if ( ! from->do_unwind)
+        {
+            // create yield_type
+            Self yield( & c);
+            c.flags_ |= flag_running;
+            try
+            { fn( yield); }
+            catch ( forced_unwind const&)
+            {}
+            catch (...)
+            { std::terminate(); }
+        }
     }
 
     c.flags_ |= flag_complete;
