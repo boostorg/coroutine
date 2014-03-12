@@ -8,8 +8,7 @@
 [section:overview Overview]
 
 __boost_coroutine__ provides templates for generalized subroutines which allow
-multiple entry points for suspending and resuming execution at certain
-locations.
+suspending and resuming execution at certain locations.
 It preserves the local state of execution and allows re-entering subroutines more
 than once (useful if state must be kept across function calls).
 

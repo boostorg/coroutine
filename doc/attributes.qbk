@@ -97,4 +97,11 @@ The stack gets a default value of `boost::context::default_stacksize()`.]]
 [[Throws:] [Nothing.]]
 ]
 
+[heading `attributes( std::size_t size, flag_unwind_t do_unwind, flag_fpu_t preserve_fpu)`]
+[variablelist
+[[Effects:] [Arguments `size`, `do_unwind` and `preserve_fpu` are given by the
+user.]]
+[[Throws:] [Nothing.]]
+]
+
 [endsect]

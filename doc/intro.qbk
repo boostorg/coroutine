@@ -40,7 +40,7 @@ Before the coroutine gets suspended, the non-volatile registers (including stack
 and instruction/program pointer) of the currently active coroutine are stored in
 the coroutine's control-block.
 The registers of the newly activated coroutine must be restored from its
-associated control-block before it can continue with its work.
+associated control-block before it is resumed.
 
 The context switch requires no system privileges and provides cooperative
 multitasking convenient to C++. Coroutines provide quasi parallelism.
@@ -58,7 +58,7 @@ February 2009, Article No. 6] of a coroutine are:
 
 * values of local data persist between successive calls (context switches)
 * execution is suspended as control leaves coroutine and is resumed at certain time later
-* symmetric or asymmetric control-transfer mechanism
+* symmetric or asymmetric control-transfer mechanism; see below
 * first-class object (can be passed as argument, returned by procedures,
    stored in a data structure to be used later or freely manipulated by
    the developer)
@@ -81,14 +81,15 @@ specify the coroutine to which it intends to yield control.
 
 [$../../../../libs/coroutine/doc/images/foo_bar_seq.png [align center]]
 
-Both concepts are equivalent and a coroutine library can provide either
-symmetric or asymmetric coroutines.
+Both concepts are equivalent and a fully-general coroutine library can provide
+either symmetric or asymmetric coroutines. For convenience, Boost.Coroutine
+provides both.
 
 
 [heading stackfulness]
 In contrast to a stackless coroutine a stackful coroutine can be suspended
-from within a nested stackframe. Execution resumes at exact the same point in the
-code where it was suspended before.
+from within a nested stackframe. Execution resumes at exactly the same point
+in the code where it was suspended before.
 With a stackless coroutine, only the top-level routine may be suspended. Any
 routine called by that top-level routine may not itself suspend. This prohibits
 providing suspend/resume operations in routines within a general-purpose library.
