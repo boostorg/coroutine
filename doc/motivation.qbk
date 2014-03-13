@@ -82,14 +82,14 @@ callback functions.
         {
         public:
             session(boost::asio::io_service& io_service) :
-                  socket_(io_service)
+                  socket_(io_service) // construct a TCP-socket from io_service
             {}
 
-            tcp::socket& socket()
-            { return socket_; }
+            tcp::socket& socket(){
+                return socket_;
+            }
 
-            void start()
-            {
+            void start(){
                 // initiate asynchronous read; handle_read() is callback-function
                 socket_.async_read_some(boost::asio::buffer(data_,max_length),
                     boost::bind(&session::handle_read,this,
@@ -99,8 +99,7 @@ callback functions.
 
         private:
             void handle_read(const boost::system::error_code& error,
-                size_t bytes_transferred)
-            {
+                             size_t bytes_transferred){
                 if (!error)
                     // initiate asynchronous write; handle_write() is callback-function
                     boost::asio::async_write(socket_,
@@ -111,8 +110,7 @@ callback functions.
                     delete this;
             }
 
-            void handle_write(const boost::system::error_code& error)
-            {
+            void handle_write(const boost::system::error_code& error){
                 if (!error)
                     // initiate asynchronous read; handle_read() is callback-function
                     socket_.async_read_some(boost::asio::buffer(data_,max_length),
@@ -123,7 +121,7 @@ callback functions.
                     delete this;
             }
 
-            tcp::socket socket_;
+            boost::asio::ip::tcp::socket socket_;
             enum { max_length=1024 };
             char data_[max_length];
         };
@@ -142,12 +140,12 @@ is much easier to read and understand.
 N3964 - Library Foundations for Asynchronous Operations, Revision 1]].
 __yield_context__ internally uses __boost_coroutine__:
 
-        void session(socket_ptr sock)
-        {
-            try
-            {
-                for(;;)
-                {
+        void session(boost::asio::io_service& io_service){
+            // construct TCP-socket from io_service
+            boost::asio::ip::tcp::socket socket(io_service);
+
+            try{
+                for(;;){
                     // local data-buffer
                     char data[max_length];
 
@@ -156,7 +154,7 @@ __yield_context__ internally uses __boost_coroutine__:
                     // read asynchronous data from socket
                     // execution context will be suspended until
                     // some bytes are read from socket
-                    std::size_t length=sock->async_read_some(
+                    std::size_t length=socket.async_read_some(
                             boost::asio::buffer(data),
                             boost::asio::yield[ec]);
                     if (ec==boost::asio::error::eof)
@@ -166,7 +164,7 @@ __yield_context__ internally uses __boost_coroutine__:
 
                     // write some bytes asynchronously
                     boost::asio::async_write(
-                            *sock,
+                            socket,
                             boost::asio::buffer(data,length),
                             boost::asio::yield[ec]);
                     if (ec==boost::asio::error::eof)
@@ -175,8 +173,9 @@ __yield_context__ internally uses __boost_coroutine__:
                         throw boost::system::system_error(ec); //some other error
                 }
             }
-            catch(std::exception const& e)
-            { std::cerr<<"Exception: "<<e.what()<<"\n"; }
+            catch(std::exception const& e){
+                std::cerr<<"Exception: "<<e.what()<<"\n";
+            }
         }
 
 In contrast to the previous example this one gives the impression of sequential
@@ -193,7 +192,7 @@ of trees.
 If traversing two different trees in the same deterministic order produces the
 same list of leaf nodes, then both trees have the same fringe.
 
-[$../../../../libs/coroutine/doc/images/fringe.png [align center]]
+[$../../../../libs/coroutine/doc/images/same_fringe.png [align center]]
 
 Both trees in the picture have the same fringe even though the structure of the
 trees is different.
@@ -336,16 +335,14 @@ data structure.
 
 This example demonstrates how symmetric coroutines merge two sorted arrays.
 
-        std::vector<int> merge(const std::vector<int>& a,const std::vector<int>& b)
-        {
+        std::vector<int> merge(const std::vector<int>& a,const std::vector<int>& b){
             std::vector<int> c;
             std::size_t idx_a=0,idx_b=0;
             boost::coroutines::symmetric_coroutine<void>::call_type *other_a=0,*other_b=0;
 
             boost::coroutines::symmetric_coroutine<void>::call_type coro_a(
                 [&](boost::coroutines::symmetric_coroutine<void>::yield_type& yield){
-                    while(idx_a<a.size())
-                    {
+                    while(idx_a<a.size()){
                         if(b[idx_b]<a[idx_a])    // test if element in array b is less than in array a
                             yield(*other_b);     // yield to coroutine coro_b
                         c.push_back(a[idx_a++]); // add element to final array
@@ -357,8 +354,7 @@ This example demonstrates how symmetric coroutines merge two sorted arrays.
 
             boost::coroutines::symmetric_coroutine<void>::call_type coro_b(
                 [&](boost::coroutines::symmetric_coroutine<void>::yield_type& yield){
-                    while(idx_b<b.size())
-                    {
+                    while(idx_b<b.size()){
                         if(a[idx_a]<b[idx_b])    // test if element in array a is less than in array b
                             yield(*other_a);     // yield to coroutine coro_a
                         c.push_back(b[idx_b++]); // add element to final array
