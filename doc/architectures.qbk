@@ -5,9 +5,9 @@
           http://www.boost.org/LICENSE_1_0.txt
 ]
 
-[section:architectues Architectures]
+[section:architectures Architectures]
 
-__boost_coroutine__ depends on __boost_context__ witch supports this
+__boost_coroutine__ depends on __boost_context__ which supports these
 [@boost:/libs/context/architectures.html architectures].
 
 [endsect]

@@ -44,7 +44,7 @@
 [def __coros__ ['coroutines]]
 [def __ctx__ ['context]]
 [def __not_a_coro__ ['not-a-coroutine]]
-[def __segmented_stack__ ['segemented-stack]]
+[def __segmented_stack__ ['segmented-stack]]
 [def __signature__ ['Signature]]
 [def __stack_allocator_concept__ ['stack-allocator concept]]
 [def __stack_allocator__ ['stack-allocator]]
