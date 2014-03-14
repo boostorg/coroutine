@@ -352,7 +352,7 @@ of `other`.]]
 
     #include <boost/coroutine/symmetric_coroutine.hpp>
 
-    template< typename R, typename StackAllocator = standard_stack_allocator >
+    template< typename R >
     class symmetric_coroutine<>::yield_type
     {
     private:
