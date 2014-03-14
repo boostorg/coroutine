@@ -12,6 +12,7 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
+#include <boost/throw_exception.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/utility/explicit_operator_bool.hpp>
@@ -115,9 +116,11 @@ public:
         return * this;
     }
 
-    R get() const BOOST_NOEXCEPT
+    R get() const
     {
-        BOOST_ASSERT( 0 != result_);
+        if ( 0 == result_)
+            boost::throw_exception(
+                invalid_result() );
 
         return * result_; 
     }
@@ -208,9 +211,11 @@ public:
         return * this;
     }
 
-    R & get() const BOOST_NOEXCEPT
+    R & get() const
     {
-        BOOST_ASSERT( 0 != result_);
+        if ( 0 == result_)
+            boost::throw_exception(
+                invalid_result() );
 
         return * result_; 
     }

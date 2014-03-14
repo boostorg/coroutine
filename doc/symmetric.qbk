@@ -324,9 +324,9 @@ of `other`.]]
 
 [heading `call_type & operator()(Arg arg)`]
 
-        symmetric_coroutine::call_type& coroutine<Arg>::call_type::operator()(Arg);
-        symmetric_coroutine::call_type& coroutine<Arg&>::call_type::operator()(Arg&);
-        symmetric_coroutine::call_type& coroutine<void>::call_type::operator()();
+        symmetric_coroutine::call_type& coroutine<Arg,StackAllocator>::call_type::operator()(Arg);
+        symmetric_coroutine::call_type& coroutine<Arg&,StackAllocator>::call_type::operator()(Arg&);
+        symmetric_coroutine::call_type& coroutine<void,StackAllocator>::call_type::operator()();
 
 [variablelist
 [[Preconditions:] [operator unspecified-bool-type() returns `true` for `*this`.]]
@@ -381,7 +381,7 @@ of `other`.]]
         template< typename X >
         yield_type & operator()( symmetric_coroutine< X >::call_type & other);
 
-        R get() const noexcept;
+        R get() const;
     };
 
 [heading `operator unspecified-bool-type() const`]
@@ -424,7 +424,7 @@ to another symmetric coroutine. Parameter `x` is passed as value into `other`'s 
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
 [[Returns:] [Returns data transferred from coroutine-function via
 __push_coro_op__.]]
-[[Throws:] [`boost::coroutine_error`]]
+[[Throws:] [`invalid_result`]]
 ]
 
 [endsect]

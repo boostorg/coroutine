@@ -468,15 +468,15 @@ passed to the coroutine-function).]]
 
 [heading `R get()`]
 
-    R    asymmetric_coroutine<R>::pull_type::get();
-    R&   asymmetric_coroutine<R&>::pull_type::get();
-    void asymmetric_coroutine<void>::pull_type::get()=delete;
+    R    asymmetric_coroutine<R,StackAllocator>::pull_type::get();
+    R&   asymmetric_coroutine<R&,StackAllocator>::pull_type::get();
+    void asymmetric_coroutine<void,StackAllocator>::pull_type::get()=delete;
 
 [variablelist
 [[Preconditions:] [`*this` is not a __not_a_coro__.]]
 [[Returns:] [Returns data transferred from coroutine-function via
 __push_coro_op__.]]
-[[Throws:] [`boost::coroutine_error`]]
+[[Throws:] [`invalid_result`]]
 [[Note:] [If `R` is a move-only type, you may only call `get()` once before
 the next __pull_coro_op__ call.]]
 ]
