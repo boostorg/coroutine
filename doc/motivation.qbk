@@ -57,7 +57,6 @@ The event-based asynchronous model avoids those issues:
 
 * simpler because of the single stream of instructions
 * much less expensive context switches
-* inversion of control
 
 The downside of this paradigm consists in a sub-optimal program
 structure. A event-driven program is required to split its code into
