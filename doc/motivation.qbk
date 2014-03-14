@@ -52,12 +52,12 @@ their own costs:
 * memory requirements are high
 * large overhead with creation and maintenance of thread state
 * expensive context switching between threads
-* priority inversion
 
 The event-based asynchronous model avoids those issues:
 
 * simpler because of the single stream of instructions
 * much less expensive context switches
+* inversion of control
 
 The downside of this paradigm consists in a sub-optimal program
 structure. A event-driven program is required to split its code into

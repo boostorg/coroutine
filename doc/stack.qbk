@@ -80,8 +80,8 @@ virtual addresses are used.]
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_size() <= size` and
-`! is_unbounded() && ( maximum_size() >= size)`.]]
+[[Preconditions:] [`traits_type::minimum:size() <= size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
 to the stack and its actual size in `sctx`. Depending
 on the architecture (the stack grows downwards/upwards) the stored address is
@@ -90,8 +90,8 @@ the highest/lowest address of the stack.]]
 
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
-[[Preconditions:] [`sctx.sp` is valid, `minimum_size() <= sctx.size` and
-`! is_unbounded() && ( maximum_size() >= sctx.size)`.]]
+[[Preconditions:] [`sctx.sp` is valid, `traits_type::minimum:size() <= sctx.size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 
@@ -124,8 +124,8 @@ end of each stack. The memory is simply managed by `std::malloc()` and
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_size() <= size` and
-`! is_unbounded() && ( maximum_size() >= size)`.]]
+[[Preconditions:] [`traits_type::minimum:size() <= size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer to
 the stack and its actual size in `sctx`. Depending on the architecture (the
 stack grows downwards/upwards) the stored address is the highest/lowest
@@ -134,8 +134,8 @@ address of the stack.]]
 
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
-[[Preconditions:] [`sctx.sp` is valid, `minimum_size() <= sctx.size` and
-`! is_unbounded() && ( maximum_size() >= sctx.size)`.]]
+[[Preconditions:] [`sctx.sp` is valid, `traits_type::minimum:size() <= sctx.size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 
@@ -172,8 +172,8 @@ must be compiled with compiler-flags [*-fsplit-stack -DBOOST_USE_SEGMENTED_STACK
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_size() <= size` and
-`! is_unbounded() && ( maximum_size() >= size)`.]]
+[[Preconditions:] [`traits_type::minimum:size() <= size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer to
 the stack and its actual size in `sctx`. Depending on the architecture (the
 stack grows downwards/upwards) the stored address is the highest/lowest
@@ -182,8 +182,8 @@ address of the stack.]]
 
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
-[[Preconditions:] [`sctx.sp` is valid, `minimum_size() <= sctx.size` and
-`! is_unbounded() && ( maximum_size() >= sctx.size)`.]]
+[[Preconditions:] [`sctx.sp` is valid, `traits_type::minimum:size() <= sctx.size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 
