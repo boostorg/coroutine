@@ -15,6 +15,7 @@
 #include <boost/coroutine/segmented_stack_allocator.hpp>
 #include <boost/coroutine/stack_allocator.hpp>
 #include <boost/coroutine/stack_context.hpp>
+#include <boost/coroutine/stack_traits.hpp>
 #include <boost/coroutine/standard_stack_allocator.hpp>
 
 #endif // BOOST_COROUTINES_ALL_H

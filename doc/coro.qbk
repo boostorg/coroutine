@@ -48,6 +48,7 @@
 [def __signature__ ['Signature]]
 [def __stack_allocator_concept__ ['stack-allocator concept]]
 [def __stack_allocator__ ['stack-allocator]]
+[def __stack_traits__ ['stack-traits]]
 [def __stack__ ['stack]]
 [def __tls__ ['thread-local-storage]]
 

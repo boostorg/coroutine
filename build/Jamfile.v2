@@ -29,33 +29,21 @@ project boost/coroutine
     : source-location ../src
     ;
 
-alias protected_allocator_sources
-    : protected_stack_allocator_windows.cpp
+alias stack_traits_sources
+    : windows/stack_traits.cpp
     : <target-os>windows
     ;
 
-alias protected_allocator_sources
-    : protected_stack_allocator_posix.cpp
+alias stack_traits_sources
+    : posix/stack_traits.cpp
     ;
 
-explicit protected_allocator_sources ;
-
-alias segmented_allocator_sources
-    : segmented_stack_allocator.cpp
-    : <segmented-stacks>on
-    ;
-
-alias segmented_allocator_sources
-    ;
-
-explicit segmented_allocator_sources ;
+explicit stack_traits_sources ;
 
 lib boost_coroutine
     : detail/coroutine_context.cpp
       exceptions.cpp
-      protected_allocator_sources
-      segmented_allocator_sources
-      standard_stack_allocator.cpp
+      stack_traits_sources
     : <link>shared:<library>../../context/build//boost_context
       <link>shared:<library>../../system/build//boost_system
       <link>shared:<library>../../thread/build//boost_thread
