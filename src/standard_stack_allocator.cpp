@@ -6,6 +6,7 @@
 
 #include <boost/coroutine/standard_stack_allocator.hpp>
 
+#include <new>
 #include <cstdlib>
 #include <stdexcept>
 
