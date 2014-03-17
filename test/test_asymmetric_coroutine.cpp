@@ -421,7 +421,7 @@ void test_no_unwind()
         coro::asymmetric_coroutine< void >::push_type coro(
             f12,
             coro::attributes(
-                coro::stack_allocator::default_stacksize(),
+                coro::stack_allocator::traits_type::default_size(),
                 coro::no_stack_unwind) );
         BOOST_CHECK( coro);
         BOOST_CHECK_EQUAL( ( int) 0, value1);

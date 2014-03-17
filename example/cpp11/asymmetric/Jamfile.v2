@@ -45,10 +45,6 @@ exe iterator_range
     : iterator_range.cpp
     ;
 
-exe test_case
-    : test_case.cpp
-    ;
-
 #exe await_emu
 #    : await_emu.cpp
 #    ;

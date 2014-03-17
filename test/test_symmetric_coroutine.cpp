@@ -411,7 +411,7 @@ void test_no_unwind()
     {
         coro::symmetric_coroutine< void >::call_type coro( f6,
             coro::attributes(
-                coro::stack_allocator::default_stacksize(),
+                coro::stack_allocator::traits_type::default_size(),
                 coro::no_stack_unwind) );
         coro::symmetric_coroutine< void >::call_type coro_e( empty);
         BOOST_CHECK( coro);

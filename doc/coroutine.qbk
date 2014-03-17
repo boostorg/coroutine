@@ -86,6 +86,14 @@ __pull_coro_op__.
 [warning Calling __call_coro_op__, __push_coro_op__ and __pull_coro_op__ from
 inside the [_same] coroutine results in undefined behaviour.]
 
+As an example, the code below will result in undefined behaviour:
+
+        boost::coroutines::symmetric_coroutine<void>::call_type coro(
+            [&](boost::coroutines::symmetric_coroutine<void>::yield_type& yield){
+                yield(coro); // yield to same symmetric_coroutine
+        });
+        coro();
+
 
 [include asymmetric.qbk]
 [include symmetric.qbk]

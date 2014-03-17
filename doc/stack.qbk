@@ -22,7 +22,8 @@ __stack_allocator__ type, `sctx` is a `stack_context`, and `size` is a `std::siz
     [
         [`a.allocate( sctx, size)`]
         [`void`]
-        [creates a stack of at least `size` bytes and stores both values in `sctx`]
+        [creates a stack of at least `size` bytes and stores its pointer and
+        length in `sctx`]
     ]
     [
         [`a.deallocate( sctx)`]
@@ -63,61 +64,34 @@ efficient to use as any other stack.]
 [note The appended `guard page` is [*not] mapped to physical memory, only
 virtual addresses are used.]
 
-        class protected_stack_allocator
+        #include <boost/coroutine/protected_stack_allocator.hpp>
+
+        template< typename traitsT >
+        struct basic_protected_stack_allocator
         {
-            static bool is_stack_unbounded();
-
-            static std::size_t maximum_stacksize();
-
-            static std::size_t default_stacksize();
-
-            static std::size_t minimum_stacksize();
+            typedef traitT  traits_type;
 
             void allocate( stack_context &, std::size_t size);
 
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbounded()`]
-[variablelist
-[[Returns:] [Returns `true` if the environment defines no limit for the size of
-a stack.]]
-]
-
-[heading `static std::size_t maximum_stacksize()`]
-[variablelist
-[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
-[[Returns:] [Returns the maximum size in bytes of stack defined by the
-environment.]]
-]
-
-[heading `static std::size_t default_stacksize()`]
-[variablelist
-[[Returns:] [Returns a default stack size, which may be platform specific.
-If the stack is unbound then the present implementation returns the maximum of
-`64 kB` and `minimum_stacksize()`.]]
-]
-
-[heading `static std::size_t minimum_stacksize()`]
-[variablelist
-[[Returns:] [Returns the minimum size in bytes of stack defined by the
-environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
-]
+        typedef basic_protected_stack_allocator< stack_traits > protected_stack_allocator
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_stacksize() <= size` and
-`! is_stack_unbounded() && ( maximum_stacksize() >= size)`.]]
+[[Preconditions:] [`traits_type::minimum:size() <= size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= size)`.]]
 [[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
 to the stack and its actual size in `sctx`. Depending
-on the architecture (the stack grows downwards/upwards) the returned address is
+on the architecture (the stack grows downwards/upwards) the stored address is
 the highest/lowest address of the stack.]]
 ]
 
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
-[[Preconditions:] [`sctx.sp` is valid, `minimum_stacksize() <= sctx.size` and
-`! is_stack_unbounded() && ( maximum_stacksize() >= sctx.size)`.]]
+[[Preconditions:] [`sctx.sp` is valid, `traits_type::minimum:size() <= sctx.size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 
@@ -134,62 +108,34 @@ end of each stack. The memory is simply managed by `std::malloc()` and
 
 [note The __standard_allocator__ is the default stack allocator.]
 
-        class standard_stack_allocator
+        #include <boost/coroutine/standard_stack_allocator.hpp>
+
+        template< typename traitsT >
+        struct standard_stack_allocator
         {
-            static bool is_stack_unbounded();
-
-            static std::size_t maximum_stacksize();
-
-            static std::size_t default_stacksize();
-
-            static std::size_t minimum_stacksize();
+            typedef traitT  traits_type;
 
             void allocate( stack_context &, std::size_t size);
 
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbounded()`]
-[variablelist
-[[Returns:] [Returns `true` if the environment defines no limit for the size of
-a stack.]]
-]
-
-[heading `static std::size_t maximum_stacksize()`]
-[variablelist
-[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
-[[Returns:] [Returns the maximum size in bytes of stack defined by the
-environment.]]
-]
-
-[heading `static std::size_t default_stacksize()`]
-[variablelist
-[[Returns:] [Returns a default stack size, which may be platform specific.
-If the stack is unbound then the present implementation returns the maximum of
-`64 kB` and `minimum_stacksize()`.]]
-]
-
-[heading `static std::size_t minimum_stacksize()`]
-[variablelist
-[[Returns:] [Returns the minimum size in bytes of stack defined by the
-environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
-]
+        typedef basic_standard_stack_allocator< stack_traits > standard_stack_allocator 
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_stacksize() <= size` and
-`! is_stack_unbounded() && ( maximum_stacksize() >= size)`.]]
-[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
-to the stack and its actual size in `sctx`.]]
-[[Returns:] [Returns pointer to the start address of the new stack. Depending
-on the architecture the stack grows downwards/upwards the returned address is
-the highest/lowest address of the stack.]]
+[[Preconditions:] [`traits_type::minimum:size() <= size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= size)`.]]
+[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer to
+the stack and its actual size in `sctx`. Depending on the architecture (the
+stack grows downwards/upwards) the stored address is the highest/lowest
+address of the stack.]]
 ]
 
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
-[[Preconditions:] [`sctx.sp` is valid, `minimum_stacksize() <= sctx.size` and
-`! is_stack_unbounded() && ( maximum_stacksize() >= sctx.size)`.]]
+[[Preconditions:] [`sctx.sp` is valid, `traits_type::minimum:size() <= sctx.size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
 
@@ -199,75 +145,109 @@ the highest/lowest address of the stack.]]
 [section:segmented_stack_allocator Class ['segmented_stack_allocator]]
 
 __boost_coroutine__ supports usage of a __segmented_stack__, e. g. the size of
-the stack grows on demand. The coroutine is created with an minimal stack size
+the stack grows on demand. The coroutine is created with a minimal stack size
 and will be increased as required.
 Class __segmented_allocator__ models the __stack_allocator_concept__.
-In contrast to __protected_allocator__ and __standard_allocator__ it creates an
+In contrast to __protected_allocator__ and __standard_allocator__ it creates a
 stack which grows on demand.
 
 [note Segmented stacks are currently only supported by [*gcc] from version [*4.7]
-onwards. In order to use a __segmented_stack__ __boost_coroutine__ must be build
+onwards. In order to use a __segmented_stack__ __boost_coroutine__ must be built
 with [*toolset=gcc segmented-stacks=on] at b2/bjam command-line. Applications
 must be compiled with compiler-flags [*-fsplit-stack -DBOOST_USE_SEGMENTED_STACKS].]
 
-        class segmented_stack_allocator
+        #include <boost/coroutine/segmented_stack_allocator.hpp>
+
+        template< typename traitsT >
+        struct basic_segmented_stack_allocator
         {
-            static bool is_stack_unbounded();
-
-            static std::size_t maximum_stacksize();
-
-            static std::size_t default_stacksize();
-
-            static std::size_t minimum_stacksize();
+            typedef traitT  traits_type;
 
             void allocate( stack_context &, std::size_t size);
 
             void deallocate( stack_context &);
         }
 
-[heading `static bool is_stack_unbounded()`]
-[variablelist
-[[Returns:] [Returns `true` if the environment defines no limit for the size of
-a stack.]]
-]
-
-[heading `static std::size_t maximum_stacksize()`]
-[variablelist
-[[Preconditions:] [`is_stack_unbounded()` returns `false`.]]
-[[Returns:] [Returns the maximum size in bytes of stack defined by the
-environment.]]
-]
-
-[heading `static std::size_t default_stacksize()`]
-[variablelist
-[[Returns:] [Returns a default stack size, which may be platform specific.
-If the stack is unbound then the present implementation returns the maximum of
-`64 kB` and `minimum_stacksize()`.]]
-]
-
-[heading `static std::size_t minimum_stacksize()`]
-[variablelist
-[[Returns:] [Returns the minimum size in bytes of stack defined by the
-environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
-]
+        typedef basic_segmented_stack_allocator< stack_traits > segmented_stack_allocator;
 
 [heading `void allocate( stack_context & sctx, std::size_t size)`]
 [variablelist
-[[Preconditions:] [`minimum_stacksize() <= size` and
-`! is_stack_unbounded() && ( maximum_stacksize() >= size)`.]]
-[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
-to the stack and its actual size in `sctx`.]]
-[[Returns:] [Returns pointer to the start address of the new stack. Depending
-on the architecture the stack grows downwards/upwards the returned address is
-the highest/lowest address of the stack.]]
+[[Preconditions:] [`traits_type::minimum:size() <= size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= size)`.]]
+[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer to
+the stack and its actual size in `sctx`. Depending on the architecture (the
+stack grows downwards/upwards) the stored address is the highest/lowest
+address of the stack.]]
 ]
 
 [heading `void deallocate( stack_context & sctx)`]
 [variablelist
-[[Preconditions:] [`sctx.sp` is valid, `minimum_stacksize() <= sctx.size` and
-`! is_stack_unbounded() && ( maximum_stacksize() >= sctx.size)`.]]
+[[Preconditions:] [`sctx.sp` is valid, `traits_type::minimum:size() <= sctx.size` and
+`! traits_type::is_unbounded() && ( traits_type::maximum:size() >= sctx.size)`.]]
 [[Effects:] [Deallocates the stack space.]]
 ]
+
+[endsect]
+
+
+[section:stack_traits Class ['stack_traits]]
+
+['stack_traits] models a __stack_traits__ providing a way to access certain
+properites defined by the enironment. Stack allocators use __stack_traits__ to
+allocate stacks.
+
+        #include <boost/coroutine/stack_traits.hpp>
+
+        struct stack_traits
+        {
+            static bool is_unbounded() noexcept;
+
+            static std::size_t page_size() noexcept;
+
+            static std::size_t default_size() noexcept;
+
+            static std::size_t minimum_size() noexcept;
+
+            static std::size_t maximum_size() noexcept;
+        }
+
+
+[heading `static bool is_unbounded()`]
+[variablelist
+[[Returns:] [Returns `true` if the environment defines no limit for the size of
+a stack.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `static std::size_t page_size()`]
+[variablelist
+[[Returns:] [Returns the page size in bytes.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `static std::size_t default_size()`]
+[variablelist
+[[Returns:] [Returns a default stack size, which may be platform specific.
+If the stack is unbounded then the present implementation returns the maximum of
+`64 kB` and `minimum_size()`.]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `static std::size_t minimum_size()`]
+[variablelist
+[[Returns:] [Returns the minimum size in bytes of stack defined by the
+environment (Win32 4kB/Win64 8kB, defined by rlimit on POSIX).]]
+[[Throws:] [Nothing.]]
+]
+
+[heading `static std::size_t maximum_size()`]
+[variablelist
+[[Preconditions:] [`is_unbounded()` returns `false`.]]
+[[Returns:] [Returns the maximum size in bytes of stack defined by the
+environment.]]
+[[Throws:] [Nothing.]]
+]
+
 
 [endsect]
 
@@ -276,7 +256,7 @@ the highest/lowest address of the stack.]]
 
 __boost_coroutine__ provides the class __stack_context__ which will contain
 the stack pointer and the size of the stack.
-In case of a __segmented_stack__ __stack_context__ contains some extra control
+In case of a __segmented_stack__, __stack_context__ contains some extra control
 structures.
 
         struct stack_context
@@ -284,7 +264,7 @@ structures.
             void    *   sp;
             std::size_t size;
 
-            // might contain addition control structures
+            // might contain additional control structures
             // for instance for segmented stacks
         }
 

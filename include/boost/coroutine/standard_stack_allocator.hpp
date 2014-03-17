@@ -8,10 +8,15 @@
 #define BOOST_COROUTINES_STANDARD_STACK_ALLOCATOR_H
 
 #include <cstddef>
+#include <cstdlib>
+#include <new>
 
+#include <boost/assert.hpp>
 #include <boost/config.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
+#include <boost/coroutine/stack_context.hpp>
+#include <boost/coroutine/stack_traits.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -20,23 +25,35 @@
 namespace boost {
 namespace coroutines {
 
-struct stack_context;
-
-class BOOST_COROUTINES_DECL standard_stack_allocator
+template< typename traitsT >
+struct basic_standard_stack_allocator
 {
-public:
-    static bool is_stack_unbounded();
+    typedef traitsT traits_type;
 
-    static std::size_t maximum_stacksize();
+    void allocate( stack_context & ctx, std::size_t size = traits_type::minimum_size() )
+    {
+        BOOST_ASSERT( traits_type::minimum_size() <= size);
+        BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= size) );
 
-    static std::size_t default_stacksize();
+        void * limit = std::malloc( size);
+        if ( ! limit) throw std::bad_alloc();
 
-    static std::size_t minimum_stacksize();
+        ctx.size = size;
+        ctx.sp = static_cast< char * >( limit) + ctx.size;
+    }
 
-    void allocate( stack_context & ctx, std::size_t size);
+    void deallocate( stack_context & ctx)
+    {
+        BOOST_ASSERT( ctx.sp);
+        BOOST_ASSERT( traits_type::minimum_size() <= ctx.size);
+        BOOST_ASSERT( traits_type::is_unbounded() || ( traits_type::maximum_size() >= ctx.size) );
 
-    void deallocate( stack_context & ctx);
+        void * limit = static_cast< char * >( ctx.sp) - ctx.size;
+        std::free( limit);
+    }
 };
+
+typedef basic_standard_stack_allocator< stack_traits >  standard_stack_allocator;
 
 }}
 
