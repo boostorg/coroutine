@@ -30,7 +30,7 @@ namespace coroutines {
 struct stack_context;
 
 template< typename traitsT >
-struct protected_stack_allocator
+struct basic_protected_stack_allocator
 {
     typedef traitsT traits_type;
 
