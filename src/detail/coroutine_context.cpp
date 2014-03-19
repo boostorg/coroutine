@@ -22,10 +22,6 @@ void __splitstack_getcontext( void * [BOOST_COROUTINES_SEGMENTS]);
 
 void __splitstack_setcontext( void * [BOOST_COROUTINES_SEGMENTS]);
 
-void __splitstack_releasecontext (void * [BOOST_COROUTINES_SEGMENTS]);
-
-void __splitstack_block_signals_context( void * [BOOST_COROUTINES_SEGMENTS], int *, int *);
-
 }
 #endif
 
