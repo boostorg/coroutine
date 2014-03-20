@@ -32,6 +32,8 @@ bool value1 = false;
 int value2 = 0;
 std::string value3;
 
+typedef void( * coro_fn_void)(coro::symmetric_coroutine< void* >::yield_type &);
+
 coro::symmetric_coroutine< void >::call_type * term_coro = 0;
 
 struct X
@@ -563,7 +565,8 @@ void test_vptr()
 {
     D * d = 0;
     T t;
-    coro::symmetric_coroutine< void* >::call_type call( trampoline< T, D >);
+    coro_fn_void fn = trampoline< T, D >;
+    coro::symmetric_coroutine< void* >::call_type call( fn);
     call( & t);
     d = t.d;
     BOOST_CHECK( 0 != d);

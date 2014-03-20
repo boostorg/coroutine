@@ -20,11 +20,6 @@
 #  include BOOST_ABI_PREFIX
 #endif
 
-#if defined(BOOST_USE_SEGMENTED_STACKS)
-extern "C"  void *__splitstack_makecontext(
-        std::size_t, void * [BOOST_COROUTINES_SEGMENTS], std::size_t *);
-#endif
-
 namespace boost {
 namespace coroutines {
 namespace detail {

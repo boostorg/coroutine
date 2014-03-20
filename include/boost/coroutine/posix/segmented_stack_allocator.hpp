@@ -51,7 +51,7 @@ struct basic_segmented_stack_allocator
         ctx.sp = static_cast< char * >( limit) + ctx.size;
 
         int off = 0;
-         __splitstack_block_signals_context( ctx.segments_ctx, & off, 0);
+        __splitstack_block_signals_context( ctx.segments_ctx, & off, 0);
     }
 
     void deallocate( stack_context & ctx)
