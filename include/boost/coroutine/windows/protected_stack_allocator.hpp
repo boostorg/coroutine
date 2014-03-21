@@ -54,10 +54,10 @@ struct basic_protected_stack_allocator
         DWORD old_options;
 #if defined(BOOST_DISABLE_ASSERTS)
         ::VirtualProtect(
-            limit, pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
+            limit, traits_type::page_size(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
 #else
         const BOOL result = ::VirtualProtect(
-            limit, pagesize(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
+            limit, traits_type::page_size(), PAGE_READWRITE | PAGE_GUARD /*PAGE_NOACCESS*/, & old_options);
         BOOST_ASSERT( FALSE != result);
 #endif
 
