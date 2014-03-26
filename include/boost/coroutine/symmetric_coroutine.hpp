@@ -10,8 +10,7 @@
 #include <boost/config.hpp>
 
 #include <boost/coroutine/detail/symmetric_coroutine_call.hpp>
-#include <boost/coroutine/detail/symmetric_coroutine_impl.hpp>
-#include <boost/coroutine/stack_allocator.hpp>
+#include <boost/coroutine/detail/symmetric_coroutine_yield.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -20,11 +19,11 @@
 namespace boost {
 namespace coroutines {
 
-template< typename T, typename StackAllocator = stack_allocator >
+template< typename T >
 struct symmetric_coroutine
 {
-    typedef detail::symmetric_coroutine_call< T, StackAllocator >   call_type;
-    typedef detail::symmetric_coroutine_yield< T >                  yield_type;
+    typedef detail::symmetric_coroutine_call< T >   call_type;
+    typedef detail::symmetric_coroutine_yield< T >  yield_type;
 };
 
 }}

@@ -46,6 +46,7 @@ duration_type measure_time_void( duration_type overhead)
 {
     boost::coroutines::symmetric_coroutine< void >::call_type c( fn_void,
             boost::coroutines::attributes( preserve_fpu) );
+    c();
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {

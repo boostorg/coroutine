@@ -32,102 +32,40 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-template< typename Fn, typename Coro, typename Self >
+template< typename Coro >
 void trampoline( intptr_t vp)
 {
     typedef typename Coro::param_type   param_type;
 
-    BOOST_ASSERT( vp);
+    BOOST_ASSERT( 0 != vp);
 
-    setup< Fn > * from(
-        reinterpret_cast< setup< Fn > * >( vp) );
+    param_type * param(
+        reinterpret_cast< param_type * >( vp) );
+    BOOST_ASSERT( 0 != param);
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    Fn fn( forward< Fn >( from->fn) );
-#else
-    Fn fn( move( from->fn) );
-#endif
-    Coro c( from->caller, from->callee,
-            stack_unwind == from->attr.do_unwind,
-            fpu_preserved == from->attr.preserve_fpu);
-    from = 0;
+    Coro * coro(
+        reinterpret_cast< Coro * >( param->coro) );
+    BOOST_ASSERT( 0 != coro);
 
-    {
-        param_type * from(
-            reinterpret_cast< param_type * >(
-                c.callee_.jump(
-                    c.caller_,
-                    reinterpret_cast< intptr_t >( & c),
-                    c.preserve_fpu() ) ) );
-        if ( ! from->do_unwind)
-        {
-            // create yield_type
-            Self yield( & c, from->data);
-            c.flags_ |= flag_running;
-            try
-            { fn( yield); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { std::terminate(); }
-        }
-    }
-
-    c.flags_ |= flag_complete;
-    c.flags_ &= ~flag_running;
-    c.callee_.jump( c.caller_, 0, c.preserve_fpu() );
-    BOOST_ASSERT_MSG( false, "coroutine is complete");
+    coro->run( param->data);
 }
 
-template< typename Fn, typename Coro, typename Self >
+template< typename Coro >
 void trampoline_void( intptr_t vp)
 {
     typedef typename Coro::param_type   param_type;
 
-    BOOST_ASSERT( vp);
+    BOOST_ASSERT( 0 != vp);
 
-    setup< Fn > * from(
-        reinterpret_cast< setup< Fn > * >( vp) );
+    param_type * param(
+        reinterpret_cast< param_type * >( vp) );
+    BOOST_ASSERT( 0 != param);
 
-#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
-    Fn fn( forward< Fn >( from->fn) );
-#else
-    Fn fn( move( from->fn) );
-#endif
-    Coro c( from->caller, from->callee,
-            stack_unwind == from->attr.do_unwind,
-            fpu_preserved == from->attr.preserve_fpu);
-    from = 0;
-
-    {
-        param_type * from(
-            reinterpret_cast< param_type * >(
-                c.callee_.jump(
-                    c.caller_,
-                    reinterpret_cast< intptr_t >( & c),
-                    c.preserve_fpu() ) ) );
-        if ( ! from->do_unwind)
-        {
-            // create yield_type
-            Self yield( & c);
-            c.flags_ |= flag_running;
-            try
-            { fn( yield); }
-            catch ( forced_unwind const&)
-            {}
-            catch (...)
-            { std::terminate(); }
-        }
-    }
-
-    c.flags_ |= flag_complete;
-    c.flags_ &= ~flag_running;
-    param_type to;
-    c.callee_.jump(
-        c.caller_,
-        reinterpret_cast< intptr_t >( & to),
-        c.preserve_fpu() );
-    BOOST_ASSERT_MSG( false, "coroutine is complete");
+    Coro * coro(
+        reinterpret_cast< Coro * >( param->coro) );
+    BOOST_ASSERT( 0 != coro);
+    
+    coro->run();
 }
 
 }}}

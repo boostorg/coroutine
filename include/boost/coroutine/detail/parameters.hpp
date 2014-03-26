@@ -25,14 +25,18 @@ struct parameters
 {
     Data                *   data;
     bool                    do_unwind;
+    void                *   coro;
 
     parameters() :
-        data( 0), do_unwind( false)
+        data( 0), do_unwind( false), coro( 0)
     {}
 
-    explicit parameters( Data * data_) :
-        data( data_), do_unwind( false)
-    { BOOST_ASSERT( data); }
+    explicit parameters( Data * data_, void * coro_) :
+        data( data_), do_unwind( false), coro( coro_)
+    {
+        BOOST_ASSERT( 0 != data);
+        BOOST_ASSERT( 0 != coro);
+    }
 
     explicit parameters( unwind_t::flag_t) :
         data( 0), do_unwind( true)
@@ -44,17 +48,21 @@ struct parameters< Data & >
 {
     Data                *   data;
     bool                    do_unwind;
+    void                *   coro;
 
     parameters() :
-        data( 0), do_unwind( false)
+        data( 0), do_unwind( false), coro( 0)
     {}
 
-    explicit parameters( Data * data_) :
-        data( data_), do_unwind( false)
-    { BOOST_ASSERT( data); }
+    explicit parameters( Data * data_, void * coro_) :
+        data( data_), do_unwind( false), coro( coro_)
+    {
+        BOOST_ASSERT( 0 != data);
+        BOOST_ASSERT( 0 != coro);
+    }
 
     explicit parameters( unwind_t::flag_t) :
-        data( 0), do_unwind( true)
+        data( 0), do_unwind( true), coro( 0)
     {}
 };
 
@@ -62,13 +70,18 @@ template<>
 struct parameters< void >
 {
     bool                    do_unwind;
+    void                *   coro;
 
     parameters() :
-        do_unwind( false)
+        do_unwind( false), coro(0)
     {}
 
+    parameters( void * coro_) :
+        do_unwind( false), coro( coro_)
+    { BOOST_ASSERT( 0 != coro); }
+
     explicit parameters( unwind_t::flag_t) :
-        do_unwind( true)
+        do_unwind( true), coro( 0)
     {}
 };
 

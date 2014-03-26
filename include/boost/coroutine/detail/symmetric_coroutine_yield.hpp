@@ -18,9 +18,6 @@
 #include <boost/utility/explicit_operator_bool.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
-#include <boost/coroutine/detail/coroutine_context.hpp>
-#include <boost/coroutine/detail/flags.hpp>
-#include <boost/coroutine/detail/parameters.hpp>
 #include <boost/coroutine/exceptions.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
@@ -36,9 +33,8 @@ class symmetric_coroutine_yield
 {
 private:
     template< typename X, typename Y, typename Z >
-    friend void trampoline( intptr_t);
+    friend class symmetric_coroutine_object;
 
-    typedef parameters< R >                     param_type;
     typedef symmetric_coroutine_impl< R >       impl_type;
 
     struct dummy {};
@@ -52,13 +48,14 @@ private:
         impl_( impl),
         result_( result)
     {
-        BOOST_ASSERT( impl_);
+        BOOST_ASSERT( 0 != impl_);
         BOOST_ASSERT( 0 != result_);
     }
 
 public:
     symmetric_coroutine_yield() BOOST_NOEXCEPT :
-        impl_( 0)
+        impl_( 0),
+        result_( 0)
     {}
 
     symmetric_coroutine_yield( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT :
@@ -76,7 +73,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return  0 == impl_; }
+    { return 0 == impl_; }
 
     void swap( symmetric_coroutine_yield & other) BOOST_NOEXCEPT
     {
@@ -91,7 +88,7 @@ public:
     }
 
     template< typename Coro >
-    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type & x,
+    symmetric_coroutine_yield & operator()( Coro & other, typename Coro::value_type x,
                                             typename disable_if<
                                                 is_same< typename Coro::value_type, void >,
                                                 dummy*
@@ -131,9 +128,8 @@ class symmetric_coroutine_yield< R & >
 {
 private:
     template< typename X, typename Y, typename Z >
-    friend void trampoline( intptr_t);
+    friend class symmetric_coroutine_object;
 
-    typedef parameters< R & >                   param_type;
     typedef symmetric_coroutine_impl< R & >     impl_type;
 
     struct dummy {};
@@ -147,13 +143,14 @@ private:
         impl_( impl),
         result_( result)
     {
-        BOOST_ASSERT( impl_);
+        BOOST_ASSERT( 0 != impl_);
         BOOST_ASSERT( 0 != result_);
     }
 
 public:
     symmetric_coroutine_yield() BOOST_NOEXCEPT :
-        impl_( 0)
+        impl_( 0),
+        result_( 0)
     {}
 
     symmetric_coroutine_yield( BOOST_RV_REF( symmetric_coroutine_yield) other) BOOST_NOEXCEPT :
@@ -171,7 +168,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return  0 == impl_; }
+    { return 0 == impl_; }
 
     void swap( symmetric_coroutine_yield & other) BOOST_NOEXCEPT
     {
@@ -226,9 +223,8 @@ class symmetric_coroutine_yield< void >
 {
 private:
     template< typename X, typename Y, typename Z >
-    friend void trampoline_void( intptr_t);
+    friend class symmetric_coroutine_object;
 
-    typedef parameters< void >                  param_type;
     typedef symmetric_coroutine_impl< void >    impl_type;
 
     struct dummy {};
@@ -239,7 +235,7 @@ private:
 
     symmetric_coroutine_yield( impl_type * impl) BOOST_NOEXCEPT :
         impl_( impl)
-    { BOOST_ASSERT( impl_); }
+    { BOOST_ASSERT( 0 != impl_); }
 
 public:
     symmetric_coroutine_yield() BOOST_NOEXCEPT :
@@ -260,7 +256,7 @@ public:
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
     bool operator!() const BOOST_NOEXCEPT
-    { return  0 == impl_; }
+    { return 0 == impl_; }
 
     void swap( symmetric_coroutine_yield & other) BOOST_NOEXCEPT
     { std::swap( impl_, other.impl_); }
