@@ -7,22 +7,11 @@
 #ifndef BOOST_COROUTINES_DETAIL_TRAMPOLINE_H
 #define BOOST_COROUTINES_DETAIL_TRAMPOLINE_H
 
-#include <cstddef>
-#include <exception>
-
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/exception_ptr.hpp>
-#include <boost/move/move.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
-#include <boost/coroutine/detail/flags.hpp>
-#include <boost/coroutine/detail/parameters.hpp>
-#include <boost/coroutine/detail/setup.hpp>
-#include <boost/coroutine/detail/setup.hpp>
-#include <boost/coroutine/exceptions.hpp>
-#include <boost/coroutine/flags.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -42,6 +31,7 @@ void trampoline( intptr_t vp)
     param_type * param(
         reinterpret_cast< param_type * >( vp) );
     BOOST_ASSERT( 0 != param);
+    BOOST_ASSERT( 0 != param->data);
 
     Coro * coro(
         reinterpret_cast< Coro * >( param->coro) );

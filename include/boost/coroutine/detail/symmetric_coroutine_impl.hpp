@@ -31,54 +31,9 @@ namespace detail {
 template< typename R >
 class symmetric_coroutine_impl : private noncopyable
 {
-protected:
-    template< typename X >
-    friend class symmetric_coroutine_impl;
-
-    template< typename X >
-    friend void trampoline( intptr_t);
-
+public:
     typedef parameters< R >                           param_type;
 
-    int                 flags_;
-    coroutine_context   caller_;
-    coroutine_context   callee_;
-
-    void resume_( param_type * to) BOOST_NOEXCEPT
-    {
-        BOOST_ASSERT( ! is_running() );
-        BOOST_ASSERT( ! is_complete() );
-
-        flags_ |= flag_running;
-        caller_.jump(
-            callee_,
-            reinterpret_cast< intptr_t >( to),
-            preserve_fpu() );
-    }
-
-    template< typename Other >
-    R * yield_to_( Other * other, typename Other::param_type * to)
-    {
-        BOOST_ASSERT( ! is_complete() );
-        BOOST_ASSERT( is_running() );
-        BOOST_ASSERT( ! other->is_complete() );
-        BOOST_ASSERT( ! other->is_running() );
-
-        other->caller_ = caller_;
-        flags_ &= ~flag_running;
-        param_type * from(
-            reinterpret_cast< param_type * >(
-                callee_.jump(
-                    other->callee_,
-                    reinterpret_cast< intptr_t >( to),
-                    preserve_fpu() ) ) );
-        flags_ |= flag_running;
-        if ( from->do_unwind) throw forced_unwind();
-        BOOST_ASSERT( from->data);
-        return from->data;
-    }
-
-public:
     symmetric_coroutine_impl( stack_context const& stack_ctx,
                               bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
@@ -174,19 +129,10 @@ public:
     virtual void run( R *) BOOST_NOEXCEPT = 0;
 
     virtual void destroy() = 0;
-};
 
-template< typename R >
-class symmetric_coroutine_impl< R & > : private noncopyable
-{
 protected:
     template< typename X >
     friend class symmetric_coroutine_impl;
-
-    template< typename X >
-    friend void trampoline( intptr_t);
-
-    typedef parameters< R & >                         param_type;
 
     int                 flags_;
     coroutine_context   caller_;
@@ -225,8 +171,14 @@ protected:
         BOOST_ASSERT( from->data);
         return from->data;
     }
+};
 
+template< typename R >
+class symmetric_coroutine_impl< R & > : private noncopyable
+{
 public:
+    typedef parameters< R & >                         param_type;
+
     symmetric_coroutine_impl( stack_context const& stack_ctx,
                               bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
@@ -322,26 +274,29 @@ public:
     virtual void run( R *) BOOST_NOEXCEPT = 0;
 
     virtual void destroy() = 0;
-};
 
-template<>
-class symmetric_coroutine_impl< void > : private noncopyable
-{
 protected:
     template< typename X >
     friend class symmetric_coroutine_impl;
-
-    template< typename X >
-    friend void trampoline_void( intptr_t);
-
-    typedef parameters< void >                          param_type;
 
     int                 flags_;
     coroutine_context   caller_;
     coroutine_context   callee_;
 
+    void resume_( param_type * to) BOOST_NOEXCEPT
+    {
+        BOOST_ASSERT( ! is_running() );
+        BOOST_ASSERT( ! is_complete() );
+
+        flags_ |= flag_running;
+        caller_.jump(
+            callee_,
+            reinterpret_cast< intptr_t >( to),
+            preserve_fpu() );
+    }
+
     template< typename Other >
-    void yield_to_( Other * other, typename Other::param_type * to)
+    R * yield_to_( Other * other, typename Other::param_type * to)
     {
         BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
@@ -358,9 +313,17 @@ protected:
                     preserve_fpu() ) ) );
         flags_ |= flag_running;
         if ( from->do_unwind) throw forced_unwind();
+        BOOST_ASSERT( from->data);
+        return from->data;
     }
+};
 
+template<>
+class symmetric_coroutine_impl< void > : private noncopyable
+{
 public:
+    typedef parameters< void >                          param_type;
+
     symmetric_coroutine_impl( stack_context const& stack_ctx,
                               bool unwind, bool preserve_fpu) BOOST_NOEXCEPT :
         flags_( 0),
@@ -461,6 +424,34 @@ public:
     virtual void run() BOOST_NOEXCEPT = 0;
 
     virtual void destroy() = 0;
+
+protected:
+    template< typename X >
+    friend class symmetric_coroutine_impl;
+
+    int                 flags_;
+    coroutine_context   caller_;
+    coroutine_context   callee_;
+
+    template< typename Other >
+    void yield_to_( Other * other, typename Other::param_type * to)
+    {
+        BOOST_ASSERT( ! is_complete() );
+        BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! other->is_running() );
+
+        other->caller_ = caller_;
+        flags_ &= ~flag_running;
+        param_type * from(
+            reinterpret_cast< param_type * >(
+                callee_.jump(
+                    other->callee_,
+                    reinterpret_cast< intptr_t >( to),
+                    preserve_fpu() ) ) );
+        flags_ |= flag_running;
+        if ( from->do_unwind) throw forced_unwind();
+    }
 };
 
 }}}

@@ -98,7 +98,11 @@ public:
 
         impl_t::flags_ |= flag_complete;
         impl_t::flags_ &= ~flag_running;
-        impl_t::callee_.jump( impl_t::caller_, 0, impl_t::preserve_fpu() );
+        typename impl_t::param_type to;
+        impl_t::callee_.jump(
+            impl_t::caller_, 
+            reinterpret_cast< intptr_t >( & to),
+            impl_t::preserve_fpu() );
         BOOST_ASSERT_MSG( false, "coroutine is complete");
     }
 
@@ -175,7 +179,11 @@ public:
 
         impl_t::flags_ |= flag_complete;
         impl_t::flags_ &= ~flag_running;
-        impl_t::callee_.jump( impl_t::caller_, 0, impl_t::preserve_fpu() );
+        typename impl_t::param_type to;
+        impl_t::callee_.jump(
+            impl_t::caller_, 
+            reinterpret_cast< intptr_t >( & to),
+            impl_t::preserve_fpu() );
         BOOST_ASSERT_MSG( false, "coroutine is complete");
     }
 
@@ -252,7 +260,11 @@ public:
 
         impl_t::flags_ |= flag_complete;
         impl_t::flags_ &= ~flag_running;
-        impl_t::callee_.jump( impl_t::caller_, 0, impl_t::preserve_fpu() );
+        typename impl_t::param_type to;
+        impl_t::callee_.jump(
+            impl_t::caller_, 
+            reinterpret_cast< intptr_t >( & to),
+            impl_t::preserve_fpu() );
         BOOST_ASSERT_MSG( false, "coroutine is complete");
     }
 
