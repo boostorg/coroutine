@@ -16,23 +16,20 @@
 #include <boost/move/move.hpp>
 #include <boost/range.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/type_traits/decay.hpp>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <boost/utility/explicit_operator_bool.hpp>
 
 #include <boost/coroutine/attributes.hpp>
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/detail/coroutine_context.hpp>
 #include <boost/coroutine/detail/parameters.hpp>
-#include <boost/coroutine/detail/setup.hpp>
-#include <boost/coroutine/detail/trampoline_pull.hpp>
-#include <boost/coroutine/detail/trampoline_push.hpp>
 #include <boost/coroutine/exceptions.hpp>
 #include <boost/coroutine/stack_allocator.hpp>
 #include <boost/coroutine/detail/pull_coroutine_impl.hpp>
+#include <boost/coroutine/detail/pull_coroutine_object.hpp>
+#include <boost/coroutine/detail/pull_coroutine_synthesized.hpp>
 #include <boost/coroutine/detail/push_coroutine_impl.hpp>
+#include <boost/coroutine/detail/push_coroutine_object.hpp>
+#include <boost/coroutine/detail/push_coroutine_synthesized.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -41,95 +38,90 @@
 namespace boost {
 namespace coroutines {
 
-template< typename R, typename StackAllocator >
+template< typename R >
 class pull_coroutine;
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 class push_coroutine
 {
 private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_pull( intptr_t);
+    template< typename V, typename X, typename Y, typename Z >
+    friend class detail::pull_coroutine_object;
 
-    typedef detail::push_coroutine_impl< Arg >  impl_type;
-    typedef detail::parameters< Arg >           param_type;
+    typedef detail::push_coroutine_impl< Arg >          impl_type;
+    typedef detail::push_coroutine_synthesized< Arg >   synth_type;
+    typedef detail::parameters< Arg >                   param_type;
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( push_coroutine)
 
-    push_coroutine( impl_type * impl) :
-        impl_( impl),
-        stack_alloc_(),
-        stack_ctx_()
+    explicit push_coroutine( detail::synthesized_t::flag_t, impl_type & impl) :
+        impl_( & impl)
     { BOOST_ASSERT( impl_); }
 
 public:
     push_coroutine() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( pull_coroutine< Arg, StackAllocator > &);
+    typedef void ( * coroutine_fn)( pull_coroutine< Arg > &);
 
-    explicit push_coroutine( coroutine_fn fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( coroutine_fn,
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    explicit push_coroutine( coroutine_fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename StackAllocator >
+    explicit push_coroutine( coroutine_fn,
+                             attributes const&,
+                             StackAllocator);
 # endif
     template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename Fn, StackAllocator >
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const&,
+                             StackAllocator);
 #else
     template< typename Fn >
     explicit push_coroutine( Fn fn,
-                             attributes const& attr = attributes() );
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
+
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( Fn fn,
+                             attributes const&,
+                             StackAllocator);
 
     template< typename Fn >
-    explicit push_coroutine( Fn fn, attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() );
-
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const&,
+                             StackAllocator);
 #endif
 
     ~push_coroutine()
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     push_coroutine( BOOST_RV_REF( push_coroutine) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     push_coroutine & operator=( BOOST_RV_REF( push_coroutine) other) BOOST_NOEXCEPT
@@ -145,11 +137,7 @@ public:
     { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( push_coroutine & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     push_coroutine & operator()( Arg arg)
     {
@@ -162,14 +150,14 @@ public:
     class iterator : public std::iterator< std::output_iterator_tag, void, void, void, void >
     {
     private:
-       push_coroutine< Arg, StackAllocator >    *   c_;
+       push_coroutine< Arg >    *   c_;
 
     public:
         iterator() :
            c_( 0)
         {}
 
-        explicit iterator( push_coroutine< Arg, StackAllocator > * c) :
+        explicit iterator( push_coroutine< Arg > * c) :
             c_( c)
         {}
 
@@ -196,93 +184,87 @@ public:
     struct const_iterator;
 };
 
-template< typename Arg, typename StackAllocator >
-class push_coroutine< Arg &, StackAllocator >
+template< typename Arg >
+class push_coroutine< Arg & >
 {
 private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_pull( intptr_t);
+    template< typename V, typename X, typename Y, typename Z >
+    friend class detail::pull_coroutine_object;
 
-    typedef detail::push_coroutine_impl< Arg & >    impl_type;
-    typedef detail::parameters< Arg & >             param_type;
+    typedef detail::push_coroutine_impl< Arg & >          impl_type;
+    typedef detail::push_coroutine_synthesized< Arg & >   synth_type;
+    typedef detail::parameters< Arg & >                   param_type;
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( push_coroutine)
 
-    push_coroutine( impl_type * impl) :
-        impl_( impl),
-        stack_alloc_(),
-        stack_ctx_()
+    explicit push_coroutine( detail::synthesized_t::flag_t, impl_type & impl) :
+        impl_( & impl)
     { BOOST_ASSERT( impl_); }
 
 public:
     push_coroutine() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( pull_coroutine< Arg &, StackAllocator > &);
+    typedef void ( * coroutine_fn)( pull_coroutine< Arg & > &);
 
-    explicit push_coroutine( coroutine_fn fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( coroutine_fn,
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    explicit push_coroutine( coroutine_fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename StackAllocator >
+    explicit push_coroutine( coroutine_fn,
+                             attributes const&,
+                             StackAllocator);
 # endif
     template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const&,
+                             StackAllocator);
 #else
     template< typename Fn >
-    explicit push_coroutine( Fn fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( Fn,
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
+
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( Fn,
+                             attributes const&,
+                             StackAllocator);
 
     template< typename Fn >
-    explicit push_coroutine( Fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() );
-
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const&,
+                             StackAllocator);
 #endif
 
     ~push_coroutine()
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     push_coroutine( BOOST_RV_REF( push_coroutine) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     push_coroutine & operator=( BOOST_RV_REF( push_coroutine) other) BOOST_NOEXCEPT
@@ -298,11 +280,7 @@ public:
     { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( push_coroutine & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     push_coroutine & operator()( Arg & arg)
     {
@@ -315,14 +293,14 @@ public:
     class iterator : public std::iterator< std::output_iterator_tag, void, void, void, void >
     {
     private:
-       push_coroutine< Arg &, StackAllocator >  *   c_;
+       push_coroutine< Arg & >  *   c_;
 
     public:
         iterator() :
            c_( 0)
         {}
 
-        explicit iterator( push_coroutine< Arg &, StackAllocator > * c) :
+        explicit iterator( push_coroutine< Arg & > * c) :
             c_( c)
         {}
 
@@ -349,92 +327,86 @@ public:
     struct const_iterator;
 };
 
-template< typename StackAllocator >
-class push_coroutine< void, StackAllocator >
+template<>
+class push_coroutine< void >
 {
 private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_pull_void( intptr_t);
+    template< typename V, typename X, typename Y, typename Z >
+    friend class detail::pull_coroutine_object;
 
-    typedef detail::push_coroutine_impl< void >     impl_type;
-    typedef detail::parameters< void >              param_type;
+    typedef detail::push_coroutine_impl< void >          impl_type;
+    typedef detail::push_coroutine_synthesized< void >   synth_type;
+    typedef detail::parameters< void >                   param_type;
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( push_coroutine)
 
-    push_coroutine( impl_type * impl) :
-        impl_( impl),
-        stack_alloc_(),
-        stack_ctx_()
+    explicit push_coroutine( detail::synthesized_t::flag_t, impl_type & impl) :
+        impl_( & impl)
     { BOOST_ASSERT( impl_); }
 
 public:
     push_coroutine() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( pull_coroutine< void, StackAllocator > &);
+    typedef void ( * coroutine_fn)( pull_coroutine< void > &);
 
-    explicit push_coroutine( coroutine_fn fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( coroutine_fn,
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    explicit push_coroutine( coroutine_fn fn, attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename StackAllocator >
+    explicit push_coroutine( coroutine_fn, attributes const&,
+                             StackAllocator);
 # endif
     template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const&,
+                             StackAllocator);
 #else
     template< typename Fn >
-    explicit push_coroutine( Fn fn,
-                             attributes const& attr = attributes() );
+    explicit push_coroutine( Fn,
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
+
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( Fn,
+                             attributes const&,
+                             StackAllocator);
 
     template< typename Fn >
-    explicit push_coroutine( Fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const& = attributes(),
+                             stack_allocator = stack_allocator() );
 
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() );
-
-    template< typename Fn >
-    explicit push_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc);
+    template< typename Fn, typename StackAllocator >
+    explicit push_coroutine( BOOST_RV_REF( Fn),
+                             attributes const&,
+                             StackAllocator);
 #endif
 
     ~push_coroutine()
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     push_coroutine( BOOST_RV_REF( push_coroutine) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     push_coroutine & operator=( BOOST_RV_REF( push_coroutine) other) BOOST_NOEXCEPT
@@ -450,11 +422,7 @@ public:
     { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( push_coroutine & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     push_coroutine & operator()()
     {
@@ -470,225 +438,255 @@ public:
 
 
 
-template< typename R, typename StackAllocator >
+template< typename R >
 class pull_coroutine
 {
 private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_push( intptr_t);
+    template< typename V, typename X, typename Y, typename Z >
+    friend class detail::push_coroutine_object;
 
-    typedef detail::pull_coroutine_impl< R >    impl_type;
-    typedef detail::parameters< R >             param_type;
+    typedef detail::pull_coroutine_impl< R >            impl_type;
+    typedef detail::pull_coroutine_synthesized< R >     synth_type;
+    typedef detail::parameters< R >                     param_type;
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
-    pull_coroutine( impl_type * impl) :
-        impl_( impl),
-        stack_alloc_(),
-        stack_ctx_()
+    explicit pull_coroutine( detail::synthesized_t::flag_t, impl_type & impl) :
+        impl_( & impl)
     { BOOST_ASSERT( impl_); }
 
 public:
     pull_coroutine() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( push_coroutine< R, StackAllocator > &);
+    typedef void ( * coroutine_fn)( push_coroutine< R > &);
 
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, coroutine_fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
+    template< typename StackAllocator >
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, coroutine_fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 # endif
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, Fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, Fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, Fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, Fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, Fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R >, R, Fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
@@ -696,19 +694,15 @@ public:
 
     ~pull_coroutine()
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     pull_coroutine( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     pull_coroutine & operator=( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT
@@ -724,11 +718,7 @@ public:
     { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     pull_coroutine & operator()()
     {
@@ -748,8 +738,8 @@ public:
     class iterator : public std::iterator< std::input_iterator_tag, typename remove_reference< R >::type >
     {
     private:
-        pull_coroutine< R, StackAllocator > *   c_;
-        R                                   *   val_;
+        pull_coroutine< R > *   c_;
+        R                   *   val_;
 
         void fetch_()
         {
@@ -781,7 +771,7 @@ public:
             c_( 0), val_( 0)
         {}
 
-        explicit iterator( pull_coroutine< R, StackAllocator > * c) :
+        explicit iterator( pull_coroutine< R > * c) :
             c_( c), val_( 0)
         { fetch_(); }
 
@@ -838,225 +828,255 @@ public:
     struct const_iterator;
 };
 
-template< typename R, typename StackAllocator >
-class pull_coroutine< R &, StackAllocator >
+template< typename R >
+class pull_coroutine< R & >
 {
 private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_push( intptr_t);
+    template< typename V, typename X, typename Y, typename Z >
+    friend class detail::push_coroutine_object;
 
-    typedef detail::pull_coroutine_impl< R & >  impl_type;
-    typedef detail::parameters< R & >           param_type;
+    typedef detail::pull_coroutine_impl< R & >            impl_type;
+    typedef detail::pull_coroutine_synthesized< R & >     synth_type;
+    typedef detail::parameters< R & >                     param_type;
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
-    pull_coroutine( impl_type * impl) :
-        impl_( impl),
-        stack_alloc_(),
-        stack_ctx_()
+    explicit pull_coroutine( detail::synthesized_t::flag_t, impl_type & impl) :
+        impl_( & impl)
     { BOOST_ASSERT( impl_); }
 
 public:
     pull_coroutine() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( push_coroutine< R &, StackAllocator > &);
+    typedef void ( * coroutine_fn)( push_coroutine< R & > &);
 
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, coroutine_fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
+    template< typename StackAllocator >
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< coroutine_fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, coroutine_fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 # endif
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, Fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, Fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, Fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, Fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, Fn, stack_allocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull< Fn, impl_type, push_coroutine< R &, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< R & >, R &, Fn, StackAllocator
+        >                                                        object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
@@ -1064,19 +1084,15 @@ public:
 
     ~pull_coroutine()
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     pull_coroutine( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     pull_coroutine & operator=( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT
@@ -1092,11 +1108,7 @@ public:
     { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     pull_coroutine & operator()()
     {
@@ -1112,8 +1124,8 @@ public:
     class iterator : public std::iterator< std::input_iterator_tag, R >
     {
     private:
-        pull_coroutine< R &, StackAllocator >   *   c_;
-        R                                       *   val_;
+        pull_coroutine< R & >   *   c_;
+        R                       *   val_;
 
         void fetch_()
         {
@@ -1145,7 +1157,7 @@ public:
             c_( 0), val_( 0)
         {}
 
-        explicit iterator( pull_coroutine< R &, StackAllocator > * c) :
+        explicit iterator( pull_coroutine< R & > * c) :
             c_( c), val_( 0)
         { fetch_(); }
 
@@ -1202,237 +1214,255 @@ public:
     struct const_iterator;
 };
 
-template< typename StackAllocator >
-class pull_coroutine< void, StackAllocator >
+template<>
+class pull_coroutine< void >
 {
 private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void detail::trampoline_push_void( intptr_t);
+    template< typename V, typename X, typename Y, typename Z >
+    friend class detail::push_coroutine_object;
 
-    typedef detail::pull_coroutine_impl< void >     impl_type;
-    typedef detail::parameters< void >              param_type;
+    typedef detail::pull_coroutine_impl< void >            impl_type;
+    typedef detail::pull_coroutine_synthesized< void >     synth_type;
+    typedef detail::parameters< void >                     param_type;
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( pull_coroutine)
 
-    pull_coroutine( impl_type * impl) :
-        impl_( impl),
-        stack_alloc_(),
-        stack_ctx_()
+    explicit pull_coroutine( detail::synthesized_t::flag_t, impl_type & impl) :
+        impl_( & impl)
     { BOOST_ASSERT( impl_); }
 
 public:
     pull_coroutine() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-	typedef void ( * coroutine_fn)( push_coroutine< void, StackAllocator > &);
+    typedef void ( * coroutine_fn)( push_coroutine< void > &);
 
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-                detail::trampoline_pull_void<
-                    coroutine_fn, impl_type, push_coroutine< void, StackAllocator >
-                >,
-                stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn),
-                                                  & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutie< void >, void, coroutine_fn, stack_allocator
+        >                                       object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
+    template< typename StackAllocator >
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                coroutine_fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn),
-                                                  & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, coroutine_fn, StackAllocator
+        >                                                                   object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 # endif
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                Fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( forward< Fn >( fn),
-                                        & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, Fn, stack_allocator
+        >                                                       object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                Fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( forward< Fn >( fn),
-                                        & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, Fn, StackAllocator
+        >                                                       object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                Fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, Fn, stack_allocator
+        >                                                       object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                Fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, Fn, StackAllocator
+        >                                                       object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                             attributes const& attrs = attributes(),
+                             stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                Fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, Fn, stack_allocator
+        >                                           object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attr,
-                             StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                             attributes const& attrs,
+                             StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        detail::coroutine_context callee(
-            detail::trampoline_pull_void<
-                Fn, impl_type, push_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-        detail::coroutine_context caller;
-        detail::setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef detail::pull_coroutine_object<
+            push_coroutine< void >, void, Fn, StackAllocator
+        >                                           object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
         impl_->pull();
     }
@@ -1440,19 +1470,15 @@ public:
 
     ~pull_coroutine()
     {
-        if ( 0 != stack_ctx_.sp)
+        if ( 0 != impl_)
         {
-            BOOST_ASSERT( 0 != impl_);
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     pull_coroutine( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     pull_coroutine & operator=( BOOST_RV_REF( pull_coroutine) other) BOOST_NOEXCEPT
@@ -1468,11 +1494,7 @@ public:
     { return 0 == impl_ || impl_->is_complete(); }
 
     void swap( pull_coroutine & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     pull_coroutine & operator()()
     {
@@ -1488,673 +1510,752 @@ public:
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 # ifdef BOOST_MSVC
-template< typename Arg, typename StackAllocator >
-push_coroutine< Arg, StackAllocator >::push_coroutine( coroutine_fn fn,
-                                                       attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+template< typename Arg >
+push_coroutine< Arg >::push_coroutine( coroutine_fn fn,
+                                       attributes const& attrs,
+                                       stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-            detail::trampoline_push<
-                coroutine_fn, impl_type, pull_coroutine< Arg, StackAllocator >
-            >,
-            stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, coroutine_fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-push_coroutine< Arg, StackAllocator >::push_coroutine( coroutine_fn fn,
-                                                       attributes const& attr,
-                                                       StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename StackAllocator >
+push_coroutine< Arg >::push_coroutine( coroutine_fn fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-            detail::trampoline_push<
-                coroutine_fn, impl_type, pull_coroutine< Arg, StackAllocator >
-            >,
-            stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, coroutine_fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( coroutine_fn fn,
-                                                         attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+template< typename Arg >
+push_coroutine< Arg & >::push_coroutine( coroutine_fn fn,
+                                         attributes const& attrs,
+                                         stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-            detail::trampoline_push<
-                coroutine_fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-            >,
-            stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, coroutine_fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( coroutine_fn fn,
-                                                         attributes const& attr,
-                                                         StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename StackAllocator >
+push_coroutine< Arg & >::push_coroutine( coroutine_fn fn,
+                                         attributes const& attrs,
+                                         StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-            detail::trampoline_push<
-                coroutine_fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-                coroutine_fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-            >,
-            stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, coroutine_fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
+    BOOST_ASSERT( impl_);
+}
+
+template<>
+push_coroutine< void >::push_coroutine( coroutine_fn fn,
+                                        attributes const& attrs,
+                                        stack_allocator stack_alloc) :
+    impl_( 0)
+{
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, coroutine_fn, stack_allocator
+    >                                                               object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
 template< typename StackAllocator >
-push_coroutine< void, StackAllocator >::push_coroutine( coroutine_fn fn,
-                                                        attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< void >::push_coroutine( coroutine_fn fn,
+                                        attributes const& attrs,
+                                        StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-            detail::trampoline_push_void<
-                coroutine_fn, impl_type, pull_coroutine< void, StackAllocator >
-            >,
-            stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
-    BOOST_ASSERT( impl_);
-}
-
-template< typename StackAllocator >
-push_coroutine< void, StackAllocator >::push_coroutine( coroutine_fn fn,
-                                                        attributes const& attr,
-                                                        StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
-{
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            coroutine_fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, coroutine_fn, StackAllocator
+    >                                                               object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 # endif
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 template< typename Fn >
-push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                       attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, Fn, stack_allocator
+    >                                                    object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-template< typename Fn >
-push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                       attributes const& attr,
-                                                       StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename Fn, typename StackAllocator >
+push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, Fn, StackAllocator
+    >                                                    object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 template< typename Fn >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                         attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                         attributes const& attrs,
+                                         stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, Fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-template< typename Fn >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                         attributes const& attr,
-                                                         StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename Fn, typename StackAllocator >
+push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                         attributes const& attrs,
+                                         StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, Fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename StackAllocator >
 template< typename Fn >
-push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                        attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                        attributes const& attrs,
+                                        stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            Fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, Fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename StackAllocator >
-template< typename Fn >
-push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                        attributes const& attr,
-                                                        StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Fn, typename StackAllocator >
+push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                        attributes const& attrs,
+                                        StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            Fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, Fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 #else
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 template< typename Fn >
-push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
-                                                       attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< Arg >::push_coroutine( Fn fn,
+                                       attributes const& attrs,
+                                       stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, Fn, stack_allocator
+    >                                                    object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-template< typename Fn >
-push_coroutine< Arg, StackAllocator >::push_coroutine( Fn fn,
-                                                       attributes const& attr,
-                                                       StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename Fn, typename StackAllocator >
+push_coroutine< Arg >::push_coroutine( Fn fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, Fn, StackAllocator
+    >                                                    object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 template< typename Fn >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
-                                                         attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< Arg & >::push_coroutine( Fn fn,
+                                         attributes const& attrs,
+                                         stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, Fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-template< typename Fn >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( Fn fn,
-                                                         attributes const& attr,
-                                                         StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename Fn, typename StackAllocator >
+push_coroutine< Arg & >::push_coroutine( Fn fn,
+                                         attributes const& attrs,
+                                         StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, Fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename StackAllocator >
 template< typename Fn >
-push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
-                                                        attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< void >::push_coroutine( Fn fn,
+                                        attributes const& attrs,
+                                        stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            Fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, Fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename StackAllocator >
-template< typename Fn >
-push_coroutine< void, StackAllocator >::push_coroutine( Fn fn,
-                                                        attributes const& attr,
-                                                        StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Fn, typename StackAllocator >
+push_coroutine< void >::push_coroutine( Fn fn,
+                                        attributes const& attrs,
+                                        StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            Fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, Fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 template< typename Fn >
-push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                       attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, Fn, stack_allocator
+    >                                                    object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-template< typename Fn >
-push_coroutine< Arg, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                       attributes const& attr,
-                                                       StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename Fn, typename StackAllocator >
+push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg >, Arg, Fn, StackAllocator
+    >                                                    object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 template< typename Fn >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                         attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                         attributes const& attrs,
+                                         stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, Fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename Arg, typename StackAllocator >
-template< typename Fn >
-push_coroutine< Arg &, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                         attributes const& attr,
-                                                         StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Arg >
+template< typename Fn, typename StackAllocator >
+push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                         attributes const& attrs,
+                                         StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push<
-            Fn, impl_type, pull_coroutine< Arg &, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< Arg & >, Arg &, Fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename StackAllocator >
 template< typename Fn >
-push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                        attributes const& attr) :
-    impl_( 0),
-    stack_alloc_(),
-    stack_ctx_()
+push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                        attributes const& attrs,
+                                        stack_allocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            Fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, Fn, stack_allocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 
-template< typename StackAllocator >
-template< typename Fn >
-push_coroutine< void, StackAllocator >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                                        attributes const& attr,
-                                                        StackAllocator const& stack_alloc) :
-    impl_( 0),
-    stack_alloc_( stack_alloc),
-    stack_ctx_()
+template< typename Fn, typename StackAllocator >
+push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
+                                        attributes const& attrs,
+                                        StackAllocator stack_alloc) :
+    impl_( 0)
 {
-    stack_alloc_.allocate( stack_ctx_, attr.size);
-    detail::coroutine_context callee(
-        detail::trampoline_push_void<
-            Fn, impl_type, pull_coroutine< void, StackAllocator >
-        >,
-        stack_ctx_);
-    detail::coroutine_context caller;
-    detail::setup< Fn > to( fn, & caller, & callee, attr);
-    impl_ = reinterpret_cast< impl_type * >(
-            caller.jump(
-                callee,
-                reinterpret_cast< intptr_t >( & to),
-                fpu_preserved == attr.preserve_fpu) );
+    // create a stack-context
+    stack_context stack_ctx;
+    // allocate the coroutine-stack
+    stack_alloc.allocate( stack_ctx, attrs.size);
+    BOOST_ASSERT( 0 < stack_ctx.sp);
+    // typedef of internal coroutine-type
+    typedef detail::push_coroutine_object<
+        pull_coroutine< void >, void, Fn, StackAllocator
+    >                                                            object_t;
+    // reserve space on top of coroutine-stack for internal coroutine-type
+    stack_context internal_stack_ctx;
+    internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+    internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+    BOOST_ASSERT( 0 < internal_stack_ctx.size);
+    // placement new for internal coroutine
+    impl_ = new ( internal_stack_ctx.sp) object_t(
+            fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
     BOOST_ASSERT( impl_);
 }
 #endif
 
-template< typename R, typename StackAllocator >
-void swap( pull_coroutine< R, StackAllocator > & l, pull_coroutine< R, StackAllocator > & r) BOOST_NOEXCEPT
+template< typename R >
+void swap( pull_coroutine< R > & l, pull_coroutine< R > & r) BOOST_NOEXCEPT
 { l.swap( r); }
 
-template< typename Arg, typename StackAllocator >
-void swap( push_coroutine< Arg, StackAllocator > & l, push_coroutine< Arg, StackAllocator > & r) BOOST_NOEXCEPT
+template< typename Arg >
+void swap( push_coroutine< Arg > & l, push_coroutine< Arg > & r) BOOST_NOEXCEPT
 { l.swap( r); }
 
-template< typename R, typename StackAllocator >
+template< typename R >
 inline
-typename pull_coroutine< R, StackAllocator >::iterator
-range_begin( pull_coroutine< R, StackAllocator > & c)
-{ return typename pull_coroutine< R, StackAllocator >::iterator( & c); }
+typename pull_coroutine< R >::iterator
+range_begin( pull_coroutine< R > & c)
+{ return typename pull_coroutine< R >::iterator( & c); }
 
-template< typename R, typename StackAllocator >
+template< typename R >
 inline
-typename pull_coroutine< R, StackAllocator >::iterator
-range_end( pull_coroutine< R, StackAllocator > &)
-{ return typename pull_coroutine< R, StackAllocator >::iterator(); }
+typename pull_coroutine< R >::iterator
+range_end( pull_coroutine< R > &)
+{ return typename pull_coroutine< R >::iterator(); }
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 inline
-typename push_coroutine< Arg, StackAllocator >::iterator
-range_begin( push_coroutine< Arg, StackAllocator > & c)
-{ return typename push_coroutine< Arg, StackAllocator >::iterator( & c); }
+typename push_coroutine< Arg >::iterator
+range_begin( push_coroutine< Arg > & c)
+{ return typename push_coroutine< Arg >::iterator( & c); }
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 inline
-typename push_coroutine< Arg, StackAllocator >::iterator
-range_end( push_coroutine< Arg, StackAllocator > &)
-{ return typename push_coroutine< Arg, StackAllocator >::iterator(); }
+typename push_coroutine< Arg >::iterator
+range_end( push_coroutine< Arg > &)
+{ return typename push_coroutine< Arg >::iterator(); }
 
-template< typename T, typename StackAllocator = stack_allocator >
+template< typename T >
 struct asymmetric_coroutine
 {
-    typedef push_coroutine< T, StackAllocator > push_type;
-    typedef pull_coroutine< T, StackAllocator > pull_type;
+    typedef push_coroutine< T > push_type;
+    typedef pull_coroutine< T > pull_type;
 };
 
 // deprecated
-template< typename T, typename StackAllocator = stack_allocator >
+template< typename T >
 struct coroutine
 {
-    typedef push_coroutine< T, StackAllocator > push_type;
-    typedef pull_coroutine< T, StackAllocator > pull_type;
+    typedef push_coroutine< T > push_type;
+    typedef pull_coroutine< T > pull_type;
 };
 
 }
 
-template< typename Arg, typename StackAllocator >
-struct range_mutable_iterator< coroutines::push_coroutine< Arg, StackAllocator > >
-{ typedef typename coroutines::push_coroutine< Arg, StackAllocator >::iterator type; };
+template< typename Arg >
+struct range_mutable_iterator< coroutines::push_coroutine< Arg > >
+{ typedef typename coroutines::push_coroutine< Arg >::iterator type; };
 
-template< typename R, typename StackAllocator >
-struct range_mutable_iterator< coroutines::pull_coroutine< R, StackAllocator > >
-{ typedef typename coroutines::pull_coroutine< R, StackAllocator >::iterator type; };
+template< typename R >
+struct range_mutable_iterator< coroutines::pull_coroutine< R > >
+{ typedef typename coroutines::pull_coroutine< R >::iterator type; };
 
 }
 
 namespace std {
 
-template< typename R, typename StackAllocator >
+template< typename R >
 inline
-typename boost::coroutines::pull_coroutine< R, StackAllocator >::iterator
-begin( boost::coroutines::pull_coroutine< R, StackAllocator > & c)
+typename boost::coroutines::pull_coroutine< R >::iterator
+begin( boost::coroutines::pull_coroutine< R > & c)
 { return boost::begin( c); }
 
-template< typename R, typename StackAllocator >
+template< typename R >
 inline
-typename boost::coroutines::pull_coroutine< R, StackAllocator >::iterator
-end( boost::coroutines::pull_coroutine< R, StackAllocator > & c)
+typename boost::coroutines::pull_coroutine< R >::iterator
+end( boost::coroutines::pull_coroutine< R > & c)
 { return boost::end( c); }
 
-template< typename R, typename StackAllocator >
+template< typename R >
 inline
-typename boost::coroutines::push_coroutine< R, StackAllocator >::iterator
-begin( boost::coroutines::push_coroutine< R, StackAllocator > & c)
+typename boost::coroutines::push_coroutine< R >::iterator
+begin( boost::coroutines::push_coroutine< R > & c)
 { return boost::begin( c); }
 
-template< typename R, typename StackAllocator >
+template< typename R >
 inline
-typename boost::coroutines::push_coroutine< R, StackAllocator >::iterator
-end( boost::coroutines::push_coroutine< R, StackAllocator > & c)
+typename boost::coroutines::push_coroutine< R >::iterator
+end( boost::coroutines::push_coroutine< R > & c)
 { return boost::end( c); }
 
 }

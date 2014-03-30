@@ -24,16 +24,16 @@ running thread was pinned to a single CPU.
     [
         [i386 (AMD Athlon 64 DualCore 4400+, Linux 32bit)]
         [49 ns / 50 cycles]
-        [53 \u00b5s / 53646 cycles]
-        [25 \u00b5s / 24447 cycles]
-        [14 \u00b5s / 15141 cycles]
+        [16 \u00b5s / 41802 cycles]
+        [6 \u00b5s / 10350 cycles]
+        [6 \u00b5s / 18817 cycles]
     ]
     [
         [x86_64 (Intel Core2 Q6700, Linux 64bit)]
         [12 ns / 39 cycles]
-        [18 \u00b5s / 40723 cycles]
-        [9 \u00b5s / 19462 cycles]
-        [6 \u00b5s / 18073 cycles]
+        [16 \u00b5s / 41802 cycles]
+        [6 \u00b5s / 10350 cycles]
+        [6 \u00b5s / 18817 cycles]
     ]
 ]
 
@@ -55,9 +55,9 @@ running thread was pinned to a single CPU.
     [
         [x86_64 (Intel Core2 Q6700, Linux 64bit)]
         [10 ns / 33 cycles]
-        [13 \u00b5s / 22828 cycles]
-        [98 ns / 241 cycles]
-        [204 ns / 507 cycles]
+        [10 \u00b5s / 22828 cycles]
+        [42 ns / 710 cycles]
+        [135 ns / 362 cycles]
     ]
 ]
 

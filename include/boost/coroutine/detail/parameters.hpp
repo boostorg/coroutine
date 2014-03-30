@@ -31,6 +31,10 @@ struct parameters
         data( 0), do_unwind( false), coro( 0)
     {}
 
+    explicit parameters( void * coro_) :
+        data( 0), do_unwind( false), coro( coro_)
+    { BOOST_ASSERT( 0 != coro); }
+
     explicit parameters( Data * data_, void * coro_) :
         data( data_), do_unwind( false), coro( coro_)
     {
@@ -53,6 +57,10 @@ struct parameters< Data & >
     parameters() :
         data( 0), do_unwind( false), coro( 0)
     {}
+
+    explicit parameters( void * coro_) :
+        data( 0), do_unwind( false), coro( coro_)
+    { BOOST_ASSERT( 0 != coro); }
 
     explicit parameters( Data * data_, void * coro_) :
         data( data_), do_unwind( false), coro( coro_)

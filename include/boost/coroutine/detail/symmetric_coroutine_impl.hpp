@@ -88,8 +88,8 @@ public:
 
     R * yield()
     {
-        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! is_complete() );
 
         flags_ &= ~flag_running;
         param_type to;
@@ -153,10 +153,10 @@ protected:
     template< typename Other >
     R * yield_to_( Other * other, typename Other::param_type * to)
     {
-        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
-        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
 
         other->caller_ = caller_;
         flags_ &= ~flag_running;
@@ -233,8 +233,8 @@ public:
 
     R * yield()
     {
-        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! is_complete() );
 
         flags_ &= ~flag_running;
         param_type to;
@@ -298,10 +298,10 @@ protected:
     template< typename Other >
     R * yield_to_( Other * other, typename Other::param_type * to)
     {
-        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
-        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
 
         other->caller_ = caller_;
         flags_ &= ~flag_running;
@@ -385,8 +385,8 @@ public:
 
     void yield() BOOST_NOEXCEPT
     {
-        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
+        BOOST_ASSERT( ! is_complete() );
 
         flags_ &= ~flag_running;
         param_type to;
@@ -436,10 +436,10 @@ protected:
     template< typename Other >
     void yield_to_( Other * other, typename Other::param_type * to)
     {
-        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( is_running() );
-        BOOST_ASSERT( ! other->is_complete() );
+        BOOST_ASSERT( ! is_complete() );
         BOOST_ASSERT( ! other->is_running() );
+        BOOST_ASSERT( ! other->is_complete() );
 
         other->caller_ = caller_;
         flags_ &= ~flag_running;
