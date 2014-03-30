@@ -85,7 +85,7 @@ public:
                              attributes const& = attributes(),
                              stack_allocator = stack_allocator() );
 
-    template< typename Fn, StackAllocator >
+    template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
                              attributes const&,
                              StackAllocator);
