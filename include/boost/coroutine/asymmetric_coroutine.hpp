@@ -362,7 +362,8 @@ public:
                              stack_allocator = stack_allocator() );
 
     template< typename StackAllocator >
-    explicit push_coroutine( coroutine_fn, attributes const&,
+    explicit push_coroutine( coroutine_fn,
+                             attributes const&,
                              StackAllocator);
 # endif
     template< typename Fn >
@@ -1620,7 +1621,6 @@ push_coroutine< Arg & >::push_coroutine( coroutine_fn fn,
     BOOST_ASSERT( impl_);
 }
 
-template<>
 push_coroutine< void >::push_coroutine( coroutine_fn fn,
                                         attributes const& attrs,
                                         stack_allocator stack_alloc) :
