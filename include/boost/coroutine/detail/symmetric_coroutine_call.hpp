@@ -316,7 +316,8 @@ public:
     typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attrs = attributes() ) :
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
         impl_( 0)
     {
         // create a stack-context
