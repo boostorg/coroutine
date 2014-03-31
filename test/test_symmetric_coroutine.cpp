@@ -24,7 +24,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/utility.hpp>
 
-#include <boost/coroutine/all.hpp>
+#include <boost/coroutine/symmetric_coroutine.hpp>
 
 namespace coro = boost::coroutines;
 

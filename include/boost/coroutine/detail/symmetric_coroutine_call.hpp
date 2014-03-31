@@ -10,20 +10,15 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/move/move.hpp>
-#include <boost/type_traits/decay.hpp>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <boost/utility/explicit_operator_bool.hpp>
 
 #include <boost/coroutine/attributes.hpp>
 #include <boost/coroutine/detail/config.hpp>
-#include <boost/coroutine/detail/coroutine_context.hpp>
-#include <boost/coroutine/detail/parameters.hpp>
-#include <boost/coroutine/detail/setup.hpp>
 #include <boost/coroutine/detail/symmetric_coroutine_impl.hpp>
+#include <boost/coroutine/detail/symmetric_coroutine_object.hpp>
 #include <boost/coroutine/detail/symmetric_coroutine_yield.hpp>
-#include <boost/coroutine/detail/trampoline.hpp>
+#include <boost/coroutine/stack_allocator.hpp>
+#include <boost/coroutine/stack_context.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -33,7 +28,7 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-template< typename Arg, typename StackAllocator >
+template< typename Arg >
 class symmetric_coroutine_call
 {
 private:
@@ -41,24 +36,19 @@ private:
     friend class symmetric_coroutine_yield;
 
     typedef symmetric_coroutine_impl< Arg >   impl_type;
-    typedef parameters< Arg >                 param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_call)
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
 public:
     typedef Arg                                value_type;
     typedef symmetric_coroutine_yield< Arg >   yield_type;
 
     symmetric_coroutine_call() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -66,171 +56,197 @@ public:
     typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< coroutine_fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, coroutine_fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
+    template< typename StackAllocator >
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< coroutine_fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, coroutine_fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 # endif
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 #else
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
-    template< typename Fn >
-    explicit symmetric_coroutine_call( Fn fn, attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+    template< typename Fn, typename StackAllocator >
+    explicit symmetric_coroutine_call( Fn fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
-        BOOST_ASSERT( impl_);
-    }
-
-    template< typename Fn >
-    explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
-    {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
+        BOOST_ASSERT( impl_);
+    }
+
+    template< typename Fn, typename StackAllocator >
+    explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
+    {
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 #endif
@@ -239,16 +255,13 @@ public:
     {
         if ( 0 != impl_)
         {
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
@@ -264,47 +277,38 @@ public:
     { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
     void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     symmetric_coroutine_call & operator()( Arg arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
-        impl_->run( arg);
+        impl_->resume( arg);
         return * this;
     }
 };
 
-template< typename Arg, typename StackAllocator >
-class symmetric_coroutine_call< Arg &, StackAllocator >
+template< typename Arg >
+class symmetric_coroutine_call< Arg & >
 {
 private:
     template< typename X >
     friend class symmetric_coroutine_yield;
 
     typedef symmetric_coroutine_impl< Arg & >     impl_type;
-    typedef parameters< Arg & >                   param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_call)
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
 public:
     typedef Arg                                    value_type;
     typedef symmetric_coroutine_yield< Arg & >     yield_type;
 
     symmetric_coroutine_call() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -312,171 +316,197 @@ public:
     typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< coroutine_fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, coroutine_fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
+    template< typename StackAllocator >
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< coroutine_fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, coroutine_fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 # endif
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 #else
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
-    template< typename Fn >
-    explicit symmetric_coroutine_call( Fn fn, attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+    template< typename Fn, typename StackAllocator >
+    explicit symmetric_coroutine_call( Fn fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
-        BOOST_ASSERT( impl_);
-    }
-
-    template< typename Fn >
-    explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
-    {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
+        BOOST_ASSERT( impl_);
+    }
+
+    template< typename Fn, typename StackAllocator >
+    explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
+    {
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< Arg &, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 #endif
@@ -485,16 +515,13 @@ public:
     {
         if ( 0 != impl_)
         {
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
@@ -510,47 +537,38 @@ public:
     { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
     void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     symmetric_coroutine_call & operator()( Arg & arg) BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
-        impl_->run( arg);
+        impl_->resume( arg);
         return * this;
     }
 };
 
-template< typename StackAllocator >
-class symmetric_coroutine_call< void, StackAllocator >
+template<>
+class symmetric_coroutine_call< void >
 {
 private:
     template< typename X >
     friend class symmetric_coroutine_yield;
 
     typedef symmetric_coroutine_impl< void >        impl_type;
-    typedef parameters< void >                      param_type;
 
     BOOST_MOVABLE_BUT_NOT_COPYABLE( symmetric_coroutine_call)
 
     struct dummy {};
 
     impl_type       *   impl_;
-    StackAllocator      stack_alloc_;
-    stack_context       stack_ctx_;
 
 public:
     typedef void                                     value_type;
     typedef symmetric_coroutine_yield< void >        yield_type;
 
     symmetric_coroutine_call() BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     {}
 
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
@@ -558,171 +576,197 @@ public:
     typedef void ( * coroutine_fn)( yield_type &);
 
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< coroutine_fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, coroutine_fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
+    template< typename StackAllocator >
     explicit symmetric_coroutine_call( coroutine_fn fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< coroutine_fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< coroutine_fn > to( forward< coroutine_fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, coroutine_fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< coroutine_fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 # endif
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
-    template< typename Fn >
+    template< typename Fn, typename StackAllocator >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( forward< Fn >( fn), & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t(
+                    forward< Fn >( fn), attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 #else
     template< typename Fn >
     explicit symmetric_coroutine_call( Fn fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
-    template< typename Fn >
-    explicit symmetric_coroutine_call( Fn fn, attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+    template< typename Fn, typename StackAllocator >
+    explicit symmetric_coroutine_call( Fn fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
-        BOOST_ASSERT( impl_);
-    }
-
-    template< typename Fn >
-    explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr = attributes() ) :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
-    {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 
     template< typename Fn >
     explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attr,
-                                       StackAllocator const& stack_alloc) :
-        impl_( 0),
-        stack_alloc_( stack_alloc),
-        stack_ctx_()
+                                       attributes const& attrs = attributes(),
+                                       stack_allocator stack_alloc = stack_allocator() ) :
+        impl_( 0)
     {
-        stack_alloc_.allocate( stack_ctx_, attr.size);
-        coroutine_context callee(
-            trampoline_void< Fn, impl_type, yield_type >,
-            stack_ctx_);
-        coroutine_context caller;
-        setup< Fn > to( fn, & caller, & callee, attr);
-        impl_ = reinterpret_cast< impl_type * >(
-                caller.jump(
-                    callee,
-                    reinterpret_cast< intptr_t >( & to),
-                    fpu_preserved == attr.preserve_fpu) );
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, Fn, stack_allocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
+        BOOST_ASSERT( impl_);
+    }
+
+    template< typename Fn, typename StackAllocator >
+    explicit symmetric_coroutine_call( BOOST_RV_REF( Fn) fn,
+                                       attributes const& attrs,
+                                       StackAllocator stack_alloc) :
+        impl_( 0)
+    {
+        // create a stack-context
+        stack_context stack_ctx;
+        // allocate the coroutine-stack
+        stack_alloc.allocate( stack_ctx, attrs.size);
+        BOOST_ASSERT( 0 < stack_ctx.sp);
+        // typedef of internal coroutine-type
+        typedef symmetric_coroutine_object< void, Fn, StackAllocator > object_t;
+        // reserve space on top of coroutine-stack for internal coroutine-type
+        stack_context internal_stack_ctx;
+        internal_stack_ctx.sp = static_cast< char * >( stack_ctx.sp) - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.sp);
+        internal_stack_ctx.size = stack_ctx.size - sizeof( object_t);
+        BOOST_ASSERT( 0 < internal_stack_ctx.size);
+        // placement new for internal coroutine
+        impl_ = new ( internal_stack_ctx.sp) object_t( fn, attrs, stack_ctx, internal_stack_ctx, stack_alloc); 
         BOOST_ASSERT( impl_);
     }
 #endif
@@ -731,16 +775,13 @@ public:
     {
         if ( 0 != impl_)
         {
-            impl_->unwind_stack();
-            stack_alloc_.deallocate( stack_ctx_);
+            impl_->destroy();
             impl_ = 0;
         }
     }
 
     symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
-        impl_( 0),
-        stack_alloc_(),
-        stack_ctx_()
+        impl_( 0)
     { swap( other); }
 
     symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
@@ -756,24 +797,20 @@ public:
     { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
     void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
-    {
-        std::swap( impl_, other.impl_);
-        std::swap( stack_alloc_, other.stack_alloc_);
-        std::swap( stack_ctx_, other.stack_ctx_);
-    }
+    { std::swap( impl_, other.impl_); }
 
     symmetric_coroutine_call & operator()() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
-        impl_->run();
+        impl_->resume();
         return * this;
     }
 };
 
-template< typename Arg, typename StackAllocator >
-void swap( symmetric_coroutine_call< Arg, StackAllocator > & l,
-           symmetric_coroutine_call< Arg, StackAllocator > & r)
+template< typename Arg >
+void swap( symmetric_coroutine_call< Arg > & l,
+           symmetric_coroutine_call< Arg > & r)
 { l.swap( r); }
 
 }}}

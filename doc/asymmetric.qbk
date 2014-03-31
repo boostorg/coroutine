@@ -366,16 +366,16 @@ resumed with __push_coro_op__, __pull_coro_op__).]
 
     #include <boost/coroutine/asymmetric_coroutine.hpp>
 
-    template< typename R, typename StackAllocator = standard_stack_allocator >
+    template< typename R >
     class asymmetric_coroutine<>::pull_type
     {
     public:
         pull_type();
 
         template< typename Fn >
-        pull_type( Fn && fn, attributes const& attr = attributes() );
+        pull_type( Fn && fn, attributes const& attr = attributes(), stack_allocator stack_alloc = stack_allocator() );
 
-        template< typename Fn >
+        template< typename Fn, typename StackAllocator >
         pull_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
 
         pull_type( pull_type && other);
@@ -409,7 +409,7 @@ resumed with __push_coro_op__, __pull_coro_op__).]
 ]
 
 [heading `template< typename Fn >
-          pull_type( Fn && fn, attributes const& attr)`]
+          pull_type( Fn && fn, attributes const& attr, stack_allocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]
@@ -419,7 +419,7 @@ registers.]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
 ]
 
-[heading `template< typename Fn >
+[heading `template< typename Fn, typename StackAllocator >
           pull_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
@@ -524,16 +524,16 @@ would return `false`.]]
 
     #include <boost/coroutine/asymmetric_coroutine.hpp>
 
-    template< typename Arg, typename StackAllocator = standard_stack_allocator >
+    template< typename Arg >
     class asymmetric_coroutine<>::push_type
     {
     public:
         push_type();
 
         template< typename Fn >
-        push_type( Fn && fn, attributes const& attr = attributes());
+        push_type( Fn && fn, attributes const& attr = attributes(), stack_allocator const& stack_alloc = stack_allocator() );
 
-        template< typename Fn >
+        template< typename Fn, typename StackAllocator >
         push_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
 
         push_type( push_type && other);
@@ -565,7 +565,7 @@ would return `false`.]]
 ]
 
 [heading `template< typename Fn >
-          push_type( Fn && fn, attributes const& attr)`]
+          push_type( Fn && fn, attributes const& attr, stack_allocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]
@@ -573,7 +573,7 @@ when ! is_stack_unbounded().]]
 determines stack clean-up and preserving floating-point registers.]]
 ]
 
-[heading `template< typename Fn >
+[heading `template< typename Fn, typename StackAllocator >
           push_type( Fn && fn, attributes const& attr, StackAllocator const& stack_alloc)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()

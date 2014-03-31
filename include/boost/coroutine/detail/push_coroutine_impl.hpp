@@ -34,20 +34,15 @@ namespace detail {
 template< typename Arg >
 class push_coroutine_impl : private noncopyable
 {
-private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void trampoline_push( intptr_t);
-
-    typedef parameters< Arg >                           param_type;
-
+protected:
     int                     flags_;
     exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
 public:
+    typedef parameters< Arg >                           param_type;
+
     push_coroutine_impl( coroutine_context * caller,
                          coroutine_context * callee,
                          bool unwind, bool preserve_fpu) :
@@ -69,12 +64,18 @@ public:
     bool preserve_fpu() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_preserve_fpu); }
 
+    bool is_started() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_started); }
+
+    bool is_running() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_running); }
+
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
     void unwind_stack() BOOST_NOEXCEPT
     {
-        if ( ! is_complete() && force_unwind() )
+        if ( is_started() && ! is_complete() && force_unwind() )
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
@@ -90,52 +91,55 @@ public:
 
     void push( Arg const& arg)
     {
+        BOOST_ASSERT( ! is_running() );
         BOOST_ASSERT( ! is_complete() );
 
-        param_type to( const_cast< Arg * >( & arg) );
+        flags_ |= flag_running;
+        param_type to( const_cast< Arg * >( & arg), this);
         param_type * from(
             reinterpret_cast< param_type * >(
                 caller_->jump(
                     * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ &= ~flag_running;
         if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
 
     void push( BOOST_RV_REF( Arg) arg)
     {
+        BOOST_ASSERT( ! is_running() );
         BOOST_ASSERT( ! is_complete() );
 
-        param_type to( const_cast< Arg * >( & arg) );
+        flags_ |= flag_running;
+        param_type to( const_cast< Arg * >( & arg), this);
         param_type * from(
             reinterpret_cast< param_type * >(
                 caller_->jump(
                     * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ &= ~flag_running;
         if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
+
+    virtual void destroy() = 0;
 };
 
 template< typename Arg >
 class push_coroutine_impl< Arg & > : private noncopyable
 {
-private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void trampoline_push( intptr_t);
-
-    typedef parameters< Arg & >                         param_type;
-
+protected:
     int                     flags_;
     exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
 public:
+    typedef parameters< Arg & >                         param_type;
+
     push_coroutine_impl( coroutine_context * caller,
                          coroutine_context * callee,
                          bool unwind, bool preserve_fpu) :
@@ -157,12 +161,18 @@ public:
     bool preserve_fpu() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_preserve_fpu); }
 
+    bool is_started() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_started); }
+
+    bool is_running() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_running); }
+
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
     void unwind_stack() BOOST_NOEXCEPT
     {
-        if ( ! is_complete() && force_unwind() )
+        if ( is_started() && ! is_complete() && force_unwind() )
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
@@ -178,37 +188,37 @@ public:
 
     void push( Arg & arg)
     {
+        BOOST_ASSERT( ! is_running() );
         BOOST_ASSERT( ! is_complete() );
 
-        param_type to( & arg);
+        flags_ |= flag_running;
+        param_type to( & arg, this);
         param_type * from(
             reinterpret_cast< param_type * >(
                 caller_->jump(
                     * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ &= ~flag_running;
         if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
+
+    virtual void destroy() = 0;
 };
 
 template<>
 class push_coroutine_impl< void > : private noncopyable
 {
-private:
-    template<
-        typename X, typename Y, typename Z
-    >
-    friend void trampoline_push_void( intptr_t);
-
-    typedef parameters< void >                          param_type;
-
+protected:
     int                     flags_;
     exception_ptr           except_;
     coroutine_context   *   caller_;
     coroutine_context   *   callee_;
 
 public:
+    typedef parameters< void >                          param_type;
+
     push_coroutine_impl( coroutine_context * caller,
                          coroutine_context * callee,
                          bool unwind, bool preserve_fpu) :
@@ -230,12 +240,18 @@ public:
     bool preserve_fpu() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_preserve_fpu); }
 
+    bool is_started() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_started); }
+
+    bool is_running() const BOOST_NOEXCEPT
+    { return 0 != ( flags_ & flag_running); }
+
     bool is_complete() const BOOST_NOEXCEPT
     { return 0 != ( flags_ & flag_complete); }
 
     void unwind_stack() BOOST_NOEXCEPT
     {
-        if ( ! is_complete() && force_unwind() )
+        if ( is_started() && ! is_complete() && force_unwind() )
         {
             flags_ |= flag_unwind_stack;
             param_type to( unwind_t::force_unwind);
@@ -251,18 +267,23 @@ public:
 
     void push()
     {
+        BOOST_ASSERT( ! is_running() );
         BOOST_ASSERT( ! is_complete() );
 
-        param_type to;
+        flags_ |= flag_running;
+        param_type to( this);
         param_type * from(
             reinterpret_cast< param_type * >(
                 caller_->jump(
                     * callee_,
                     reinterpret_cast< intptr_t >( & to),
                     preserve_fpu() ) ) );
+        flags_ &= ~flag_running;
         if ( from->do_unwind) throw forced_unwind();
         if ( except_) rethrow_exception( except_);
     }
+
+    virtual void destroy() = 0;
 };
 
 }}}

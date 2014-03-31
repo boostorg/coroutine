@@ -17,8 +17,8 @@
 #include "../clock.hpp"
 #include "../cycle.hpp"
 
-typedef boost::coroutines::protected_stack_allocator                        stack_allocator;
-typedef boost::coroutines::symmetric_coroutine< void, stack_allocator >     coro_type;
+typedef boost::coroutines::protected_stack_allocator       stack_allocator;
+typedef boost::coroutines::symmetric_coroutine< void >     coro_type;
 
 boost::coroutines::flag_fpu_t preserve_fpu = boost::coroutines::fpu_not_preserved;
 boost::coroutines::flag_unwind_t unwind_stack = boost::coroutines::stack_unwind;
@@ -29,11 +29,11 @@ void fn( coro_type::yield_type &) {}
 duration_type measure_time( duration_type overhead)
 {
     stack_allocator stack_alloc;
+    boost::coroutines::attributes attrs( unwind_stack, preserve_fpu);
 
     time_point_type start( clock_type::now() );
     for ( std::size_t i = 0; i < jobs; ++i) {
-        coro_type::call_type c( fn,
-            boost::coroutines::attributes( unwind_stack, preserve_fpu), stack_alloc);
+        coro_type::call_type c( fn, attrs, stack_alloc);
     }
     duration_type total = clock_type::now() - start;
     total -= overhead; // overhead of measurement
