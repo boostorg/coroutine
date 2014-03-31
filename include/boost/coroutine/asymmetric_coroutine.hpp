@@ -1256,7 +1256,7 @@ public:
         BOOST_ASSERT( 0 < stack_ctx.sp);
         // typedef of internal coroutine-type
         typedef detail::pull_coroutine_object<
-            push_coroutie< void >, void, coroutine_fn, stack_allocator
+            push_coroutine< void >, void, coroutine_fn, stack_allocator
         >                                       object_t;
         // reserve space on top of coroutine-stack for internal coroutine-type
         stack_context internal_stack_ctx;
