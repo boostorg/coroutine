@@ -225,25 +225,23 @@ resumed with __call_coro_op__).]
 
     #include <boost/coroutine/symmetric_coroutine.hpp>
 
-    template< typename Arg, typename StackAllocator = standard_stack_allocator >
+    template< typename Arg >
     class symmetric_coroutine<>::call_type
     {
     public:
         call_type() noexcept;
 
         template< typename Fn >
-        call_type( const Fn& fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator() );
+        call_type( Fn && fn, attributes const& attr = attributes() );
 
-        template< typename Fn >
-        call_type( Fn && fn, attributes const& attr = attributes(),
-                   StackAllocator stack_alloc = StackAllocator() );
+        template< typename Fn, typename StackAllocator >
+        call_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
+
+        ~call_type();
 
         call_type( call_type const& other)=delete;
 
         call_type & operator=( call_type const& other)=delete;
-
-        ~call_type() noexcept;
 
         call_type( call_type && other) noexcept;
 
@@ -267,8 +265,8 @@ resumed with __call_coro_op__).]
 [[Throws:] [Nothing.]]
 ]
 
-[heading `template< typename Fn, typename StackAllocator >
-          call_type( Fn fn, attributes const& attr, StackAllocator const& stack_alloc)`]
+[heading `template< typename Fn >
+          call_type( Fn fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]
@@ -285,6 +283,11 @@ when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]
+]
+
+[heading `~call_type()`]
+[variablelist
+[[Effects:] [Destroys the context and deallocates the stack.]]
 ]
 
 [heading `call_type( call_type && other)`]
@@ -355,7 +358,7 @@ of `other`.]]
     template< typename R >
     class symmetric_coroutine<>::yield_type
     {
-    private:
+    public:
         yield_type() noexcept;
 
         yield_type( yield_type const& other)=delete;
@@ -368,7 +371,6 @@ of `other`.]]
 
         void swap( yield_type & other) noexcept;
 
-    public:
         operator unspecified-bool-type() const;
 
         bool operator!() const noexcept;
