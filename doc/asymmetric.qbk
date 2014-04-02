@@ -373,7 +373,7 @@ resumed with __push_coro_op__, __pull_coro_op__).]
         pull_type();
 
         template< typename Fn >
-        pull_type( Fn && fn, attributes const& attr = attributes(), stack_allocator stack_alloc = stack_allocator() );
+        pull_type( Fn && fn, attributes const& attr = attributes() );
 
         template< typename Fn, typename StackAllocator >
         pull_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
@@ -409,7 +409,7 @@ resumed with __push_coro_op__, __pull_coro_op__).]
 ]
 
 [heading `template< typename Fn >
-          pull_type( Fn && fn, attributes const& attr, stack_allocator const& stack_alloc)`]
+          pull_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]
@@ -531,7 +531,7 @@ would return `false`.]]
         push_type();
 
         template< typename Fn >
-        push_type( Fn && fn, attributes const& attr = attributes(), stack_allocator const& stack_alloc = stack_allocator() );
+        push_type( Fn && fn, attributes const& attr = attributes() );
 
         template< typename Fn, typename StackAllocator >
         push_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
@@ -565,7 +565,7 @@ would return `false`.]]
 ]
 
 [heading `template< typename Fn >
-          push_type( Fn && fn, attributes const& attr, stack_allocator const& stack_alloc)`]
+          push_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]

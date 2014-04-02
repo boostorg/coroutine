@@ -72,8 +72,7 @@ public:
     typedef void ( * coroutine_fn)( pull_coroutine< Arg > &);
 
     explicit push_coroutine( coroutine_fn,
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename StackAllocator >
     explicit push_coroutine( coroutine_fn,
@@ -82,8 +81,7 @@ public:
 # endif
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn),
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
@@ -92,8 +90,7 @@ public:
 #else
     template< typename Fn >
     explicit push_coroutine( Fn fn,
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( Fn fn,
@@ -102,8 +99,7 @@ public:
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn),
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
@@ -215,8 +211,7 @@ public:
     typedef void ( * coroutine_fn)( pull_coroutine< Arg & > &);
 
     explicit push_coroutine( coroutine_fn,
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename StackAllocator >
     explicit push_coroutine( coroutine_fn,
@@ -225,8 +220,7 @@ public:
 # endif
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn),
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
@@ -235,8 +229,7 @@ public:
 #else
     template< typename Fn >
     explicit push_coroutine( Fn,
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( Fn,
@@ -245,8 +238,7 @@ public:
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn),
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
@@ -358,8 +350,7 @@ public:
     typedef void ( * coroutine_fn)( pull_coroutine< void > &);
 
     explicit push_coroutine( coroutine_fn,
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename StackAllocator >
     explicit push_coroutine( coroutine_fn,
@@ -368,8 +359,7 @@ public:
 # endif
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn),
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
@@ -378,8 +368,7 @@ public:
 #else
     template< typename Fn >
     explicit push_coroutine( Fn,
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( Fn,
@@ -388,8 +377,7 @@ public:
 
     template< typename Fn >
     explicit push_coroutine( BOOST_RV_REF( Fn),
-                             attributes const& = attributes(),
-                             stack_allocator = stack_allocator() );
+                             attributes const& = attributes() );
 
     template< typename Fn, typename StackAllocator >
     explicit push_coroutine( BOOST_RV_REF( Fn),
@@ -470,12 +458,12 @@ public:
     typedef void ( * coroutine_fn)( push_coroutine< R > &);
 
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -526,12 +514,12 @@ public:
 # endif
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -582,12 +570,12 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -638,12 +626,12 @@ public:
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -860,12 +848,12 @@ public:
     typedef void ( * coroutine_fn)( push_coroutine< R & > &);
 
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -916,12 +904,12 @@ public:
 # endif
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -972,12 +960,12 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1028,12 +1016,12 @@ public:
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1246,12 +1234,12 @@ public:
     typedef void ( * coroutine_fn)( push_coroutine< void > &);
 
     explicit pull_coroutine( coroutine_fn fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1302,12 +1290,12 @@ public:
 # endif
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1358,12 +1346,12 @@ public:
 #else
     template< typename Fn >
     explicit pull_coroutine( Fn fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1414,12 +1402,12 @@ public:
 
     template< typename Fn >
     explicit pull_coroutine( BOOST_RV_REF( Fn) fn,
-                             attributes const& attrs = attributes(),
-                             stack_allocator stack_alloc = stack_allocator() ) :
+                             attributes const& attrs = attributes() ) :
         impl_( 0)
     {
         // create a stack-context
         stack_context stack_ctx;
+        stack_allocator stack_alloc;
         // allocate the coroutine-stack
         stack_alloc.allocate( stack_ctx, attrs.size);
         BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1513,12 +1501,12 @@ public:
 # ifdef BOOST_MSVC
 template< typename Arg >
 push_coroutine< Arg >::push_coroutine( coroutine_fn fn,
-                                       attributes const& attrs,
-                                       stack_allocator stack_alloc) :
+                                       attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1568,12 +1556,12 @@ push_coroutine< Arg >::push_coroutine( coroutine_fn fn,
 
 template< typename Arg >
 push_coroutine< Arg & >::push_coroutine( coroutine_fn fn,
-                                         attributes const& attrs,
-                                         stack_allocator stack_alloc) :
+                                         attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1622,12 +1610,12 @@ push_coroutine< Arg & >::push_coroutine( coroutine_fn fn,
 }
 
 push_coroutine< void >::push_coroutine( coroutine_fn fn,
-                                        attributes const& attrs,
-                                        stack_allocator stack_alloc) :
+                                        attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1677,12 +1665,12 @@ push_coroutine< void >::push_coroutine( coroutine_fn fn,
 template< typename Arg >
 template< typename Fn >
 push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attrs,
-                                       stack_allocator stack_alloc) :
+                                       attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1733,12 +1721,12 @@ push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
 template< typename Arg >
 template< typename Fn >
 push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                         attributes const& attrs,
-                                         stack_allocator stack_alloc) :
+                                         attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1788,12 +1776,12 @@ push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
 
 template< typename Fn >
 push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                        attributes const& attrs,
-                                        stack_allocator stack_alloc) :
+                                        attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1843,12 +1831,12 @@ push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
 template< typename Arg >
 template< typename Fn >
 push_coroutine< Arg >::push_coroutine( Fn fn,
-                                       attributes const& attrs,
-                                       stack_allocator stack_alloc) :
+                                       attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1899,12 +1887,12 @@ push_coroutine< Arg >::push_coroutine( Fn fn,
 template< typename Arg >
 template< typename Fn >
 push_coroutine< Arg & >::push_coroutine( Fn fn,
-                                         attributes const& attrs,
-                                         stack_allocator stack_alloc) :
+                                         attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -1954,12 +1942,12 @@ push_coroutine< Arg & >::push_coroutine( Fn fn,
 
 template< typename Fn >
 push_coroutine< void >::push_coroutine( Fn fn,
-                                        attributes const& attrs,
-                                        stack_allocator stack_alloc) :
+                                        attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -2009,12 +1997,12 @@ push_coroutine< void >::push_coroutine( Fn fn,
 template< typename Arg >
 template< typename Fn >
 push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                       attributes const& attrs,
-                                       stack_allocator stack_alloc) :
+                                       attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -2065,12 +2053,12 @@ push_coroutine< Arg >::push_coroutine( BOOST_RV_REF( Fn) fn,
 template< typename Arg >
 template< typename Fn >
 push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                         attributes const& attrs,
-                                         stack_allocator stack_alloc) :
+                                         attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
@@ -2120,12 +2108,12 @@ push_coroutine< Arg & >::push_coroutine( BOOST_RV_REF( Fn) fn,
 
 template< typename Fn >
 push_coroutine< void >::push_coroutine( BOOST_RV_REF( Fn) fn,
-                                        attributes const& attrs,
-                                        stack_allocator stack_alloc) :
+                                        attributes const& attrs) :
     impl_( 0)
 {
     // create a stack-context
     stack_context stack_ctx;
+    stack_allocator stack_alloc;
     // allocate the coroutine-stack
     stack_alloc.allocate( stack_ctx, attrs.size);
     BOOST_ASSERT( 0 < stack_ctx.sp);
