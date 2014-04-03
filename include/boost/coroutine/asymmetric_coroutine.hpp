@@ -2170,25 +2170,21 @@ void swap( push_coroutine< Arg > & l, push_coroutine< Arg > & r) BOOST_NOEXCEPT
 { l.swap( r); }
 
 template< typename R >
-inline
 typename pull_coroutine< R >::iterator
 range_begin( pull_coroutine< R > & c)
 { return typename pull_coroutine< R >::iterator( & c); }
 
 template< typename R >
-inline
 typename pull_coroutine< R >::iterator
 range_end( pull_coroutine< R > &)
 { return typename pull_coroutine< R >::iterator(); }
 
 template< typename Arg >
-inline
 typename push_coroutine< Arg >::iterator
 range_begin( push_coroutine< Arg > & c)
 { return typename push_coroutine< Arg >::iterator( & c); }
 
 template< typename Arg >
-inline
 typename push_coroutine< Arg >::iterator
 range_end( push_coroutine< Arg > &)
 { return typename push_coroutine< Arg >::iterator(); }
@@ -2208,6 +2204,28 @@ struct coroutine
     typedef pull_coroutine< T > pull_type;
 };
 
+#if defined(__clang__)
+template< typename R >
+typename pull_coroutine< R >::iterator
+begin( pull_coroutine< R > & c)
+{ return boost::begin( c); }
+
+template< typename R >
+typename pull_coroutine< R >::iterator
+end( pull_coroutine< R > & c)
+{ return boost::end( c); }
+
+template< typename R >
+typename push_coroutine< R >::iterator
+begin( push_coroutine< R > & c)
+{ return boost::begin( c); }
+
+template< typename R >
+typename push_coroutine< R >::iterator
+end( push_coroutine< R > & c)
+{ return boost::end( c); }
+#endif
+
 }
 
 template< typename Arg >
@@ -2223,25 +2241,21 @@ struct range_mutable_iterator< coroutines::pull_coroutine< R > >
 namespace std {
 
 template< typename R >
-inline
 typename boost::coroutines::pull_coroutine< R >::iterator
 begin( boost::coroutines::pull_coroutine< R > & c)
 { return boost::begin( c); }
 
 template< typename R >
-inline
 typename boost::coroutines::pull_coroutine< R >::iterator
 end( boost::coroutines::pull_coroutine< R > & c)
 { return boost::end( c); }
 
 template< typename R >
-inline
 typename boost::coroutines::push_coroutine< R >::iterator
 begin( boost::coroutines::push_coroutine< R > & c)
 { return boost::begin( c); }
 
 template< typename R >
-inline
 typename boost::coroutines::push_coroutine< R >::iterator
 end( boost::coroutines::push_coroutine< R > & c)
 { return boost::end( c); }
