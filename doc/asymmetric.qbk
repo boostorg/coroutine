@@ -370,23 +370,29 @@ resumed with __push_coro_op__, __pull_coro_op__).]
     class asymmetric_coroutine<>::pull_type
     {
     public:
-        pull_type();
+        pull_type() noexcept;
 
         template< typename Fn >
-        pull_type( Fn && fn, attributes const& attr = attributes(), stack_allocator stack_alloc = stack_allocator() );
+        pull_type( Fn && fn, attributes const& attr = attributes() );
 
         template< typename Fn, typename StackAllocator >
         pull_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
 
-        pull_type( pull_type && other);
+        pull_type( pull_type const& other)=delete;
 
-        pull_type & operator=( pull_type && other);
+        pull_type & operator=( pull_type const& other)=delete;
 
-        operator unspecified-bool-type() const;
+        ~pull_type();
 
-        bool operator!() const;
+        pull_type( pull_type && other) noexcept;
 
-        void swap( pull_type & other);
+        pull_type & operator=( pull_type && other) noexcept;
+
+        operator unspecified-bool-type() const noexcept;
+
+        bool operator!() const noexcept;
+
+        void swap( pull_type & other) noexcept;
 
         pull_type & operator()();
 
@@ -409,7 +415,7 @@ resumed with __push_coro_op__, __pull_coro_op__).]
 ]
 
 [heading `template< typename Fn >
-          pull_type( Fn && fn, attributes const& attr, stack_allocator const& stack_alloc)`]
+          pull_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]
@@ -428,6 +434,11 @@ when ! is_stack_unbounded().]]
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]
 [[Throws:] [Exceptions thrown inside __coro_fn__.]]
+]
+
+[heading `~pull_type()`]
+[variablelist
+[[Effects:] [Destroys the context and deallocates the stack.]]
 ]
 
 [heading `pull_type( pull_type && other)`]
@@ -528,23 +539,29 @@ would return `false`.]]
     class asymmetric_coroutine<>::push_type
     {
     public:
-        push_type();
+        push_type() noexcept;
 
         template< typename Fn >
-        push_type( Fn && fn, attributes const& attr = attributes(), stack_allocator const& stack_alloc = stack_allocator() );
+        push_type( Fn && fn, attributes const& attr = attributes() );
 
         template< typename Fn, typename StackAllocator >
         push_type( Fn && fn, attributes const& attr, StackAllocator stack_alloc);
 
-        push_type( push_type && other);
+        push_type( push_type const& other)=delete;
 
-        push_type & operator=( push_type && other);
+        push_type & operator=( push_type const& other)=delete;
 
-        operator unspecified-bool-type() const;
+        ~push_type();
 
-        bool operator!() const;
+        push_type( push_type && other) noexcept;
 
-        void swap( push_type & other);
+        push_type & operator=( push_type && other) noexcept;
+
+        operator unspecified-bool-type() const noexcept;
+
+        bool operator!() const noexcept;
+
+        void swap( push_type & other) noexcept;
 
         push_type & operator()( Arg arg);
     };
@@ -565,7 +582,7 @@ would return `false`.]]
 ]
 
 [heading `template< typename Fn >
-          push_type( Fn && fn, attributes const& attr, stack_allocator const& stack_alloc)`]
+          push_type( Fn && fn, attributes const& attr)`]
 [variablelist
 [[Preconditions:] [`size` >= minimum_stacksize(), `size` <= maximum_stacksize()
 when ! is_stack_unbounded().]]
@@ -581,6 +598,11 @@ when ! is_stack_unbounded().]]
 [[Effects:] [Creates a coroutine which will execute `fn`. Argument `attr`
 determines stack clean-up and preserving floating-point registers.
 For allocating/deallocating the stack `stack_alloc` is used.]]
+]
+
+[heading `~push_type()`]
+[variablelist
+[[Effects:] [Destroys the context and deallocates the stack.]]
 ]
 
 [heading `push_type( push_type && other)`]

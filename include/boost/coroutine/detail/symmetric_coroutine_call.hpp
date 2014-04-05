@@ -251,7 +251,7 @@ public:
     }
 #endif
 
-    ~symmetric_coroutine_call() BOOST_NOEXCEPT
+    ~symmetric_coroutine_call()
     {
         if ( 0 != impl_)
         {
@@ -511,7 +511,7 @@ public:
     }
 #endif
 
-    ~symmetric_coroutine_call() BOOST_NOEXCEPT
+    ~symmetric_coroutine_call()
     {
         if ( 0 != impl_)
         {
@@ -771,7 +771,7 @@ public:
     }
 #endif
 
-    ~symmetric_coroutine_call() BOOST_NOEXCEPT
+    ~symmetric_coroutine_call()
     {
         if ( 0 != impl_)
         {

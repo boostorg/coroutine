@@ -45,3 +45,7 @@ exe merge_arrays
 exe unwind
     : unwind.cpp
     ;
+
+exe segmented_stack
+    : segmented_stack.cpp
+    ;

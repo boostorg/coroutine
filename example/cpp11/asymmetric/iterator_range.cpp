@@ -16,7 +16,7 @@
 int main()
 {
     using namespace boost;
-    coroutines::coroutine<int>::pull_type c([](coroutines::coroutine<int>::push_type& yield) {
+    coroutines::asymmetric_coroutine<int>::pull_type c([](coroutines::asymmetric_coroutine<int>::push_type& yield) {
         for (int i = 0; i < 5; ++i) {
             yield(i);
         }
