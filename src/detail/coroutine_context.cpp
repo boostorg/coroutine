@@ -6,6 +6,30 @@
 
 #include "boost/coroutine/detail/coroutine_context.hpp"
 
+#include <boost/coroutine/coroutine_id.hpp>
+#include <boost/thread/tss.hpp>
+
+namespace boost {
+namespace coroutines {
+namespace this_coroutine {
+namespace detail {
+
+boost::thread_specific_ptr<coroutine_id> id;
+void set_id(coroutine_id id_) {
+    if (!id.get()) { id.reset(new coroutine_id); }
+    *id = id_;
+}
+
+} // detail
+
+coroutine_id get_id()
+{
+    if (!detail::id.get()) { return 0; }
+    return *detail::id;
+}
+
+}}}
+
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -66,12 +90,14 @@ coroutine_context::jump( coroutine_context & other, intptr_t param, bool preserv
     __splitstack_getcontext( stack_ctx_.segments_ctx);
     __splitstack_setcontext( other.stack_ctx_.segments_ctx);
 
+    this_coroutine::detail::set_id(&other.ctx_);
     intptr_t ret = context::jump_fcontext( & ctx_, other.ctx_, param, preserve_fpu);
 
     __splitstack_setcontext( stack_ctx_.segments_ctx);
 
     return ret;
 #else
+    this_coroutine::detail::set_id(&other.ctx_);
     return context::jump_fcontext( & ctx_, other.ctx_, param, preserve_fpu);
 #endif
 }
