@@ -17,7 +17,7 @@ BOOST_STATIC_ASSERT_MSG(
 void get_id_should_return_bool_convertible_false_\
 if_called_before_any_context_switch()
 {
-    BOOST_CHECK(!this_coro::get_id());
+    BOOST_CHECK_EQUAL(static_cast<bool>(this_coro::get_id()), false);
 }
 
 void get_id_should_not_throw_outside_a_coroutine()
