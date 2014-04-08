@@ -9,7 +9,7 @@ namespace coroutines {
 namespace this_coroutine {
 
 typedef const context::fcontext_t* coroutine_id;
-coroutine_id get_id();
+coroutine_id get_id() BOOST_NOEXCEPT;
 
 }}}
 

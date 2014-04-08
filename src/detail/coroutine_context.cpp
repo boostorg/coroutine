@@ -22,7 +22,7 @@ void set_id(coroutine_id id_) {
 
 } // detail
 
-coroutine_id get_id()
+coroutine_id get_id() BOOST_NOEXCEPT
 {
     if (!detail::id.get()) { return 0; }
     return *detail::id;
