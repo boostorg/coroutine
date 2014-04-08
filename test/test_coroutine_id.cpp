@@ -4,6 +4,8 @@
 
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/has_less.hpp>
+#include <boost/type_traits/has_equal_to.hpp>
+#include <boost/type_traits/has_not_equal_to.hpp>
 
 #include <boost/thread/thread.hpp>
 
@@ -13,6 +15,11 @@ namespace this_coro = coro::this_coroutine;
 BOOST_STATIC_ASSERT_MSG(
         boost::has_less<this_coro::coroutine_id>::value,
         "coroutine_id should be less than comparable");
+BOOST_STATIC_ASSERT_MSG(
+        boost::has_equal_to<this_coro::coroutine_id>::value,
+        "coroutine_id should be equality comparable");
+BOOST_STATIC_ASSERT(
+        boost::has_not_equal_to<this_coro::coroutine_id>::value);
 
 void get_id_should_return_bool_convertible_false_\
 if_called_before_any_context_switch()
