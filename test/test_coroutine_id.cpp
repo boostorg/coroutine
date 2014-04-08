@@ -140,14 +140,14 @@ when_threre_are_more_threads()
 {
     coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro1(f5);
     coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro2(f5);
-    BOOST_CHECK(coro1.get().coro_id != coro2.get().coro_id);
-    BOOST_CHECK(coro1.get().thread_id == coro2.get().thread_id);
+    BOOST_CHECK_NE(coro1.get().coro_id, coro2.get().coro_id);
+    BOOST_CHECK_EQUAL(coro1.get().thread_id, coro2.get().thread_id);
     thread_functor tf(&coro1);
     boost::thread t(tf);
     coro2();
     t.join();
-    BOOST_CHECK(coro1.get().coro_id != coro2.get().coro_id);
-    BOOST_CHECK(coro1.get().thread_id != coro2.get().thread_id);
+    BOOST_CHECK_NE(coro1.get().coro_id, coro2.get().coro_id);
+    BOOST_CHECK_NE(coro1.get().thread_id, coro2.get().thread_id);
     coro1();
     coro2();
     BOOST_CHECK( ! coro1);
