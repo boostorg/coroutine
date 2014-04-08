@@ -30,4 +30,5 @@ project boost/coroutine/test
 test-suite "coroutine" :
     [ run test_asymmetric_coroutine.cpp ]
     [ run test_symmetric_coroutine.cpp ]
+	[ run test_coroutine_id.cpp ]
     ;
