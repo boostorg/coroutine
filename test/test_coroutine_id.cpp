@@ -118,12 +118,12 @@ struct thread_id_coro_id {
 void f5( coro::asymmetric_coroutine<thread_id_coro_id>::push_type & push)
 {
     boost::thread::id thread_id = boost::this_thread::get_id();
-    this_coro::coroutine_id id1 = this_coro::get_id();
-    push(thread_id_coro_id(thread_id, id1));
+    this_coro::coroutine_id coro_id1 = this_coro::get_id();
+    push(thread_id_coro_id(thread_id, coro_id1));
     thread_id = boost::this_thread::get_id();
-    this_coro::coroutine_id id2 = this_coro::get_id();
-    push(thread_id_coro_id(thread_id, id2));
-    BOOST_CHECK_EQUAL(id1, id2);
+    this_coro::coroutine_id coro_id2 = this_coro::get_id();
+    push(thread_id_coro_id(thread_id, coro_id2));
+    BOOST_CHECK_EQUAL(coro_id1, coro_id2);
 }
 struct thread_functor{
     coro::asymmetric_coroutine<thread_id_coro_id>::pull_type *coro;
