@@ -5,6 +5,8 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/has_less.hpp>
 
+#include <boost/thread/thread.hpp>
+
 namespace coro = boost::coroutines;
 namespace this_coro = coro::this_coroutine;
 
@@ -106,6 +108,53 @@ and_ids_should_be_different_in_different_coroutine_functions()
 }
 
 
+struct thread_id_coro_id {
+	boost::thread::id thread_id;
+	this_coro::coroutine_id coro_id;
+	thread_id_coro_id(boost::thread::id thread_id,
+			this_coro::coroutine_id coro_id) : thread_id(thread_id),
+				coro_id(coro_id) {}
+};
+void f5( coro::asymmetric_coroutine<thread_id_coro_id>::push_type & push)
+{
+	boost::thread::id thread_id = boost::this_thread::get_id();
+	this_coro::coroutine_id id1 = this_coro::get_id();
+	push(thread_id_coro_id(thread_id, id1));
+	thread_id = boost::this_thread::get_id();
+	this_coro::coroutine_id id2 = this_coro::get_id();
+	push(thread_id_coro_id(thread_id, id2));
+	BOOST_CHECK_EQUAL(id1, id2);
+}
+struct thread_functor{
+	coro::asymmetric_coroutine<thread_id_coro_id>::pull_type *coro;
+	thread_functor(
+		coro::asymmetric_coroutine<thread_id_coro_id>::pull_type* coro) :
+			coro(coro) {}
+	void operator()() {
+		coro->operator()();
+	}
+};
+void id_should_remain_the_same_during_the_whole_coroutine_function\
+and_ids_should_be_different_in_different_coroutine_functions\
+when_threre_are_more_threads()
+{
+    coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro1(f5);
+    coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro2(f5);
+	BOOST_CHECK(coro1.get().coro_id != coro2.get().coro_id);
+	BOOST_CHECK(coro1.get().thread_id == coro2.get().thread_id);
+	thread_functor tf(&coro1);
+	boost::thread t(tf);
+	coro2();
+	t.join();
+	BOOST_CHECK(coro1.get().coro_id != coro2.get().coro_id);
+	BOOST_CHECK(coro1.get().thread_id != coro2.get().thread_id);
+	coro1();
+	coro2();
+	BOOST_CHECK( ! coro1);
+	BOOST_CHECK( ! coro2);
+}
+
+
 boost::unit_test::test_suite * init_unit_test_suite( int, char* [])
 {
     boost::unit_test::test_suite * test =
@@ -128,6 +177,11 @@ when_there_are_more_coroutine_functions));
 	test->add( BOOST_TEST_CASE(
 		&id_should_remain_the_same_during_the_whole_coroutine_function\
 and_ids_should_be_different_in_different_coroutine_functions));
+
+	test->add( BOOST_TEST_CASE(
+		&id_should_remain_the_same_during_the_whole_coroutine_function\
+and_ids_should_be_different_in_different_coroutine_functions\
+when_threre_are_more_threads));
 
     return test;
 }
