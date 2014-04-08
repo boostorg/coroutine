@@ -51,6 +51,7 @@ void f2( coro::asymmetric_coroutine< void >::push_type & push)
     push();
     this_coro::coroutine_id id3 = this_coro::get_id();
     push();
+    BOOST_CHECK(id1);
     BOOST_CHECK_EQUAL(id1, id2);
     BOOST_CHECK_EQUAL(id2, id3);
 }
@@ -64,22 +65,11 @@ void id_should_remain_the_same_during_the_whole_coroutine_function()
 }
 
 
-void f3( coro::asymmetric_coroutine< void >::push_type & push)
-{
-    this_coro::coroutine_id id1 = this_coro::get_id();
-    push();
-    this_coro::coroutine_id id2 = this_coro::get_id();
-    push();
-    this_coro::coroutine_id id3 = this_coro::get_id();
-    push();
-    BOOST_CHECK_EQUAL(id1, id2);
-    BOOST_CHECK_EQUAL(id2, id3);
-}
 void id_should_remain_the_same_during_the_whole_coroutine_function\
 when_there_are_more_coroutine_functions()
 {
-    coro::asymmetric_coroutine< void >::pull_type coro1(f3);
-    coro::asymmetric_coroutine< void >::pull_type coro2(f3);
+    coro::asymmetric_coroutine< void >::pull_type coro1(f2);
+    coro::asymmetric_coroutine< void >::pull_type coro2(f2);
     coro1();
     coro2();
     coro1();
@@ -91,7 +81,7 @@ when_there_are_more_coroutine_functions()
 }
 
 
-void f4( coro::asymmetric_coroutine<this_coro::coroutine_id>::push_type & push)
+void f3( coro::asymmetric_coroutine<this_coro::coroutine_id>::push_type & push)
 {
     this_coro::coroutine_id id1 = this_coro::get_id();
     push(id1);
@@ -102,8 +92,8 @@ void f4( coro::asymmetric_coroutine<this_coro::coroutine_id>::push_type & push)
 void id_should_remain_the_same_during_the_whole_coroutine_function\
 and_ids_should_be_different_in_different_coroutine_functions()
 {
-    coro::asymmetric_coroutine<this_coro::coroutine_id>::pull_type coro1(f4);
-    coro::asymmetric_coroutine<this_coro::coroutine_id>::pull_type coro2(f4);
+    coro::asymmetric_coroutine<this_coro::coroutine_id>::pull_type coro1(f3);
+    coro::asymmetric_coroutine<this_coro::coroutine_id>::pull_type coro2(f3);
     BOOST_CHECK(coro1.get() != coro2.get());
     coro1();
     coro2();
@@ -122,7 +112,7 @@ struct thread_id_coro_id {
             this_coro::coroutine_id coro_id) : thread_id(thread_id),
                 coro_id(coro_id) {}
 };
-void f5( coro::asymmetric_coroutine<thread_id_coro_id>::push_type & push)
+void f4( coro::asymmetric_coroutine<thread_id_coro_id>::push_type & push)
 {
     boost::thread::id thread_id = boost::this_thread::get_id();
     this_coro::coroutine_id coro_id1 = this_coro::get_id();
@@ -145,8 +135,8 @@ void id_should_remain_the_same_during_the_whole_coroutine_function\
 and_ids_should_be_different_in_different_coroutine_functions\
 when_threre_are_more_threads()
 {
-    coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro1(f5);
-    coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro2(f5);
+    coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro1(f4);
+    coro::asymmetric_coroutine<thread_id_coro_id>::pull_type coro2(f4);
     BOOST_CHECK_NE(coro1.get().coro_id, coro2.get().coro_id);
     BOOST_CHECK_EQUAL(coro1.get().thread_id, coro2.get().thread_id);
     thread_functor tf(&coro1);
