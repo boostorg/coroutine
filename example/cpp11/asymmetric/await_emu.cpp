@@ -15,7 +15,8 @@
 #define BOOST_THREAD_PROVIDES_FUTURE
 #define BOOST_RESULT_OF_USE_DECLTYPE
 
-#include <boost/coroutine/all.hpp>
+#include <boost/coroutine/asymmetric_coroutine.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
@@ -40,19 +41,19 @@ template<typename T>
 class concurrent_queue
 {
     queue<T> q;
-    mutex m;
-    condition_variable c;
+    boost::mutex m;
+    boost::condition_variable c;
 public:
     template<typename U>
     void push(U &&u)
     {
-        lock_guard<mutex> l(m);
+        boost::lock_guard<boost::mutex> l(m);
         q.push( forward<U>(u) );
         c.notify_one();
     }
     void pop(T &result)
     {
-        unique_lock<mutex> u(m);
+        boost::unique_lock<boost::mutex> u(m);
         c.wait(u, [&]{return !q.empty();} );
         result = move_if_noexcept(q.front());
         q.pop();
@@ -65,13 +66,13 @@ auto finished = false;
 
 void reschedule()
 {
-    this_thread::sleep_for(chrono::milliseconds( rand() % 2000 ));
+    this_thread::sleep_for(boost::chrono::milliseconds( rand() % 2000 ));
 }
 
 // ___________________________________________________________ //
 
-typedef coroutines::asymmetric_coroutine<void>::pull_type      coro_pull;
-typedef coroutines::asymmetric_coroutine<void>::push_type      coro_push;
+typedef coroutines::asymmetric_coroutine<void>::pull_type  coro_pull;
+typedef coroutines::asymmetric_coroutine<void>::push_type  coro_push;
 
 struct CurrentCoro
 {
@@ -119,9 +120,10 @@ struct Awaiter
     auto operator*(Future &&ft) -> decltype(ft.get())
     {
         typedef decltype(ft.get()) Result;
+        typedef typename boost::remove_reference<Future>::type FutureValue;
 
         auto &&current_coro = coro_stack.top();
-        auto result = ft.then([current_coro](Future &ft) -> Result
+        auto result = ft.then([current_coro](FutureValue ready) -> Result
         {
             main_tasks.push([current_coro]
             {
@@ -129,7 +131,7 @@ struct Awaiter
                 (*coro_stack.top().coro)();
                 coro_stack.pop();
             });
-            return ft.get();
+            return ready.get();
         });
         (*coro_stack.top().caller)();
         return result.get();
@@ -188,6 +190,6 @@ void async_user_handler()
     for(auto i=0; i!=5; ++i)
         fs.push_back( asynchronous([i]{ return foo(i+1); }) );
 
-    for(auto &&f : fs)
+    BOOST_FOREACH(auto &&f, fs)
         cout << await f << ":\tafter end" << endl;
 }
