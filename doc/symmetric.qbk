@@ -14,9 +14,9 @@ to return to its direct caller.
 
 
 [heading __call_coro__]
-__call_coro__ starts a symmetric coroutine and transfers parameter to its
+__call_coro__ starts a symmetric coroutine and transfers its parameter to its
 __coro_fn__.
-The first template parameter defines the transferred parameter type.
+The template parameter defines the transferred parameter type.
 The constructor of __call_coro__ takes a function (__coro_fn__) accepting a
 reference to a __yield_coro__ as argument. Instantiating a __call_coro__ does
 not pass the control of execution to __coro_fn__ - instead the first call of
@@ -113,11 +113,11 @@ instance is the only way to transfer data and execution control.
 __call_coro__ does not enter the __coro_fn__ at __call_coro__ construction but
 at the first invocation of __call_coro_op__.
 
-Unless the first template parameter is `void`, the __coro_fn__ of a
+Unless the template parameter is `void`, the __coro_fn__ of a
 __call_coro__ can assume that (a) upon initial entry and (b) after every
 __yield_coro_op__ call, its __yield_coro_get__ has a new value available.
 
-However, if the first template parameter is a move-only type,
+However, if the template parameter is a move-only type,
 __yield_coro_get__ may only be called once before the next __yield_coro_op__
 call.
 
