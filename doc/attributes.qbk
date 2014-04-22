@@ -7,7 +7,7 @@
 
 [section:attributes Attributes]
 
-Class `attributes` is used to transfers parameters required to setup a
+Class `attributes` is used to specify parameters required to setup a
 coroutine's context.
 
         enum flag_unwind_t
