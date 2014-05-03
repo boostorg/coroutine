@@ -59,7 +59,7 @@ The event-based asynchronous model avoids those issues:
 * much less expensive context switches
 
 The downside of this paradigm consists in a sub-optimal program
-structure. A event-driven program is required to split its code into
+structure. An event-driven program is required to split its code into
 multiple small callback functions, i.e. the code is organized in a sequence of
 small steps that execute intermittently. An algorithm that would usually be expressed
 as a hierarchy of functions and loops must be transformed into callbacks. The
