@@ -69,11 +69,13 @@ public:
         if ( is_started() && ! is_complete() && force_unwind() )
         {
             flags_ |= flag_unwind_stack;
+            flags_ |= flag_running;
             param_type to( unwind_t::force_unwind);
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
+            flags_ &= ~flag_running;
             flags_ &= ~flag_unwind_stack;
 
             BOOST_ASSERT( is_complete() );
@@ -148,6 +150,7 @@ protected:
             callee_,
             reinterpret_cast< intptr_t >( to),
             preserve_fpu() );
+        flags_ &= ~flag_running;
     }
 
     template< typename Other >
@@ -214,11 +217,13 @@ public:
         if ( is_started() && ! is_complete() && force_unwind() )
         {
             flags_ |= flag_unwind_stack;
+            flags_ |= flag_running;
             param_type to( unwind_t::force_unwind);
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
+            flags_ &= ~flag_running;
             flags_ &= ~flag_unwind_stack;
 
             BOOST_ASSERT( is_complete() );
@@ -293,6 +298,7 @@ protected:
             callee_,
             reinterpret_cast< intptr_t >( to),
             preserve_fpu() );
+        flags_ &= ~flag_running;
     }
 
     template< typename Other >
@@ -359,11 +365,13 @@ public:
         if ( is_started() && ! is_complete() && force_unwind() )
         {
             flags_ |= flag_unwind_stack;
+            flags_ |= flag_running;
             param_type to( unwind_t::force_unwind);
             caller_.jump(
                 callee_,
                 reinterpret_cast< intptr_t >( & to),
                 preserve_fpu() );
+            flags_ &= ~flag_running;
             flags_ &= ~flag_unwind_stack;
 
             BOOST_ASSERT( is_complete() );
@@ -381,6 +389,7 @@ public:
             callee_,
             reinterpret_cast< intptr_t >( & to),
             preserve_fpu() );
+        flags_ &= ~flag_running;
     }
 
     void yield() BOOST_NOEXCEPT
