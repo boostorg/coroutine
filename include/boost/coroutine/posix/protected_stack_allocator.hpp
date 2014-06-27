@@ -52,15 +52,8 @@ struct basic_protected_stack_allocator
         BOOST_ASSERT( 0 < size && 0 < size_);
         BOOST_ASSERT( size_ <= size);
 
-        const int fd( ::open("/dev/zero", O_RDONLY) );
-        BOOST_ASSERT( -1 != fd);
         // conform to POSIX.4 (POSIX.1b-1993, _POSIX_C_SOURCE=199309L)
-# if defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
-        void * limit = ::mmap( 0, size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-# else
-        void * limit = ::mmap( 0, size_, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-# endif
-        ::close( fd);
+        void * limit = ::mmap( 0, size_, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         if ( MAP_FAILED == limit) throw std::bad_alloc();
 
         // conforming to POSIX.1-2001
