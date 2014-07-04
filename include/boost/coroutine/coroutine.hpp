@@ -10,8 +10,4 @@
 #include <boost/coroutine/asymmetric_coroutine.hpp>
 #include <boost/coroutine/symmetric_coroutine.hpp>
 
-#ifdef BOOST_HAS_ABI_HEADERS
-#  include BOOST_ABI_SUFFIX
-#endif
-
 #endif // BOOST_COROUTINES_COROUTINE_H
