@@ -48,7 +48,7 @@ public:
     void push(U &&u)
     {
         boost::lock_guard<boost::mutex> l(m);
-        q.push( forward<U>(u) );
+        q.push( boost::forward<U>(u) );
         c.notify_one();
     }
     void pop(T &result)
