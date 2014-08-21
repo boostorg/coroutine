@@ -780,11 +780,11 @@ public:
         }
     }
 
-    symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
+    inline symmetric_coroutine_call( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT :
         impl_( 0)
     { swap( other); }
 
-    symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
+    inline symmetric_coroutine_call & operator=( BOOST_RV_REF( symmetric_coroutine_call) other) BOOST_NOEXCEPT
     {
         symmetric_coroutine_call tmp( boost::move( other) );
         swap( tmp);
@@ -793,13 +793,13 @@ public:
 
     BOOST_EXPLICIT_OPERATOR_BOOL();
 
-    bool operator!() const BOOST_NOEXCEPT
+    inline bool operator!() const BOOST_NOEXCEPT
     { return 0 == impl_ || impl_->is_complete() || impl_->is_running(); }
 
-    void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
+    inline void swap( symmetric_coroutine_call & other) BOOST_NOEXCEPT
     { std::swap( impl_, other.impl_); }
 
-    symmetric_coroutine_call & operator()() BOOST_NOEXCEPT
+    inline symmetric_coroutine_call & operator()() BOOST_NOEXCEPT
     {
         BOOST_ASSERT( * this);
 
