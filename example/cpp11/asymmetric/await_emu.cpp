@@ -55,7 +55,7 @@ public:
     {
         boost::unique_lock<boost::mutex> u(m);
         c.wait(u, [&]{return !q.empty();} );
-        result = move_if_noexcept(q.front());
+        result = std::move_if_noexcept(q.front());
         q.pop();
     }
 };
