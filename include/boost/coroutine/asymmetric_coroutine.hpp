@@ -2204,7 +2204,6 @@ struct coroutine
     typedef pull_coroutine< T > pull_type;
 };
 
-#if defined(__clang__)
 template< typename R >
 typename pull_coroutine< R >::iterator
 begin( pull_coroutine< R > & c)
@@ -2224,7 +2223,6 @@ template< typename R >
 typename push_coroutine< R >::iterator
 end( push_coroutine< R > & c)
 { return boost::end( c); }
-#endif
 
 }
 
@@ -2235,30 +2233,6 @@ struct range_mutable_iterator< coroutines::push_coroutine< Arg > >
 template< typename R >
 struct range_mutable_iterator< coroutines::pull_coroutine< R > >
 { typedef typename coroutines::pull_coroutine< R >::iterator type; };
-
-}
-
-namespace std {
-
-template< typename R >
-typename boost::coroutines::pull_coroutine< R >::iterator
-begin( boost::coroutines::pull_coroutine< R > & c)
-{ return boost::begin( c); }
-
-template< typename R >
-typename boost::coroutines::pull_coroutine< R >::iterator
-end( boost::coroutines::pull_coroutine< R > & c)
-{ return boost::end( c); }
-
-template< typename R >
-typename boost::coroutines::push_coroutine< R >::iterator
-begin( boost::coroutines::push_coroutine< R > & c)
-{ return boost::begin( c); }
-
-template< typename R >
-typename boost::coroutines::push_coroutine< R >::iterator
-end( boost::coroutines::push_coroutine< R > & c)
-{ return boost::end( c); }
 
 }
 
