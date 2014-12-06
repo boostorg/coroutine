@@ -16,6 +16,9 @@
 #include <boost/coroutine/detail/config.hpp>
 #include <boost/coroutine/stack_context.hpp>
 
+#ifdef BOOST_COROUTINE_USE_FIBER
+# include <windows.h>
+#endif
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -26,11 +29,17 @@ namespace detail {
 
 // class hold stack-context and coroutines execution-context
 class BOOST_COROUTINES_DECL coroutine_context
-                    
+
 {
 private:
     stack_context           stack_ctx_;
     context::fcontext_t     ctx_;
+#ifdef BOOST_COROUTINE_USE_FIBER
+    void                    (*fn_)(intptr_t);
+    intptr_t                param_;
+    LPVOID                  fiber_;
+	static VOID WINAPI fb_start_proc(LPVOID lpFiberParameter);
+#endif // BOOST_COROUTINE_USE_FIBER
 
 public:
     typedef void( * ctx_fn)( intptr_t);
@@ -51,6 +60,8 @@ public:
 
     stack_context & stack_ctx()
     { return stack_ctx_; }
+
+    void destory();
 };
 
 }}}

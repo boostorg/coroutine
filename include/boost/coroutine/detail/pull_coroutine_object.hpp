@@ -65,6 +65,9 @@ private:
         stack_context stack_ctx( obj->stack_ctx_);
         StackAllocator stack_alloc( obj->stack_alloc_);
         obj->unwind_stack();
+#ifdef BOOST_COROUTINE_USE_FIBER
+        obj->callee.destory();
+#endif
         obj->~obj_t();
         stack_alloc.deallocate( stack_ctx);
     }
@@ -153,6 +156,9 @@ private:
         stack_context stack_ctx( obj->stack_ctx_);
         StackAllocator stack_alloc( obj->stack_alloc_);
         obj->unwind_stack();
+#ifdef BOOST_COROUTINE_USE_FIBER
+        obj->callee.destory();
+#endif
         obj->~obj_t();
         stack_alloc.deallocate( stack_ctx);
     }
@@ -241,6 +247,9 @@ private:
         stack_context stack_ctx( obj->stack_ctx_);
         StackAllocator stack_alloc( obj->stack_alloc_);
         obj->unwind_stack();
+#ifdef BOOST_COROUTINE_USE_FIBER
+        obj->callee.destory();
+#endif
         obj->~obj_t();
         stack_alloc.deallocate( stack_ctx);
     }
