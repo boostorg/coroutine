@@ -392,7 +392,7 @@ public:
         flags_ &= ~flag_running;
     }
 
-    inline void yield() BOOST_NOEXCEPT
+    inline void yield()
     {
         BOOST_ASSERT( is_running() );
         BOOST_ASSERT( ! is_complete() );
