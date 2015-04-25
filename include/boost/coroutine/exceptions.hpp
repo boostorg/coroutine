@@ -81,9 +81,6 @@ public:
 
     system::error_code const& code() const BOOST_NOEXCEPT
     { return ec_; }
-
-    const char* what() const throw()
-    { return code().message().c_str(); }
 };
 
 class invalid_result : public coroutine_error
