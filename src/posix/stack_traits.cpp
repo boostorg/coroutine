@@ -30,8 +30,7 @@ extern "C" {
 #  include BOOST_ABI_PREFIX
 #endif
 
-namespace boost {
-namespace coroutines {
+namespace {
 
 void pagesize_( std::size_t * size)
 {
@@ -65,6 +64,11 @@ rlimit stacksize_limit()
     boost::call_once( flag, stacksize_limit_, & limit);
     return limit;
 }
+
+}
+
+namespace boost {
+namespace coroutines {
 
 bool
 stack_traits::is_unbounded() BOOST_NOEXCEPT

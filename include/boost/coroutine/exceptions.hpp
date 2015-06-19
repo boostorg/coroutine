@@ -36,7 +36,8 @@ BOOST_SCOPED_ENUM_DECLARE_BEGIN(coroutine_errc)
 }
 BOOST_SCOPED_ENUM_DECLARE_END(coroutine_errc)
 
-BOOST_COROUTINES_DECL system::error_category const& coroutine_category() BOOST_NOEXCEPT;
+BOOST_COROUTINES_DECL
+system::error_category const& coroutine_category() BOOST_NOEXCEPT;
 
 }
 
