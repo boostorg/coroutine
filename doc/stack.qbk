@@ -152,7 +152,7 @@ In contrast to __protected_allocator__ and __standard_allocator__ it creates a
 stack which grows on demand.
 
 [note Segmented stacks are currently only supported by [*gcc] from version
-[*4.7] [*clang] from version [*3.4] onwards. In order to use a
+[*4.7] and [*clang] from version [*3.4] onwards. In order to use a
 __segmented_stack__ __boost_coroutine__ must be built with
 [*toolset=gcc segmented-stacks=on] at b2/bjam command-line. Applications
 must be compiled with compiler-flags
