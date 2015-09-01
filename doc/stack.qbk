@@ -82,7 +82,7 @@ virtual addresses are used.]
 [variablelist
 [[Preconditions:] [`traits_type::minimum_size() <= size` and
 `! traits_type::is_unbounded() && ( traits_type::maximum_size() >= size)`.]]
-[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer
+[[Effects:] [Allocates memory of at least `size` bytes and stores a pointer
 to the stack and its actual size in `sctx`. Depending
 on the architecture (the stack grows downwards/upwards) the stored address is
 the highest/lowest address of the stack.]]
@@ -126,7 +126,7 @@ end of each stack. The memory is simply managed by `std::malloc()` and
 [variablelist
 [[Preconditions:] [`traits_type::minimum_size() <= size` and
 `! traits_type::is_unbounded() && ( traits_type::maximum_size() >= size)`.]]
-[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer to
+[[Effects:] [Allocates memory of at least `size` bytes and stores a pointer to
 the stack and its actual size in `sctx`. Depending on the architecture (the
 stack grows downwards/upwards) the stored address is the highest/lowest
 address of the stack.]]
@@ -176,7 +176,7 @@ must be compiled with compiler-flags
 [variablelist
 [[Preconditions:] [`traits_type::minimum_size() <= size` and
 `! traits_type::is_unbounded() && ( traits_type::maximum_size() >= size)`.]]
-[[Effects:] [Allocates memory of at least `size` Bytes and stores a pointer to
+[[Effects:] [Allocates memory of at least `size` bytes and stores a pointer to
 the stack and its actual size in `sctx`. Depending on the architecture (the
 stack grows downwards/upwards) the stored address is the highest/lowest
 address of the stack.]]
