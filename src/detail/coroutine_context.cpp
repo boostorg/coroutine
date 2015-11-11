@@ -18,9 +18,9 @@
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 extern "C" {
 
-void __splitstack_getcontext( void * [BOOST_COROUTINES_SEGMENTS]);
+void __splitstack_getcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 
-void __splitstack_setcontext( void * [BOOST_COROUTINES_SEGMENTS]);
+void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 
 }
 #endif
