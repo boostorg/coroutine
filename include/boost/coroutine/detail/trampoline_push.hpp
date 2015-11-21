@@ -34,37 +34,29 @@ namespace coroutines {
 namespace detail {
 
 template< typename Coro >
-void trampoline_push( context::transfer_t t)
+void trampoline_push( void * vp)
 {
     typedef typename Coro::param_type   param_type;
 
-    data_t * data = static_cast< data_t * >( t.data);
-    data->from->ctx_ = t.fctx;
-    param_type * param(
-        static_cast< param_type * >( data->data) );
+    param_type * param( static_cast< param_type * >( vp) );
     BOOST_ASSERT( 0 != param);
     BOOST_ASSERT( 0 != param->data);
 
-    Coro * coro(
-        static_cast< Coro * >( param->coro) );
+    Coro * coro( static_cast< Coro * >( param->coro) );
     BOOST_ASSERT( 0 != coro);
 
     coro->run( param->data);
 }
 
 template< typename Coro >
-void trampoline_push_void( context::transfer_t t)
+void trampoline_push_void( void * vp)
 {
     typedef typename Coro::param_type   param_type;
 
-    data_t * data = static_cast< data_t * >( t.data);
-    data->from->ctx_ = t.fctx;
-    param_type * param(
-        static_cast< param_type * >( data->data) );
+    param_type * param( static_cast< param_type * >( vp) );
     BOOST_ASSERT( 0 != param);
 
-    Coro * coro(
-        static_cast< Coro * >( param->coro) );
+    Coro * coro( static_cast< Coro * >( param->coro) );
     BOOST_ASSERT( 0 != coro);
 
     coro->run();

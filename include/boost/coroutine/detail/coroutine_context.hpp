@@ -30,21 +30,21 @@ class BOOST_COROUTINES_DECL coroutine_context
 {
 private:
     template< typename Coro >
-    friend void trampoline( context::transfer_t);
+    friend void trampoline( void *);
     template< typename Coro >
-    friend void trampoline_void( context::transfer_t);
+    friend void trampoline_void( void *);
     template< typename Coro >
-    friend void trampoline_pull( context::transfer_t);
+    friend void trampoline_pull( void *);
     template< typename Coro >
-    friend void trampoline_push( context::transfer_t);
+    friend void trampoline_push( void *);
     template< typename Coro >
-    friend void trampoline_push_void( context::transfer_t);
+    friend void trampoline_push_void( void *);
 
     preallocated            palloc_;
     context::fcontext_t     ctx_;
 
 public:
-    typedef void( * ctx_fn)( context::transfer_t);
+    typedef void( * ctx_fn)( void *);
 
     // default ctor represents the current execution-context
     coroutine_context();
