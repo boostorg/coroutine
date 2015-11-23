@@ -36,8 +36,8 @@
 #endif
 
 #if defined(BOOST_USE_SEGMENTED_STACKS)
-# if ! ( (defined(__GNUC__) && __GNUC__ > 3 && __GNUC_MINOR__ > 6) || \
-         (defined(__clang__) && __clang_major__ > 2 && __clang_minor__ > 3) )
+# if ! ( (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) ) ) || \
+         (defined(__clang__) && (__clang_major__ > 2 || ( __clang_major__ == 2 && __clang_minor__ > 3) ) ) )
 #  error "compiler does not support segmented stacks"
 # endif
 # define BOOST_COROUTINES_SEGMENTS 10
