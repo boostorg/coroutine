@@ -11,11 +11,13 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
+#include <boost/context/fcontext.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/move/move.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
+#include <boost/coroutine/detail/data.hpp>
 #include <boost/coroutine/detail/flags.hpp>
 #include <boost/coroutine/detail/parameters.hpp>
 #include <boost/coroutine/detail/setup.hpp>
@@ -32,37 +34,29 @@ namespace coroutines {
 namespace detail {
 
 template< typename Coro >
-void trampoline_push( intptr_t vp)
+void trampoline_push( void * vp)
 {
     typedef typename Coro::param_type   param_type;
 
-    BOOST_ASSERT( vp);
-
-    param_type * param(
-        reinterpret_cast< param_type * >( vp) );
+    param_type * param( static_cast< param_type * >( vp) );
     BOOST_ASSERT( 0 != param);
     BOOST_ASSERT( 0 != param->data);
 
-    Coro * coro(
-        reinterpret_cast< Coro * >( param->coro) );
+    Coro * coro( static_cast< Coro * >( param->coro) );
     BOOST_ASSERT( 0 != coro);
 
     coro->run( param->data);
 }
 
 template< typename Coro >
-void trampoline_push_void( intptr_t vp)
+void trampoline_push_void( void * vp)
 {
     typedef typename Coro::param_type   param_type;
 
-    BOOST_ASSERT( vp);
-
-    param_type * param(
-        reinterpret_cast< param_type * >( vp) );
+    param_type * param( static_cast< param_type * >( vp) );
     BOOST_ASSERT( 0 != param);
 
-    Coro * coro(
-        reinterpret_cast< Coro * >( param->coro) );
+    Coro * coro( static_cast< Coro * >( param->coro) );
     BOOST_ASSERT( 0 != coro);
 
     coro->run();

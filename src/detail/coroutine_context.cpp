@@ -6,6 +6,8 @@
 
 #include "boost/coroutine/detail/coroutine_context.hpp"
 
+#include "boost/coroutine/detail/data.hpp"
+
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
 #endif
@@ -18,9 +20,9 @@
 #if defined(BOOST_USE_SEGMENTED_STACKS)
 extern "C" {
 
-void __splitstack_getcontext( void * [BOOST_COROUTINES_SEGMENTS]);
+void __splitstack_getcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 
-void __splitstack_setcontext( void * [BOOST_COROUTINES_SEGMENTS]);
+void __splitstack_setcontext( void * [BOOST_CONTEXT_SEGMENTS]);
 
 }
 #endif
@@ -55,21 +57,14 @@ coroutine_context::operator=( coroutine_context const& other)
     return * this;
 }
 
-intptr_t
-coroutine_context::jump( coroutine_context & other, intptr_t param, bool preserve_fpu)
+void *
+coroutine_context::jump( coroutine_context & other, void * param)
 {
 #if defined(BOOST_USE_SEGMENTED_STACKS)
     __splitstack_getcontext( palloc_.sctx.segments_ctx);
     __splitstack_setcontext( other.palloc_.sctx.segments_ctx);
-
-    intptr_t ret = context::jump_fcontext( & ctx_, other.ctx_, param, preserve_fpu);
-
-    __splitstack_setcontext( palloc_.sctx.segments_ctx);
-
-    return ret;
-#else
-    return context::jump_fcontext( & ctx_, other.ctx_, param, preserve_fpu);
 #endif
+    return context::jump_fcontext( & ctx_, other.ctx_, param);
 }
 
 }}}

@@ -4,10 +4,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_COROUTINES_DETAIL_FLAGS_H
-#define BOOST_COROUTINES_DETAIL_FLAGS_H
+#ifndef BOOST_COROUTINES_DETAIL_DATA_H
+#define BOOST_COROUTINES_DETAIL_DATA_H
 
 #include <boost/config.hpp>
+
+#include <boost/coroutine/detail/coroutine_context.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
 #  include BOOST_ABI_PREFIX
@@ -17,25 +19,10 @@ namespace boost {
 namespace coroutines {
 namespace detail {
 
-enum flag_t
+struct data_t
 {
-    flag_started        = 1 << 1,
-    flag_running        = 1 << 2,
-    flag_complete       = 1 << 3,
-    flag_unwind_stack   = 1 << 4,
-    flag_force_unwind   = 1 << 5
-};
-
-struct unwind_t
-{
-    enum flag_t
-    { force_unwind = 1 };
-};
-
-struct synthesized_t
-{
-    enum flag_t
-    { syntesized = 1 };
+    coroutine_context   *   from;
+    void                *   data;
 };
 
 }}}
@@ -44,4 +31,4 @@ struct synthesized_t
 #  include BOOST_ABI_SUFFIX
 #endif
 
-#endif // BOOST_COROUTINES_DETAIL_FLAGS_H
+#endif // BOOST_COROUTINES_DETAIL_DATA_H
