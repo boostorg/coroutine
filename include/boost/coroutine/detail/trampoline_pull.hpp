@@ -9,7 +9,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/context/fcontext.hpp>
+#include <boost/context/detail/fcontext.hpp>
 #include <boost/cstdint.hpp>
 
 #include <boost/coroutine/detail/config.hpp>
@@ -24,7 +24,7 @@ namespace coroutines {
 namespace detail {
 
 template< typename Coro >
-void trampoline_pull( context::transfer_t t)
+void trampoline_pull( context::detail::transfer_t t)
 {
     typedef typename Coro::param_type   param_type;
 

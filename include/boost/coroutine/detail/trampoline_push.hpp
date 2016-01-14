@@ -11,7 +11,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/context/fcontext.hpp>
+#include <boost/context/detail/fcontext.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/move/move.hpp>
@@ -34,7 +34,7 @@ namespace coroutines {
 namespace detail {
 
 template< typename Coro >
-void trampoline_push( context::transfer_t t)
+void trampoline_push( context::detail::transfer_t t)
 {
     typedef typename Coro::param_type   param_type;
 
@@ -53,7 +53,7 @@ void trampoline_push( context::transfer_t t)
 }
 
 template< typename Coro >
-void trampoline_push_void( context::transfer_t t)
+void trampoline_push_void( context::detail::transfer_t t)
 {
     typedef typename Coro::param_type   param_type;
 
