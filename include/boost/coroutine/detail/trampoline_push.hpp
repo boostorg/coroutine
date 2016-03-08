@@ -38,11 +38,15 @@ void trampoline_push( context::detail::transfer_t t)
 {
     typedef typename Coro::param_type   param_type;
 
-    param_type * param( static_cast< param_type * >( vp) );
+    data_t * data = static_cast< data_t * >( t.data);
+    data->from->ctx_ = t.fctx;
+    param_type * param(
+        static_cast< param_type * >( data->data) );
     BOOST_ASSERT( 0 != param);
     BOOST_ASSERT( 0 != param->data);
 
-    Coro * coro( static_cast< Coro * >( param->coro) );
+    Coro * coro(
+        static_cast< Coro * >( param->coro) );
     BOOST_ASSERT( 0 != coro);
 
     coro->run( param->data);
@@ -53,10 +57,14 @@ void trampoline_push_void( context::detail::transfer_t t)
 {
     typedef typename Coro::param_type   param_type;
 
-    param_type * param( static_cast< param_type * >( vp) );
+    data_t * data = static_cast< data_t * >( t.data);
+    data->from->ctx_ = t.fctx;
+    param_type * param(
+        static_cast< param_type * >( data->data) );
     BOOST_ASSERT( 0 != param);
 
-    Coro * coro( static_cast< Coro * >( param->coro) );
+    Coro * coro(
+        static_cast< Coro * >( param->coro) );
     BOOST_ASSERT( 0 != coro);
 
     coro->run();
