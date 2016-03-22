@@ -19,19 +19,45 @@ project boost/coroutine/example
       <library>/boost/context//boost_context
       <library>/boost/coroutine//boost_coroutine
       <library>/boost/program_options//boost_program_options
-      <library>/boost/random//boost_random
       <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
-      <link>static
+      <link>shared
       <threading>multi
     ;
 
+exe chaining
+    : chaining.cpp
+    ;
+exe echo
+    : echo.cpp
+    ;
+exe exception
+    : exception.cpp
+    ;
+exe fibonacci
+    : fibonacci.cpp
+    ;
+exe layout
+    : layout.cpp
+    ;
+exe parallel
+    : parallel.cpp
+    ;
+exe power
+    : power.cpp
+    ;
+exe same_fringe
+    : same_fringe.cpp
+    ;
+exe segmented_stack
+    : segmented_stack.cpp
+    ;
 exe simple
     : simple.cpp
+      test.cpp
     ;
-
-exe merge_arrays
-    : merge_arrays.cpp
+exe unwind
+    : unwind.cpp
     ;

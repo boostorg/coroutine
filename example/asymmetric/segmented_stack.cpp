@@ -9,7 +9,6 @@
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/coroutine/all.hpp>
-#include <boost/thread.hpp>
 
 int count = 384;
 
@@ -41,13 +40,6 @@ void foo( boost::coroutines::asymmetric_coroutine< void >::pull_type & source)
     source();
 }
 
-void thread_fn()
-{
-    {
-        boost::coroutines::asymmetric_coroutine< void >::push_type sink( foo);
-        sink();
-    }
-}
 
 int main( int argc, char * argv[])
 {
@@ -61,7 +53,8 @@ int main( int argc, char * argv[])
     std::cout << "application might fail" << std::endl;
 #endif
 
-    boost::thread( thread_fn).join();
+    boost::coroutines::asymmetric_coroutine< void >::push_type sink( foo);
+    sink();
 
     std::cout << "Done" << std::endl;
 
