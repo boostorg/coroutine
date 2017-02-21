@@ -65,7 +65,7 @@ coroutine_context::jump( coroutine_context & other, void * param)
     __splitstack_setcontext( other.palloc_.sctx.segments_ctx);
 #endif
     data_t data = { this, param };
-    context::detail::transfer_t t = context::detail::jump_fcontext( other.ctx_, & data);
+    context::detail::transfer_t t = context::detail::jump_fcontext( & other.ctx_, & data);
     data_t * ret = static_cast< data_t * >( t.data);
     ret->from->ctx_ = t.fctx;
     return ret->data;
