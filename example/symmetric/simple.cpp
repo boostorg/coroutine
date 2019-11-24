@@ -4,11 +4,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/coroutine/all.hpp>
+
 #include <cstdlib>
 #include <iostream>
 
 #include <boost/bind.hpp>
-#include <boost/coroutine/all.hpp>
 
 typedef boost::coroutines::symmetric_coroutine< void >  coro_t;
 
