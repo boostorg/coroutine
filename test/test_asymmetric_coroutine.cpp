@@ -4,6 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/coroutine/asymmetric_coroutine.hpp>
+
 #include <algorithm>
 #include <iostream>
 #include <sstream>
@@ -22,8 +24,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/utility.hpp>
-
-#include <boost/coroutine/asymmetric_coroutine.hpp>
 
 namespace coro = boost::coroutines;
 

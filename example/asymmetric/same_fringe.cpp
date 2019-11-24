@@ -4,6 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/coroutine/all.hpp>
+
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -14,7 +16,6 @@
 #include <boost/bind.hpp>
 #include <boost/range.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/coroutine/all.hpp>
 
 struct node
 {
