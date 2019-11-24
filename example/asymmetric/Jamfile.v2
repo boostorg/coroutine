@@ -14,7 +14,7 @@ import modules ;
 import os ;
 import toolset ;
 
-project boost/coroutine/example
+project boost/coroutine/example/asymmetric
     : requirements
       <library>/boost/context//boost_context
       <library>/boost/coroutine//boost_coroutine
