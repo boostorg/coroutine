@@ -4,13 +4,14 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/coroutine/all.hpp>
+
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
 #include <boost/bind.hpp>
-#include <boost/coroutine/all.hpp>
 #include <boost/throw_exception.hpp>
 
 typedef boost::coroutines::asymmetric_coroutine< int >::pull_type pull_coro_t;

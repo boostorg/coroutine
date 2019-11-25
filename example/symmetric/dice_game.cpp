@@ -4,11 +4,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/coroutine/all.hpp>
+
 #include <cstdlib>
 #include <iostream>
 
 #include <boost/bind.hpp>
-#include <boost/coroutine/all.hpp>
 #include <boost/move/move.hpp>
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>

@@ -7,12 +7,13 @@
 #ifndef TREE_H
 #define TREE_H
 
+#include <boost/coroutine/all.hpp>
+
 #include <cstddef>
 #include <string>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/coroutine/all.hpp>
 #include <boost/intrusive_ptr.hpp>
 
 #if defined(_MSC_VER)
