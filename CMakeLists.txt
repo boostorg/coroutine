@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.5...3.16)
 
 project(boost_coroutine VERSION "${BOOST_SUPERPROJECT_VERSION}" LANGUAGES CXX)
 
-if(WIN32)
+if(WIN32 AND NOT CMAKE_CXX_PLATFORM_ID MATCHES "Cygwin")
   set(STACK_TRAITS_SOURCES
     src/windows/stack_traits.cpp
   )
