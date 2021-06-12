@@ -38,8 +38,6 @@ target_link_libraries(boost_coroutine
     Boost::throw_exception
     Boost::type_traits
     Boost::utility
-  PRIVATE
-    Boost::thread
 )
 
 target_compile_definitions(boost_coroutine
