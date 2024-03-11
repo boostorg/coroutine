@@ -8,7 +8,7 @@ import feature ;
 import modules ;
 import toolset ;
 
-project boost/coroutine
+project
     : requirements
       <library>/boost/context//boost_context
       <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
@@ -37,7 +37,5 @@ lib boost_coroutine
     : detail/coroutine_context.cpp
       exceptions.cpp
       stack_traits_sources
-    : <link>shared:<library>../../context/build//boost_context
+    : <link>shared:<library>/boost/context//boost_context
     ;
-
-boost-install boost_coroutine ;
