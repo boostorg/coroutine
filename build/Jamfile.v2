@@ -19,6 +19,7 @@ project
       <define>BOOST_COROUTINES_SOURCE
     : usage-requirements
       <link>shared:<define>BOOST_COROUTINES_DYN_LINK=1
+      <define>BOOST_COROUTINES_NO_LIB=1
     : source-location ../src
     ;
 
